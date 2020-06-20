@@ -8,6 +8,17 @@ type Ax struct {
 	B [3]float64
 }
 
+// Eye returns an identity transform.
+func Eye() *Ax {
+	return &Ax{
+		A: [3][3]float64{
+			{1, 0, 0},
+			{0, 1, 0},
+			{0, 0, 1},
+		},
+	}
+}
+
 // Tx transforms a coordinate with an affine transform.
 func Tx(ax *Ax, x, y, z float64) (tx, ty, tz float64) {
 	tx = ax.A[0][0]*x + ax.A[0][1]*y + ax.A[0][2]*z + ax.B[0]

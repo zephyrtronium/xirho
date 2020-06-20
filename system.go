@@ -21,8 +21,8 @@ const MaxFuncs = 65536
 
 // System is a generalized iterated function system.
 type System struct {
-	// funcs is the system's function list.
-	funcs []F
+	// Funcs is the system's function list.
+	Funcs []F
 	// TODO: weights, xaos, &c
 }
 
@@ -54,7 +54,7 @@ func (s System) Iter(ctx context.Context, results chan<- P, rng RNG) {
 				p, k = it.fuse()
 				continue
 			}
-			p = it.funcs[k].Calc(p, &it.rng)
+			p = it.Funcs[k].Calc(p, &it.rng)
 			k = it.next(k)
 		}
 	}
@@ -72,9 +72,9 @@ func (it *iterator) fuse() (P, int) {
 		Z: d.Next(),
 		C: crazy.Uniform0_1{Source: &it.rng}.Next(),
 	}
-	k := it.next(crazy.RNG{Source: &it.rng}.Intn(len(it.funcs)))
+	k := it.next(crazy.RNG{Source: &it.rng}.Intn(len(it.Funcs)))
 	for i := 0; i < fuseLen+1; i++ {
-		p = it.funcs[k].Calc(p, &it.rng)
+		p = it.Funcs[k].Calc(p, &it.rng)
 		if !p.IsValid() {
 			break
 		}
@@ -86,7 +86,7 @@ func (it *iterator) fuse() (P, int) {
 // next obtains the next function to use from the current one.
 func (it *iterator) next(k int) int {
 	// TODO: weights, xaos
-	good := 0xffff - 0xffff%len(it.funcs)
+	good := 0xffff - 0xffff%len(it.Funcs)
 	for {
 		if it.n%16 == 0 {
 			it.bk = it.rng.Uint64()

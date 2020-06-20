@@ -29,6 +29,16 @@ type histBin struct {
 	n uint32
 }
 
+// NewHist allocates a histogram.
+func NewHist(width, height int, gamma float64) *Hist {
+	return &Hist{
+		counts: make([]histBin, width*height),
+		rows:   height,
+		cols:   width,
+		exp:    1 / gamma,
+	}
+}
+
 // Add increments a histogram bucket by the given color. The color's alpha
 // channel is ignored.
 func (h *Hist) Add(x, y int, c color.NRGBA64) {
