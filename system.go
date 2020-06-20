@@ -98,7 +98,7 @@ func (it *iterator) next(k int) int {
 			break
 		}
 	}
-	return k
+	return k % len(it.Funcs)
 }
 
 // newRNG creates a new seeded RNG instance.
