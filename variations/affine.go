@@ -11,8 +11,9 @@ type Affine struct {
 
 func NewAffine() xirho.F {
 	ax := &Affine{
-		ax: *xirho.Eye(),
+		ax: xirho.Ax{},
 	}
+	ax.ax.Eye()
 	ax.p = []xirho.Param{
 		xirho.AffineParam(&ax.ax, "transform"),
 		xirho.RealParam(&ax.c, "color", true, 0, 1),

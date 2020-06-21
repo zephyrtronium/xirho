@@ -25,34 +25,36 @@ func main() {
 		{0, 0.5, 0},
 		{0, 0, 0},
 	}
-	*F[0].Params()[0].(xirho.Affine).V = xirho.Ax{A: a, B: [3]float64{-1, -1, 0}}
-	*F[1].Params()[0].(xirho.Affine).V = xirho.Ax{A: a, B: [3]float64{-1, 1, 0}}
-	*F[2].Params()[0].(xirho.Affine).V = xirho.Ax{A: a, B: [3]float64{1, -1, 0}}
+	*F[0].Params()[0].(xirho.Affine).V = xirho.Ax{A: a, B: [3]float64{0, 0, 0}}
+	*F[1].Params()[0].(xirho.Affine).V = xirho.Ax{A: a, B: [3]float64{0, 1, 0}}
+	*F[2].Params()[0].(xirho.Affine).V = xirho.Ax{A: a, B: [3]float64{1, 0, 0}}
 	// *F[3].Params()[0].(xirho.Affine).V = xirho.Ax{A: a, B: [3]float64{1, 1, 0}}
-	*F[0].Params()[1].(xirho.Real).V = 0
+	*F[0].Params()[1].(xirho.Real).V = 1
 	*F[1].Params()[1].(xirho.Real).V = 0.25
 	*F[2].Params()[1].(xirho.Real).V = 0.75
 	// *F[3].Params()[1].(xirho.Real).V = 1
-	*F[0].Params()[2].(xirho.Real).V = 0.5
+	*F[0].Params()[2].(xirho.Real).V = 0.75
 	*F[1].Params()[2].(xirho.Real).V = 0.5
-	*F[2].Params()[2].(xirho.Real).V = 0.5
+	*F[2].Params()[2].(xirho.Real).V = 0.0
 	// *F[3].Params()[2].(xirho.Real).V = 0.5
 	system := xirho.System{
 		Funcs: F,
 	}
-	palette := mkpalette()
+	cam := xirho.Ax{}
+	cam.Eye().Translate(-1, -1, 0)
 	r := xirho.R{
-		Hist:    xirho.NewHist(256, 256, 1),
+		Hist:    xirho.NewHist(4096, 4096, 1),
 		System:  system,
-		Camera:  *xirho.Eye(),
-		Palette: palette,
-		Q:       1e7,
+		Camera:  cam,
+		Palette: mkpalette(),
+		N:       5e6,
 	}
 	r.Render(context.Background())
 	r.Hist.Stat()
-	img := image.NewNRGBA(r.Hist.Bounds())
-	draw.Draw(img, img.Bounds(), image.NewUniform(color.NRGBA64{A: 0xffff}), image.ZP, draw.Src)
-	draw.Draw(img, img.Bounds(), r.Hist, image.ZP, draw.Over)
+	img := image.NewRGBA(image.Rect(0, 0, 1024, 1024))
+	draw.Draw(img, img.Bounds(), image.NewUniform(color.NRGBA64{A: 0xffff}), image.Point{}, draw.Src)
+	draw.CatmullRom.Scale(img, img.Bounds(), r.Hist, r.Hist.Bounds(), draw.Over, nil)
+	// draw.Draw(img, img.Bounds(), r.Hist, image.Point{}, draw.Over)
 	err := png.Encode(os.Stdout, img)
 	if err != nil {
 		panic(err)
@@ -70,7 +72,7 @@ func mkpalette() []color.NRGBA64 {
 	// }
 	r := make([]color.NRGBA64, 256)
 	for i := range r {
-		r[i] = color.NRGBA64{R: uint16(i * i), G: uint16(i) << 8, B: uint16(i * i), A: 0xffff}
+		r[i] = color.NRGBA64{R: uint16(i * i), G: uint16(i * i), B: uint16(i * i), A: 0xffff}
 	}
 	return r
 }
