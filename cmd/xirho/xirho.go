@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"image"
 	"image/color"
 	"image/png"
 	"os"
+
+	"golang.org/x/image/draw"
 
 	"github.com/zephyrtronium/xirho"
 	"github.com/zephyrtronium/xirho/variations"
@@ -39,24 +42,35 @@ func main() {
 	}
 	palette := mkpalette()
 	r := xirho.R{
-		Hist:    xirho.NewHist(64, 64, 1),
+		Hist:    xirho.NewHist(256, 256, 1),
 		System:  system,
 		Camera:  *xirho.Eye(),
 		Palette: palette,
-		N:       1e6,
+		Q:       1e7,
 	}
 	r.Render(context.Background())
 	r.Hist.Stat()
-	err := png.Encode(os.Stdout, r.Hist)
+	img := image.NewNRGBA(r.Hist.Bounds())
+	draw.Draw(img, img.Bounds(), image.NewUniform(color.NRGBA64{A: 0xffff}), image.ZP, draw.Src)
+	draw.Draw(img, img.Bounds(), r.Hist, image.ZP, draw.Over)
+	err := png.Encode(os.Stdout, img)
 	if err != nil {
 		panic(err)
 	}
 }
 
 func mkpalette() []color.NRGBA64 {
+	// return []color.NRGBA64{
+	// 	{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
+	// 	{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
+	// 	{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
+	// 	{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
+	// 	{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
+	// 	{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
+	// }
 	r := make([]color.NRGBA64, 256)
 	for i := range r {
-		r[i] = color.NRGBA64{R: uint16(i), G: uint16(i), B: uint16(i), A: 0xffff}
+		r[i] = color.NRGBA64{R: uint16(i * i), G: uint16(i) << 8, B: uint16(i * i), A: 0xffff}
 	}
 	return r
 }

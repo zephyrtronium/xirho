@@ -62,10 +62,10 @@ func (h *Hist) Add(x, y int, c color.NRGBA64) {
 	// algorithm: m_n = (m_{n-1}*(n-1) + x_n)/n. Each channel is a 16.16
 	// fixed-point number; m_{n-1}*(n-1) multiplies a 16.16 by a 32.0, giving
 	// a 48.16; adding can't overflow because of above, so still 48.16; and
-	// dividing by a 32.0 brings us to a 16.48; shift back to 16.16.
-	bin.r = uint32((uint64(bin.r)*uint64(bin.n-1) + uint64(c.R)<<16) / uint64(bin.n) >> 32)
-	bin.g = uint32((uint64(bin.g)*uint64(bin.n-1) + uint64(c.G)<<16) / uint64(bin.n) >> 32)
-	bin.b = uint32((uint64(bin.b)*uint64(bin.n-1) + uint64(c.B)<<16) / uint64(bin.n) >> 32)
+	// dividing by a 32.0 brings us back to 16.16.
+	bin.r = uint32((uint64(bin.r)*uint64(bin.n-1) + uint64(c.R)<<16) / uint64(bin.n))
+	bin.g = uint32((uint64(bin.g)*uint64(bin.n-1) + uint64(c.G)<<16) / uint64(bin.n))
+	bin.b = uint32((uint64(bin.b)*uint64(bin.n-1) + uint64(c.B)<<16) / uint64(bin.n))
 	h.counts[k] = bin
 }
 

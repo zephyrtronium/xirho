@@ -82,7 +82,7 @@ func (r *R) plot(p P) {
 	if !p.IsValid() {
 		return
 	}
-	x, _, y := Tx(&r.Camera, p.X, p.Y, p.Z) // ignore y
+	x, y, _ := Tx(&r.Camera, p.X, p.Y, p.Z) // ignore z
 	var col, row int
 	if r.aspect <= 1 {
 		if x < -1 || x >= 1 || y < -r.aspect || y >= r.aspect {
