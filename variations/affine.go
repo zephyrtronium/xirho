@@ -9,17 +9,18 @@ type Affine struct {
 	p []xirho.Param
 }
 
-func NewAffine() xirho.F {
-	ax := &Affine{
-		ax: xirho.Ax{},
+func NewAffine(ax xirho.Ax, color, speed float64) xirho.F {
+	tx := &Affine{
+		ax: ax,
+		c:  color,
+		sp: speed,
 	}
-	ax.ax.Eye()
-	ax.p = []xirho.Param{
-		xirho.AffineParam(&ax.ax, "transform"),
-		xirho.RealParam(&ax.c, "color", true, 0, 1),
-		xirho.RealParam(&ax.sp, "color weight", true, 0, 1),
+	tx.p = []xirho.Param{
+		xirho.AffineParam(&tx.ax, "transform"),
+		xirho.RealParam(&tx.c, "color", true, 0, 1),
+		xirho.RealParam(&tx.sp, "color weight", true, 0, 1),
 	}
-	return ax
+	return tx
 }
 
 func (v *Affine) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
