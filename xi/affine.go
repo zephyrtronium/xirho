@@ -1,4 +1,4 @@
-package variations
+package xi
 
 import "github.com/zephyrtronium/xirho"
 
