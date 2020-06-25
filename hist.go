@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"math"
+	"unsafe"
 )
 
 // Hist is a uniform two-dimensional histogram.
@@ -27,6 +28,11 @@ type histBin struct {
 	r, g, b uint32
 	// n is the bin count, which determines the alpha channel.
 	n uint32
+}
+
+// HistMem estimates the memory usage in bytes of a histogram of a given size.
+func HistMem(width, height int) int {
+	return int(unsafe.Sizeof(Hist{})) + width*height*int(unsafe.Sizeof(histBin{}))
 }
 
 // NewHist allocates a histogram.

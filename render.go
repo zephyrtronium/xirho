@@ -5,6 +5,7 @@ import (
 	"image/color"
 	"runtime"
 	"sync"
+	"sync/atomic"
 )
 
 // R manages the rendering of a System onto a Hist.
@@ -78,7 +79,7 @@ func (r *R) Render(ctx context.Context) {
 
 // plot plots a point.
 func (r *R) plot(p P) {
-	r.n++
+	atomic.AddInt64(&r.n, 1)
 	if !p.IsValid() {
 		return
 	}
@@ -104,7 +105,7 @@ func (r *R) plot(p P) {
 	}
 	color := r.Palette[c]
 	r.Hist.Add(col, row, color)
-	r.q++
+	atomic.AddInt64(&r.q, 1)
 }
 
 // getProcs gets the actual number of goroutines to spawn in Render.
@@ -117,4 +118,16 @@ func (r *R) getProcs() int {
 		}
 	}
 	return procs
+}
+
+// Iters returns the number of iterations the renderer has performed. It is
+// safe to call this while the renderer is running.
+func (r *R) Iters() int64 {
+	return atomic.LoadInt64(&r.n)
+}
+
+// Hits returns the number of iterations the renderer has plotted. It is safe
+// to call this while the renderer is running.
+func (r *R) Hits() int64 {
+	return atomic.LoadInt64(&r.q)
 }
