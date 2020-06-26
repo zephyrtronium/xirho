@@ -48,7 +48,7 @@ type R struct {
 // concurrently.
 func (r *R) Render(ctx context.Context) {
 	rng := newRNG()
-	r.aspect = float64(r.Hist.cols) / float64(r.Hist.rows)
+	r.aspect = float64(r.Hist.rows) / float64(r.Hist.cols)
 	ctx, cancel := context.WithCancel(ctx)
 	var wg sync.WaitGroup
 	wg.Add(r.Procs)
@@ -92,12 +92,12 @@ func (r *R) plot(p P) bool {
 			return false
 		}
 		col = int((x + 1) * 0.5 * float64(r.Hist.cols))
-		row = int((y + r.aspect) * 0.5 * float64(r.Hist.rows))
+		row = int((y/r.aspect + 1) * 0.5 * float64(r.Hist.rows))
 	} else {
 		if x < -1/r.aspect || x >= 1/r.aspect || y < -1 || y >= 1 {
 			return false
 		}
-		col = int((x + 1/r.aspect) * 0.5 * float64(r.Hist.cols))
+		col = int((x*r.aspect + 1) * 0.5 * float64(r.Hist.cols))
 		row = int((y + 1) * 0.5 * float64(r.Hist.rows))
 	}
 	c := int(p.C * float64(len(r.Palette)))
