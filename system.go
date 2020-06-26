@@ -2,19 +2,13 @@ package xirho
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/zephyrtronium/crazy"
 )
 
-// Note that Xoshiro might cause a loss in quality if there are more than
-// sixteen functions in a System, due to the exact properties that make it
-// suitable for use by multiple goroutines. If this ends up being problematic,
-// a better choice might be crazy.MT64.
-
 // RNG is the randomness source type.
 type RNG = crazy.Xoshiro
-
-// Note to maintainers: iterator.next is tied to the value of MaxFuncs.
 
 // MaxFuncs is the maximum number of unique functions that a system may hold.
 const MaxFuncs = 65536
@@ -23,7 +17,16 @@ const MaxFuncs = 65536
 type System struct {
 	// Funcs is the system's function list.
 	Funcs []F
-	// TODO: weights, xaos, &c
+	// Final is an additional function applied after each function if non-nil.
+	Final F
+	// Weights controls the proportion of iterations which map to each func. It
+	// must be the same length as Funcs, and each element must be a
+	// finite, nonnegative number.
+	Weights []float64
+	// Graph is the weights from the row function to each column function. It
+	// must be of size len(Funcs) × len(Funcs), and each element must be a
+	// finite, nonnegative number.
+	Graph [][]float64
 }
 
 // iterator manages the iterations of a System by a single goroutine.
@@ -33,23 +36,27 @@ type iterator struct {
 	rng RNG
 	// n is the number of iterations this iterator has performed.
 	n uint64
-	// bk is a buffer to turn 64-bit RNG outputs into 16-bit ones to improve
-	// dimensional equidistribution.
-	bk uint64
+	// w is the pre-multiplied weights of each edge in the directed graph.
+	w []uint64
 }
 
 // Iter iterates the function system and sends output points over results. It
 // continues iterating until the context's Done channel is closed. rng should
-// be seeded to a distinct state for each call to this method.
+// be seeded to a distinct state for each call to this method. Iter panics if
+// Check returns an error.
 func (s System) Iter(ctx context.Context, results chan<- P, rng RNG) {
+	if err := s.Check(); err != nil {
+		panic(err)
+	}
 	it := iterator{System: s, rng: rng}
+	it.calcGraph()
 	p, k := it.fuse() // p may not be valid!
 	done := ctx.Done()
 	for {
 		select {
 		case <-done:
 			return
-		case results <- p:
+		case results <- it.final(p):
 			if !p.IsValid() {
 				p, k = it.fuse()
 				continue
@@ -58,6 +65,47 @@ func (s System) Iter(ctx context.Context, results chan<- P, rng RNG) {
 			k = it.next(k)
 		}
 	}
+}
+
+// Check verifies that the system is properly configured: it has as many
+// weights as functions, the directed graph links to every function, and
+// neither the weights nor the directed graph contain a negative or non-finite
+// element. If any of these conditions is false, then the returned error
+// describes the problem.
+func (s System) Check() error {
+	if len(s.Funcs) != len(s.Weights) {
+		return fmt.Errorf("xirho: size mismatch, have %d funcs and %d weights", len(s.Funcs), len(s.Weights))
+	}
+	for i, x := range s.Weights {
+		if x-x != 0 {
+			return fmt.Errorf("xirho: non-finite weight %v for func %d", x, i)
+		}
+		if x < 0 {
+			return fmt.Errorf("xirho: negative weight %v for func %d", x, i)
+		}
+	}
+	for i, g := range s.Graph {
+		if len(s.Funcs) != len(g) {
+			return fmt.Errorf("xirho: size mismatch, have %d funcs but graph node %d has %d weights", len(s.Funcs), i, len(g))
+		}
+		for j, x := range g {
+			if x-x != 0 {
+				return fmt.Errorf("xirho: non-finite weight %v for func %d to %d", x, i, j)
+			}
+			if x < 0 {
+				return fmt.Errorf("xirho: negative weight %v for func %d to %d", x, i, j)
+			}
+		}
+	}
+	return nil
+}
+
+// final applies the system's Final function to the point, if present.
+func (it *iterator) final(p P) P {
+	if it.Final != nil {
+		p = it.Final.Calc(p, &it.rng)
+	}
+	return p
 }
 
 // fuseLen is the number of iterations to perform before beginning to plot.
@@ -85,20 +133,74 @@ func (it *iterator) fuse() (P, int) {
 
 // next obtains the next function to use from the current one.
 func (it *iterator) next(k int) int {
-	// TODO: weights, xaos
-	good := 0xffff - 0xffff%len(it.Funcs)
-	for {
-		if it.n%16 == 0 {
-			it.bk = it.rng.Uint64()
-		} else {
-			it.bk >>= 16
-		}
-		k = int(it.bk & 0xffff)
-		if k <= good {
-			break
+	v := it.rng.Uint64() & (1<<53 - 1)
+	w := it.w[k*len(it.Funcs) : (k+1)*len(it.Funcs)]
+	for i, x := range w {
+		if v < x {
+			return i
 		}
 	}
-	return k % len(it.Funcs)
+	panic("unreachable")
+}
+
+// calcGraph sets up the iterator's weighted directed graph which controls the
+// probability of each function being chosen based on the current one.
+func (it *iterator) calcGraph() {
+	switch l := len(it.Funcs); l {
+	case 0:
+		it.w = nil
+	case 1:
+		it.w = []uint64{^uint64(0)} // even if the weight is 0
+	default:
+		it.w = make([]uint64, len(it.Funcs)*len(it.Funcs))
+		// Let F denote the set of functions in the system. Let f denote the
+		// current function.
+		// Each function in F has its own weight, and f has a weight to each
+		// function in F (including itself). The probability of choosing g in F
+		// as the next function is then the product of g's weight and the
+		// weight from f to g, divided by the total weight of all functions.
+		// Then we have a probability distribution.
+		// Numerical stability is important here, and this is called only once
+		// per proc per render, so we can afford relatively expensive
+		// algorithms like Kahan summation. We also scale to 2^53 instead of
+		// 2^64-1 so that float64 doesn't lose precision over integers.
+		// Furthermore, since we take 53-bit random numbers in it.next, scaling
+		// 1.0 by 2^53 means the last element will always be greater than any
+		// variate, which simplifies the loop.
+		const scale float64 = 1 << 53
+		wb := make([]float64, len(it.Funcs))
+		for i, g := range it.Graph {
+			copy(wb, g)
+			for j, x := range it.Weights {
+				wb[j] *= x
+			}
+			sum := cumsum(wb)
+			if sum == 0 {
+				// 0 sum would give nan for every element. Avoid nan.
+				w := it.w[i*len(it.Funcs) : (i+1)*len(it.Funcs)]
+				for j := range w {
+					w[j] = ^uint64(0)
+				}
+				continue
+			}
+			for j, x := range wb {
+				it.w[i*len(it.Funcs)+j] = uint64(x / sum * scale)
+			}
+		}
+	}
+}
+
+// cumsum computes the cumulative sum of float64s without loss of precision
+// and returns the sum.
+func cumsum(f []float64) float64 {
+	var sum, c float64
+	for i, x := range f {
+		y := x - c
+		f[i] = sum + y
+		c = f[i] - sum - y
+		sum = f[i]
+	}
+	return sum
 }
 
 // newRNG creates a new seeded RNG instance.
