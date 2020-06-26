@@ -86,20 +86,9 @@ func main() {
 		hits = iters / 5
 	}
 
-	F := []xirho.F{
-		first(),
-		second(),
-		third(),
-		fourth(),
-	}
-	system := xirho.System{
-		Funcs:   F,
-		Final:   final(),
-		Weights: []float64{6, 8, 1, 1},
-		Graph:   defaultGraph(len(F)),
-	}
+	system := params()
 	cam := xirho.Ax{}
-	cam.Eye().Scale(0.5, 0.5, 0)
+	cam.Eye().Scale(0.6, 0.6, 0)
 	log.Println("allocating histogram, estimated", xirho.HistMem(width*osa, height*osa)>>20, "MB")
 	r := xirho.R{
 		Hist:    xirho.NewHist(width*osa, height*osa, gamma),
@@ -113,6 +102,7 @@ func main() {
 	log.Println("rendering up to", r.N, "iters or", r.Q, "hits or", timeout)
 	r.Render(ctx)
 	log.Println("finished render with", r.Iters(), "iters,", r.Hits(), "hits")
+	signal.Reset(os.Interrupt) // no rendering for ^C to interrupt
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 	draw.Draw(img, img.Bounds(), image.NewUniform(color.NRGBA64{A: 0xffff}), image.Point{}, draw.Src)
 	log.Printf("drawing onto image of size %dx%d", width, height)
@@ -136,52 +126,56 @@ var resamplers = map[string]draw.Scaler{
 }
 
 func mkpalette() []color.NRGBA64 {
-	// ---- viridis ----
-	v := make([]color.NRGBA64, len(colormap.Viridis))
-	for i, c := range colormap.Viridis {
-		r, g, b, a := c.RGBA()
-		v[i] = color.NRGBA64{R: uint16(r), G: uint16(g), B: uint16(b), A: uint16(a)}
-	}
-	return v
-	// ---- rgb hexagon ----
-	// return []color.NRGBA64{
-	// 	{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
-	// 	{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
-	// 	{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
-	// 	{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
-	// 	{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
-	// 	{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
-	// 	{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
-	// 	{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
-	// 	{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
-	// 	{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
-	// 	{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
-	// 	{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
-	// 	{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
-	// 	{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
-	// 	{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
-	// 	{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
-	// 	{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
-	// 	{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
-	// 	{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
-	// 	{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
-	// 	{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
-	// 	{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
-	// 	{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
-	// 	{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
-	// 	{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
-	// 	{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
-	// 	{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
-	// 	{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
-	// 	{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
-	// 	{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
-	// 	{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
-	// 	{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
-	// 	{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
-	// 	{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
-	// 	{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
-	// 	{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
+	// ---- matplotlib colormaps ----
+	// cmap := colormap.Viridis
+	// cmap := colormap.Inferno
+	// cmap := colormap.Magma
+	// cmap := colormap.Plasma
+	// v := make([]color.NRGBA64, len(cmap))
+	// for i, c := range cmap {
+	// 	r, g, b, a := c.RGBA()
+	// 	v[i] = color.NRGBA64{R: uint16(r), G: uint16(g), B: uint16(b), A: uint16(a)}
 	// }
+	// return v
+	// ---- rgb hexagon ----
+	return []color.NRGBA64{
+		{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
+		{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
+		{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
+		{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
+		{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
+		{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
+		{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
+		{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
+		{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
+		{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
+		{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
+		{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
+		{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
+		{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
+		{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
+		{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
+		{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
+		{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
+		{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
+		{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
+		{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
+		{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
+		{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
+		{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
+		{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
+		{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
+		{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
+		{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
+		{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
+		{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
+		{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
+		{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
+		{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
+		{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
+		{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
+		{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
+	}
 	// ---- grayscale ----
 	// r := make([]color.NRGBA64, 256)
 	// for i := range r {
@@ -189,6 +183,8 @@ func mkpalette() []color.NRGBA64 {
 	// }
 	// return r
 }
+
+var _ = colormap.Inferno
 
 func defaultGraph(n int) [][]float64 {
 	r := make([][]float64, n)
@@ -203,75 +199,44 @@ func defaultGraph(n int) [][]float64 {
 
 // ---- disc julian params ----
 
-// func params() []xirho.F {
-// 	return []xirho.F{
-// 		first(), // spam to simulate weights
-// 		first(),
-// 		first(),
-// 		first(),
-// 		first(),
-// 		first(),
-// 		first(),
-// 		first(),
-// 		first(),
-// 		first(),
-// 		first(),
-// 		first(),
-// 		first(),
-// 		first(),
-// 		first(),
-// 		first(),
-// 		first(),
-// 		first(),
-// 		first(),
-// 		first(),
-// 		first(),
-// 		first(),
-// 		first(),
-// 		first(),
-// 		first(),
-// 		first(),
-// 		first(),
-// 		first(),
-// 		first(),
-// 		first(),
-// 		second(),
-// 	}
-// }
+func params() xirho.System {
+	return xirho.System{
+		Funcs:   []xirho.F{first(), second()},
+		Final:   final(),
+		Weights: []float64{30, 1},
+		Graph:   defaultGraph(2),
+	}
+}
 
-// func first() xirho.F {
-// 	ax := xirho.Ax{}
-// 	ax.Eye().RotZ(-math.Pi/4).Scale(1, 1, 0)
-// 	return xi.NewThen(xi.NewAffine(ax, 0, 0.25), xi.NewDisc())
-// }
+func first() xirho.F {
+	ax := xirho.Ax{}
+	ax.Eye().RotZ(-math.Pi/6).Scale(0.9, 0.9, 0)
+	return xi.NewThen(xi.NewAffine(ax, 0, 0.75), xi.NewDisc())
+}
 
-// func second() xirho.F {
-// 	j := xi.NewJuliaN()
-// 	*j.Params()[0].(xirho.Int).V = 50
-// 	*j.Params()[1].(xirho.Real).V = -1
-// 	return xi.NewThen(j, xi.NewColorSpeed(1, 0.03))
-// }
+func second() xirho.F {
+	j := xi.NewJuliaN()
+	*j.Params()[0].(xirho.Int).V = 30
+	*j.Params()[1].(xirho.Real).V = -1
+	return xi.NewThen(j, xi.NewColorSpeed(1, 0.3))
+}
+
+func final() xirho.F {
+	ax := xirho.Ax{}
+	ax.Eye().Scale(3, 3, 0)
+	ay := xirho.Ax{}
+	ay.Eye().RotZ(math.Pi/4).Scale(2.5, 2.5, 0)
+	return xi.NewThen(xi.NewAffine(ax, 0, 1), xi.NewPolar(), xi.NewAffine(ay, 0, 1))
+}
 
 // ---- spherical gasket params ----
 
-// func params() []xirho.F {
-// 	return []xirho.F{
-// 		first(),
-// 		first(),
-// 		first(),
-// 		first(),
-// 		first(),
-// 		first(),
-// 		second(),
-// 		second(),
-// 		second(),
-// 		second(),
-// 		second(),
-// 		second(),
-// 		second(),
-// 		second(),
-// 		third(),
-// 		fourth(),
+// func params() xirho.System {
+// 	return xirho.System{
+// 		Funcs: []xirho.F{first(), second(), third(), fourth()},
+// 		Final: final(),
+// 		Weights: []float64{6, 8, 1, 1},
+// 		Graph: defaultGraph(4),
 // 	}
 // }
 
@@ -299,71 +264,64 @@ func defaultGraph(n int) [][]float64 {
 // 	return xi.NewAffine(ax, 0.5, 0.9)
 // }
 
+// func final() xirho.F {
+// 	ax := xirho.Ax{}
+// 	ax.Eye().Translate(0.5, 0, 0)
+// 	return xi.NewThen(xi.NewAffine(ax, 0, 1), xi.NewSpherical())
+// }
+
 // ---- grand julian params ----
 
-func params() []xirho.F {
-	return []xirho.F{
-		first(),
-		second(),
-		second(),
-		second(),
-		second(),
-		second(),
-		second(),
-		second(),
-		second(),
-		second(),
-		second(),
-		second(),
-		second(),
-		third(),
-		third(),
-		fourth(),
-		fourth(),
-	}
-}
+// func params() xirho.System {
+// 	return xirho.System{
+// 		Funcs:   []xirho.F{first(), second(), third(), fourth()},
+// 		Final:   final(),
+// 		Weights: []float64{1, 12, 2, 2},
+// 		Graph:   defaultGraph(4),
+// 	}
+// }
 
-func first() xirho.F {
-	ax := xirho.Ax{}
-	ax.Eye().Scale(10, 10, 10)
-	ay := xirho.Ax{}
-	ay.Eye().Scale(0.2, 0.2, 0.2)
-	return xi.NewThen(xi.NewBlur(), xi.NewAffine(ax, 0, 1), xi.NewBubble(), xi.NewAffine(ay, 1, 0.01))
-}
+// func first() xirho.F {
+// 	ax := xirho.Ax{}
+// 	ax.Eye().Scale(10, 10, 10)
+// 	ay := xirho.Ax{}
+// 	ay.Eye().Scale(0.185, 0.185, 0.185)
+// 	return xi.NewThen(xi.NewBlur(), xi.NewAffine(ax, 0, 1), xi.NewBubble(), xi.NewAffine(ay, 0.5, 0.5))
+// }
 
-func second() xirho.F {
-	ax := xirho.Ax{}
-	ax.Eye().RotZ(math.Pi/4).Scale(1, 1, 0).Translate(0, 0.3, 0)
-	j := xi.NewJuliaN()
-	*j.Params()[0].(xirho.Int).V = 2
-	*j.Params()[1].(xirho.Real).V = -1
-	return xi.NewThen(xi.NewAffine(ax, 0, 0.9), j)
-}
+// func second() xirho.F {
+// 	ax := xirho.Ax{}
+// 	ax.Eye().RotZ(math.Pi/4).Scale(1, 1, 0).Translate(0, 0.3, 0)
+// 	j := xi.NewJuliaN()
+// 	*j.Params()[0].(xirho.Int).V = 2
+// 	*j.Params()[1].(xirho.Real).V = -1
+// 	return xi.NewThen(xi.NewAffine(ax, 0, 0.75), j)
+// }
 
-func third() xirho.F {
-	ax := xirho.Ax{}
-	ax.Eye().RotZ(math.Pi / 4)
-	ay := xirho.Ax{}
-	ay.Eye().Scale(0.2, 0.2, 0)
-	j := xi.NewJuliaN()
-	*j.Params()[0].(xirho.Int).V = 15
-	*j.Params()[1].(xirho.Real).V = -1
-	return xi.NewThen(xi.NewAffine(ax, 0, 0), j, xi.NewAffine(ay, 0, 0.01))
-}
+// func third() xirho.F {
+// 	ax := xirho.Ax{}
+// 	ax.Eye().RotZ(math.Pi / 4)
+// 	ay := xirho.Ax{}
+// 	ay.Eye().Scale(0.2, 0.2, 0)
+// 	j := xi.NewJuliaN()
+// 	*j.Params()[0].(xirho.Int).V = 15
+// 	*j.Params()[1].(xirho.Real).V = -1
+// 	return xi.NewThen(xi.NewAffine(ax, 0, 0), j, xi.NewAffine(ay, 1, 0.8))
+// }
 
-func fourth() xirho.F {
-	ax := xirho.Ax{}
-	ax.Eye().RotZ(math.Pi / 4)
-	ay := xirho.Ax{}
-	ay.Eye().Scale(0.3, 0.3, 0)
-	j := xi.NewJuliaN()
-	*j.Params()[0].(xirho.Int).V = 8
-	*j.Params()[1].(xirho.Real).V = -1
-	return xi.NewThen(xi.NewAffine(ax, 0, 0), j, xi.NewAffine(ay, 1, 0.2))
-}
+// func fourth() xirho.F {
+// 	ax := xirho.Ax{}
+// 	ax.Eye().RotZ(math.Pi / 4)
+// 	ay := xirho.Ax{}
+// 	ay.Eye().Scale(0.3, 0.3, 0)
+// 	j := xi.NewJuliaN()
+// 	*j.Params()[0].(xirho.Int).V = 8
+// 	*j.Params()[1].(xirho.Real).V = -1
+// 	return xi.NewThen(xi.NewAffine(ax, 0, 0), j, xi.NewAffine(ay, 1, 0.8))
+// }
 
-func final() xirho.F {
-	ax := xirho.Ax{}
-	ax.Eye().Translate(0.5, 0, 0)
-	return xi.NewThen(xi.NewAffine(ax, 0, 1), xi.NewSpherical())
-}
+// func final() xirho.F {
+// 	ax := xirho.Ax{}
+// 	ax.Eye().Translate(0.5, 0, 0)
+// 	return xi.NewThen(xi.NewAffine(ax, 0, 1), xi.NewSpherical())
+// }
