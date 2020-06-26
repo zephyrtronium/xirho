@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"math"
+	"sync/atomic"
 	"unsafe"
 )
 
@@ -19,15 +20,15 @@ type Hist struct {
 	lb float64
 	// exp is the reciprocal of the gamma factor applied to output pixels.
 	exp float64
-	// stat is true if Stat has been called since the last use of Add.
-	stat bool
+	// stat is 1 if Stat has been called since the last use of Add.
+	stat int32
 }
 
 type histBin struct {
-	// r, g, b are average red, green, and blue channels as 16.16 fixed point.
-	r, g, b uint32
+	// r, g, b are red, green, and blue channels.
+	r, g, b uint64
 	// n is the bin count, which determines the alpha channel.
-	n uint32
+	n uint64
 }
 
 // HistMem estimates the memory usage in bytes of a histogram of a given size.
@@ -45,34 +46,16 @@ func NewHist(width, height int, gamma float64) *Hist {
 	}
 }
 
-// Add increments a histogram bucket by the given color. The color's alpha
-// channel is ignored.
+// Add increments a histogram bucket by the given color. It is safe for
+// multiple goroutines to call this concurrently.
 func (h *Hist) Add(x, y int, c color.NRGBA64) {
+	atomic.StoreInt32(&h.stat, 0)
 	k := h.index(x, y)
-	bin := h.counts[k] // TODO: benchmark this vs. taking pointer
-	bin.n++
-	if bin.n == 0 {
-		// Overflow. Just return; the bin in memory is unmodified.
-		return
-	}
-	h.stat = false
-	if bin.n >= 1<<31-1 {
-		// We've hit this bin two billion times. Its color is decided.
-		// Note that this also prevents overflow in averaging calculations
-		// below, since the intermediate product can never have its MSB set.
-		// We still want to save the new count to preserve dynamic range.
-		h.counts[k].n = bin.n
-		return
-	}
-	// Average each component with the new channels using Knuth's online mean
-	// algorithm: m_n = (m_{n-1}*(n-1) + x_n)/n. Each channel is a 16.16
-	// fixed-point number; m_{n-1}*(n-1) multiplies a 16.16 by a 32.0, giving
-	// a 48.16; adding can't overflow because of above, so still 48.16; and
-	// dividing by a 32.0 brings us back to 16.16.
-	bin.r = uint32((uint64(bin.r)*uint64(bin.n-1) + uint64(c.R)<<16) / uint64(bin.n))
-	bin.g = uint32((uint64(bin.g)*uint64(bin.n-1) + uint64(c.G)<<16) / uint64(bin.n))
-	bin.b = uint32((uint64(bin.b)*uint64(bin.n-1) + uint64(c.B)<<16) / uint64(bin.n))
-	h.counts[k] = bin
+	bin := &h.counts[k]
+	atomic.AddUint64(&bin.r, uint64(c.R))
+	atomic.AddUint64(&bin.g, uint64(c.G))
+	atomic.AddUint64(&bin.b, uint64(c.B))
+	atomic.AddUint64(&bin.n, uint64(c.A))
 }
 
 // index converts a coordinate to an index into the histogram counts. Panics if
@@ -87,18 +70,17 @@ func (h *Hist) index(x, y int) int {
 	return y*h.cols + x
 }
 
-// Stat computes information about the histogram needed to convert bins to
-// colors. It must be called prior to any call to At.
-func (h *Hist) Stat() {
+// prep computes information needed to convert bins to colors.
+func (h *Hist) prep() {
 	// Find the maximum and compute lb.
-	var m uint32
+	var m uint64
 	for _, b := range h.counts {
-		if b.n > m {
-			m = b.n
+		if n := atomic.LoadUint64(&b.n); n > m {
+			m = n
 		}
 	}
 	h.lb = math.Log(float64(m))
-	h.stat = true
+	atomic.StoreInt32(&h.stat, 1)
 }
 
 // --- image.Image implementation for easy resizing ---
@@ -116,28 +98,49 @@ func (h *Hist) Bounds() image.Rectangle {
 // At returns the color of a pixel in the histogram. Note that this is a fairly
 // expensive operation.
 func (h *Hist) At(x, y int) color.Color {
-	if !h.stat {
-		panic(fmt.Errorf("xirho: no call to Stat, cannot compute pixels"))
+	if atomic.LoadInt32(&h.stat) == 0 {
+		h.prep()
 	}
 	if x < 0 || x > h.cols || y < 0 || y > h.rows {
 		return color.RGBA64{}
 	}
-	bin := h.counts[h.index(x, y)]
-	if bin.n == 0 {
+	bin := &h.counts[h.index(x, y)]
+	r := atomic.LoadUint64(&bin.r)
+	g := atomic.LoadUint64(&bin.g)
+	b := atomic.LoadUint64(&bin.b)
+	n := atomic.LoadUint64(&bin.n)
+	if n == 0 {
 		return color.RGBA64{}
 	}
-	alpha := math.Log(float64(bin.n)) / h.lb // logarithmic tone mapping
-	alpha = math.Pow(alpha, h.exp)           // gamma
-	alpha *= 65536                           // scale to uint16
-	if alpha < 0 {                           // clip to uint16
-		alpha = 0
-	} else if alpha > 65535 {
-		alpha = 65535
-	}
 	return color.RGBA64{
-		R: uint16(bin.r >> 16),
-		G: uint16(bin.g >> 16),
-		B: uint16(bin.b >> 16),
-		A: uint16(alpha),
+		R: cscale(r, h.lb),
+		G: cscale(g, h.lb),
+		B: cscale(b, h.lb),
+		A: cscaleg(n, h.lb, h.exp),
 	}
+}
+
+// cscale scales a bin count to a color component.
+func cscale(n uint64, lb float64) uint16 {
+	a := math.Log(float64(n)) / lb // logarithmic tone mapping
+	a *= 65536                     // scale to uint16
+	if a < 0 {                     // clip to uint16
+		a = 0
+	} else if a > 65535 {
+		a = 65535
+	}
+	return uint16(a)
+}
+
+// cscaleg scales a bin count to a color component with gamma.
+func cscaleg(n uint64, lb, exp float64) uint16 {
+	a := math.Log(float64(n)) / lb // logarithmic tone mapping
+	a = math.Pow(a, exp)           // gamma
+	a *= 65536                     // scale to uint16
+	if a < 0 {                     // clip to uint16
+		a = 0
+	} else if a > 65535 {
+		a = 65535
+	}
+	return uint16(a)
 }

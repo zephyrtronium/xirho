@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"image"
 	"image/color"
 	"image/png"
@@ -42,7 +41,7 @@ func main() {
 	flag.IntVar(&osa, "osa", 1, "oversampling; histogram bins per pixel per axis")
 	flag.Float64Var(&gamma, "gamma", 1, "gamma factor")
 	flag.StringVar(&resample, "resample", "catmull-rom", "resampling method (catmull-rom, bilinear, approx-bilinear, or nearest)")
-	flag.IntVar(&procs, "procs", 0, fmt.Sprintf("concurrent render routines (default %d)", runtime.GOMAXPROCS(0)-1))
+	flag.IntVar(&procs, "procs", runtime.GOMAXPROCS(0), "concurrent render routines")
 	flag.Parse()
 	resampler := resamplers[resample]
 	if resampler == nil {
@@ -113,7 +112,6 @@ func main() {
 	log.Println("rendering up to", r.N, "iters or", r.Q, "hits or", timeout)
 	r.Render(ctx)
 	log.Println("finished render with", r.Iters(), "iters,", r.Hits(), "hits")
-	r.Hist.Stat()
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 	draw.Draw(img, img.Bounds(), image.NewUniform(color.NRGBA64{A: 0xffff}), image.Point{}, draw.Src)
 	log.Printf("drawing onto image of size %dx%d", width, height)
@@ -137,31 +135,31 @@ var resamplers = map[string]draw.Scaler{
 }
 
 func mkpalette() []color.NRGBA64 {
-	// return []color.NRGBA64{
-	// 	{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
-	// 	{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
-	// 	{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
-	// 	{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
-	// 	{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
-	// 	{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
-	// 	{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
-	// 	{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
-	// 	{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
-	// 	{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
-	// 	{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
-	// 	{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
-	// 	{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
-	// 	{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
-	// 	{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
-	// 	{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
-	// 	{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
-	// 	{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
-	// }
-	r := make([]color.NRGBA64, 256)
-	for i := range r {
-		r[i] = color.NRGBA64{R: uint16(i * i), G: uint16(i * i), B: uint16(i * i), A: 0xffff}
+	return []color.NRGBA64{
+		{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
+		{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
+		{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
+		{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
+		{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
+		{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
+		{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
+		{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
+		{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
+		{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
+		{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
+		{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
+		{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
+		{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
+		{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
+		{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
+		{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
+		{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
 	}
-	return r
+	// r := make([]color.NRGBA64, 256)
+	// for i := range r {
+	// 	r[i] = color.NRGBA64{R: uint16(i * i), G: uint16(i * i), B: uint16(i * i), A: 0xffff}
+	// }
+	// return r
 }
 
 func defaultGraph(n int) [][]float64 {

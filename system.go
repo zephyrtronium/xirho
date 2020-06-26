@@ -3,6 +3,7 @@ package xirho
 import (
 	"context"
 	"fmt"
+	"sync/atomic"
 
 	"github.com/zephyrtronium/crazy"
 )
@@ -34,8 +35,6 @@ type iterator struct {
 	System
 	// rng is the iterator's source of randomness.
 	rng RNG
-	// n is the number of iterations this iterator has performed.
-	n uint64
 	// w is the pre-multiplied weights of each edge in the directed graph.
 	w []uint64
 }
@@ -44,7 +43,7 @@ type iterator struct {
 // continues iterating until the context's Done channel is closed. rng should
 // be seeded to a distinct state for each call to this method. Iter panics if
 // Check returns an error.
-func (s System) Iter(ctx context.Context, results chan<- P, rng RNG) {
+func (s System) Iter(ctx context.Context, r *R, rng RNG) {
 	if err := s.Check(); err != nil {
 		panic(err)
 	}
@@ -52,14 +51,30 @@ func (s System) Iter(ctx context.Context, results chan<- P, rng RNG) {
 	it.calcGraph()
 	p, k := it.fuse() // p may not be valid!
 	done := ctx.Done()
+	var n, q int64
 	for {
 		select {
 		case <-done:
+			atomic.AddInt64(&r.n, n)
+			atomic.AddInt64(&r.q, q)
 			return
-		case results <- it.final(p):
+		default:
+			n++
+			if n == 0x1000 {
+				atomic.AddInt64(&r.n, n)
+				n = 0
+			}
 			if !p.IsValid() {
 				p, k = it.fuse()
 				continue
+			}
+			fp := it.final(p)
+			if r.plot(fp) {
+				q++
+				if q == 0x1000 {
+					atomic.AddInt64(&r.q, q)
+					q = 0
+				}
 			}
 			p = it.Funcs[k].Calc(p, &it.rng)
 			k = it.next(k)

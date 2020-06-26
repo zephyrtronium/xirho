@@ -3,13 +3,20 @@ package xirho
 import (
 	"context"
 	"image/color"
-	"runtime"
 	"sync"
 	"sync/atomic"
+	"time"
 )
 
 // R manages the rendering of a System onto a Hist.
 type R struct {
+	// These fields must be first on 32-bit platforms because they are updated
+	// atomically.
+	// n is the number of points calculated.
+	n int64
+	// q is the number of points plotted.
+	q int64
+
 	// Hist is the target histogram.
 	Hist *Hist
 	// System is the system to render.
@@ -19,7 +26,7 @@ type R struct {
 	// Palette is the colors used by the renderer.
 	Palette []color.NRGBA64
 	// Procs is the number of goroutines to use in iterating the system. If
-	// Procs <= 0, then Render instead uses max(1, GOMAXPROCS-1) goroutines.
+	// Procs <= 0, then Render instead uses GOMAXPROCS goroutines.
 	Procs int
 	// N is the maximum number of iterations to perform. If N <= 0, then this
 	// is not used as an exit condition.
@@ -29,10 +36,6 @@ type R struct {
 	// then this is not used as an exit condition.
 	Q int64
 
-	// n is the number of points calculated.
-	n int64
-	// q is the number of points plotted.
-	q int64
 	// aspect is the aspect ratio of the histogram.
 	aspect float64
 }
@@ -44,25 +47,21 @@ type R struct {
 // Render multiple times concurrently, nor to modify any of r's fields
 // concurrently.
 func (r *R) Render(ctx context.Context) {
-	procs := r.getProcs()
 	rng := newRNG()
 	r.aspect = float64(r.Hist.cols) / float64(r.Hist.rows)
 	ctx, cancel := context.WithCancel(ctx)
-	ch := make(chan P, procs)
 	var wg sync.WaitGroup
-	wg.Add(procs)
-	for i := 0; i < procs; i++ {
+	wg.Add(r.Procs)
+	for i := 0; i < r.Procs; i++ {
 		go func(rng RNG) {
-			r.System.Iter(ctx, ch, rng)
+			r.System.Iter(ctx, r, rng)
 			wg.Done()
 		}(rng)
 		rng.Jump()
 	}
+	ticker := time.NewTicker(15 * time.Millisecond)
+	defer ticker.Stop()
 	for {
-		// We perform a busy loop over each channel instead of a single select
-		// with both because a select with two non-default cases is many times
-		// more expensive than with one. Points should be coming through very
-		// quickly, so the two-channel select should rarely sleep anyway.
 		select {
 		case <-ctx.Done():
 			// If our context is cancelled, then so are the workers', but vet
@@ -70,38 +69,33 @@ func (r *R) Render(ctx context.Context) {
 			cancel()
 			wg.Wait()
 			return
-		default: // do nothing
-		}
-		select {
-		case p := <-ch:
-			r.plot(p)
-			if (r.N > 0 && r.n >= r.N) || (r.Q > 0 && r.q >= r.Q) {
+		case <-ticker.C:
+			if (r.N > 0 && atomic.LoadInt64(&r.n) >= r.N) || (r.Q > 0 && atomic.LoadInt64(&r.q) >= r.Q) {
 				cancel()
 				wg.Wait()
 				return
 			}
-		default: // do nothing
 		}
 	}
 }
 
 // plot plots a point.
-func (r *R) plot(p P) {
+func (r *R) plot(p P) bool {
 	atomic.AddInt64(&r.n, 1)
 	if !p.IsValid() {
-		return
+		return false
 	}
 	x, y, _ := Tx(&r.Camera, p.X, p.Y, p.Z) // ignore z
 	var col, row int
 	if r.aspect <= 1 {
 		if x < -1 || x >= 1 || y < -r.aspect || y >= r.aspect {
-			return
+			return false
 		}
 		col = int((x + 1) * 0.5 * float64(r.Hist.cols))
 		row = int((y + r.aspect) * 0.5 * float64(r.Hist.rows))
 	} else {
 		if x < -1/r.aspect || x >= 1/r.aspect || y < -1 || y >= 1 {
-			return
+			return false
 		}
 		col = int((x + 1/r.aspect) * 0.5 * float64(r.Hist.cols))
 		row = int((y + 1) * 0.5 * float64(r.Hist.rows))
@@ -113,19 +107,7 @@ func (r *R) plot(p P) {
 	}
 	color := r.Palette[c]
 	r.Hist.Add(col, row, color)
-	atomic.AddInt64(&r.q, 1)
-}
-
-// getProcs gets the actual number of goroutines to spawn in Render.
-func (r *R) getProcs() int {
-	procs := r.Procs
-	if procs <= 0 {
-		procs = runtime.GOMAXPROCS(0) - 1
-		if procs <= 0 {
-			procs = 1
-		}
-	}
-	return procs
+	return true
 }
 
 // Iters returns the number of iterations the renderer has performed. It is
