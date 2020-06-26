@@ -59,6 +59,10 @@ func (r *R) Render(ctx context.Context) {
 		rng.Jump()
 	}
 	for {
+		// We perform a busy loop over each channel instead of a single select
+		// with both because a select with two non-default cases is many times
+		// more expensive than with one. Points should be coming through very
+		// quickly, so the two-channel select should rarely sleep anyway.
 		select {
 		case <-ctx.Done():
 			// If our context is cancelled, then so are the workers', but vet
@@ -66,6 +70,9 @@ func (r *R) Render(ctx context.Context) {
 			cancel()
 			wg.Wait()
 			return
+		default: // do nothing
+		}
+		select {
 		case p := <-ch:
 			r.plot(p)
 			if (r.N > 0 && r.n >= r.N) || (r.Q > 0 && r.q >= r.Q) {
@@ -73,6 +80,7 @@ func (r *R) Render(ctx context.Context) {
 				wg.Wait()
 				return
 			}
+		default: // do nothing
 		}
 	}
 }
