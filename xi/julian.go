@@ -33,7 +33,7 @@ func (f *JuliaN) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 		p1 = -p1
 	}
 	p3 := float64(crazy.RNG{rng}.Uintn(uint(p1)))
-	t := (math.Atan(in.Y/in.X) + 2*math.Pi*p3) / float64(f.power)
+	t := (math.Atan2(in.Y, in.X) + 2*math.Pi*p3) / float64(f.power)
 	r := math.Pow(math.Hypot(in.X, in.Y), f.dist/float64(f.power))
 	s, c := math.Sincos(t)
 	in.X = r * c

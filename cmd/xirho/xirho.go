@@ -16,6 +16,7 @@ import (
 
 	"golang.org/x/image/draw"
 
+	"github.com/dim13/colormap"
 	"github.com/zephyrtronium/xirho"
 	"github.com/zephyrtronium/xirho/xi"
 )
@@ -135,26 +136,53 @@ var resamplers = map[string]draw.Scaler{
 }
 
 func mkpalette() []color.NRGBA64 {
-	return []color.NRGBA64{
-		{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
-		{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
-		{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
-		{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
-		{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
-		{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
-		{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
-		{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
-		{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
-		{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
-		{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
-		{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
-		{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
-		{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
-		{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
-		{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
-		{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
-		{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
+	// ---- viridis ----
+	v := make([]color.NRGBA64, len(colormap.Viridis))
+	for i, c := range colormap.Viridis {
+		r, g, b, a := c.RGBA()
+		v[i] = color.NRGBA64{R: uint16(r), G: uint16(g), B: uint16(b), A: uint16(a)}
 	}
+	return v
+	// ---- rgb hexagon ----
+	// return []color.NRGBA64{
+	// 	{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
+	// 	{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
+	// 	{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
+	// 	{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
+	// 	{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
+	// 	{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
+	// 	{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
+	// 	{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
+	// 	{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
+	// 	{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
+	// 	{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
+	// 	{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
+	// 	{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
+	// 	{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
+	// 	{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
+	// 	{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
+	// 	{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
+	// 	{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
+	// 	{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
+	// 	{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
+	// 	{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
+	// 	{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
+	// 	{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
+	// 	{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
+	// 	{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
+	// 	{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
+	// 	{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
+	// 	{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
+	// 	{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
+	// 	{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
+	// 	{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
+	// 	{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
+	// 	{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
+	// 	{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
+	// 	{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
+	// 	{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
+	// }
+	// ---- grayscale ----
 	// r := make([]color.NRGBA64, 256)
 	// for i := range r {
 	// 	r[i] = color.NRGBA64{R: uint16(i * i), G: uint16(i * i), B: uint16(i * i), A: 0xffff}
@@ -173,28 +201,165 @@ func defaultGraph(n int) [][]float64 {
 	return r
 }
 
+// ---- disc julian params ----
+
+// func params() []xirho.F {
+// 	return []xirho.F{
+// 		first(), // spam to simulate weights
+// 		first(),
+// 		first(),
+// 		first(),
+// 		first(),
+// 		first(),
+// 		first(),
+// 		first(),
+// 		first(),
+// 		first(),
+// 		first(),
+// 		first(),
+// 		first(),
+// 		first(),
+// 		first(),
+// 		first(),
+// 		first(),
+// 		first(),
+// 		first(),
+// 		first(),
+// 		first(),
+// 		first(),
+// 		first(),
+// 		first(),
+// 		first(),
+// 		first(),
+// 		first(),
+// 		first(),
+// 		first(),
+// 		first(),
+// 		second(),
+// 	}
+// }
+
+// func first() xirho.F {
+// 	ax := xirho.Ax{}
+// 	ax.Eye().RotZ(-math.Pi/4).Scale(1, 1, 0)
+// 	return xi.NewThen(xi.NewAffine(ax, 0, 0.25), xi.NewDisc())
+// }
+
+// func second() xirho.F {
+// 	j := xi.NewJuliaN()
+// 	*j.Params()[0].(xirho.Int).V = 50
+// 	*j.Params()[1].(xirho.Real).V = -1
+// 	return xi.NewThen(j, xi.NewColorSpeed(1, 0.03))
+// }
+
+// ---- spherical gasket params ----
+
+// func params() []xirho.F {
+// 	return []xirho.F{
+// 		first(),
+// 		first(),
+// 		first(),
+// 		first(),
+// 		first(),
+// 		first(),
+// 		second(),
+// 		second(),
+// 		second(),
+// 		second(),
+// 		second(),
+// 		second(),
+// 		second(),
+// 		second(),
+// 		third(),
+// 		fourth(),
+// 	}
+// }
+
+// func first() xirho.F {
+// 	ax := xirho.Ax{}
+// 	ax.Eye().RotZ(-math.Pi/2).Translate(1, 0, 0)
+// 	return xi.NewThen(xi.NewAffine(ax, 0, 0.25), xi.NewSpherical())
+// }
+
+// func second() xirho.F {
+// 	ax := xirho.Ax{}
+// 	ax.Eye().RotZ(math.Pi / 2)
+// 	return xi.NewThen(xi.NewAffine(ax, 1, 0.75), xi.NewSpherical())
+// }
+
+// func third() xirho.F {
+// 	ax := xirho.Ax{}
+// 	ax.Eye().Translate(3, 0, 0)
+// 	return xi.NewAffine(ax, 0.5, 0.9)
+// }
+
+// func fourth() xirho.F {
+// 	ax := xirho.Ax{}
+// 	ax.Eye().Translate(-3, 0, 0)
+// 	return xi.NewAffine(ax, 0.5, 0.9)
+// }
+
+// ---- grand julian params ----
+
+func params() []xirho.F {
+	return []xirho.F{
+		first(),
+		second(),
+		second(),
+		second(),
+		second(),
+		second(),
+		second(),
+		second(),
+		second(),
+		second(),
+		second(),
+		second(),
+		second(),
+		third(),
+		third(),
+		fourth(),
+		fourth(),
+	}
+}
+
 func first() xirho.F {
 	ax := xirho.Ax{}
-	ax.Eye().RotZ(-math.Pi/2).Translate(1, 0, 0)
-	return xi.NewThen(xi.NewAffine(ax, 0, 0.25), xi.NewSpherical())
+	ax.Eye().Scale(10, 10, 10)
+	ay := xirho.Ax{}
+	ay.Eye().Scale(0.2, 0.2, 0.2)
+	return xi.NewThen(xi.NewBlur(), xi.NewAffine(ax, 0, 1), xi.NewBubble(), xi.NewAffine(ay, 1, 0.01))
 }
 
 func second() xirho.F {
 	ax := xirho.Ax{}
-	ax.Eye().RotZ(math.Pi / 2)
-	return xi.NewThen(xi.NewAffine(ax, 1, 0.75), xi.NewSpherical())
+	ax.Eye().RotZ(math.Pi/4).Scale(1, 1, 0).Translate(0, 0.3, 0)
+	j := xi.NewJuliaN()
+	*j.Params()[0].(xirho.Int).V = 2
+	*j.Params()[1].(xirho.Real).V = -1
+	return xi.NewThen(xi.NewAffine(ax, 0, 0.9), j)
 }
 
 func third() xirho.F {
 	ax := xirho.Ax{}
-	ax.Eye().Translate(3, 0, 0)
-	return xi.NewAffine(ax, 0.5, 0.9)
+	ax.Eye().RotZ(math.Pi / 4)
+	ay := xirho.Ax{}
+	ay.Eye().Scale(0.2, 0.2, 0)
+	j := xi.NewJuliaN()
+	*j.Params()[0].(xirho.Int).V = 15
+	*j.Params()[1].(xirho.Real).V = -1
+	return xi.NewThen(xi.NewAffine(ax, 0, 0), j, xi.NewAffine(ay, 0, 0.01))
 }
 
 func fourth() xirho.F {
 	ax := xirho.Ax{}
-	ax.Eye().Translate(-3, 0, 0)
-	return xi.NewAffine(ax, 0.5, 0.9)
+	ax.Eye().RotZ(math.Pi / 4)
+	ay := xirho.Ax{}
+	ay.Eye().Scale(0.3, 0.3, 0)
+	j := xi.NewJuliaN()
+	*j.Params()[0].(xirho.Int).V = 8
+	*j.Params()[1].(xirho.Real).V = -1
+	return xi.NewThen(xi.NewAffine(ax, 0, 0), j, xi.NewAffine(ay, 1, 0.2))
 }
 
 func final() xirho.F {

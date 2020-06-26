@@ -103,7 +103,7 @@ func (r *R) plot(p P) bool {
 	c := int(p.C * float64(len(r.Palette)))
 	if c >= len(r.Palette) {
 		// Since p.C can be 1.0, c can be out of bounds.
-		c = len(r.Palette)
+		c = len(r.Palette) - 1
 	}
 	color := r.Palette[c]
 	r.Hist.Add(col, row, color)
