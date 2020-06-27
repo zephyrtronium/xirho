@@ -18,6 +18,8 @@ That's it.
 
 ![Sierpinski gasket](img/sierpinski.png)
 
+---
+
 The original treatments of IFS were mostly concerned with affine transformations: simple functions describing uniform scaling, rotation, shearing, and translation. We can get some pretty good images out of just these; the Sierpinski gasket just above is an example.
 
 The "fractal flame" algorithm is a way of generalizing IFS: allowing arbitrary functions in the system and adding color and tone mapping to the output. The spherical gasket at the top of this page is very similar to the Sierpinski gasket, just replacing a couple affine transformations with a simple nonlinear function.
@@ -25,6 +27,8 @@ The "fractal flame" algorithm is a way of generalizing IFS: allowing arbitrary f
 ---
 
 ![Grand Julian](img/grandjulian.png)
+
+---
 
 xirho is a pretty basic fractal flame renderer, with only a handful of function types available (for now). It doesn't support designing a system interactively (yet), or even loading systems from some serialization format (yet) – each example is programmed by hand. The renderer is flexible thanks to Go's powerful type system, and it's fast because of its completely lock-free parallel design.
 
