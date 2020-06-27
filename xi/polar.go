@@ -9,8 +9,8 @@ import (
 // Polar maps the x/y rectangular coordinates of the input to polar.
 type Polar struct{}
 
-// NewPolar is a factory for Polar.
-func NewPolar() xirho.F {
+// newPolar is a factory for Polar.
+func newPolar() xirho.F {
 	return Polar{}
 }
 
@@ -23,3 +23,7 @@ func (Polar) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 }
 
 func (Polar) Prep() {}
+
+func init() {
+	must("polar", newPolar)
+}

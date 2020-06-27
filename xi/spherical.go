@@ -8,8 +8,8 @@ import (
 // of the input point treated as x+iy. The z and c coordinates are unchanged.
 type Spherical struct{}
 
-// NewSpherical is a factory for Spherical.
-func NewSpherical() xirho.F {
+// newSpherical is a factory for Spherical.
+func newSpherical() xirho.F {
 	return Spherical{}
 }
 
@@ -22,3 +22,8 @@ func (Spherical) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 }
 
 func (Spherical) Prep() {}
+
+func init() {
+	must("spherical", newSpherical)
+	must("spherical3D", newSpherical)
+}

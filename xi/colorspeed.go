@@ -13,9 +13,9 @@ type ColorSpeed struct {
 	Speed xirho.Real `xirho:"speed,0,1"`
 }
 
-// NewColorSpeed is a factory for ColorSpeed, defaulting Color to 0 and Speed
+// newColorSpeed is a factory for ColorSpeed, defaulting Color to 0 and Speed
 // to 1.
-func NewColorSpeed() xirho.F {
+func newColorSpeed() xirho.F {
 	return &ColorSpeed{Speed: 1}
 }
 
@@ -25,3 +25,7 @@ func (f *ColorSpeed) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 }
 
 func (f *ColorSpeed) Prep() {}
+
+func init() {
+	must("colorspeed", newColorSpeed)
+}

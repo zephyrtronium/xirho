@@ -10,8 +10,8 @@ import (
 // Blur produces a noisy solid circle with unit radius.
 type Blur struct{}
 
-// NewBlur is a factory for Blur.
-func NewBlur() xirho.F {
+// newBlur is a factory for Blur.
+func newBlur() xirho.F {
 	return Blur{}
 }
 
@@ -25,3 +25,7 @@ func (Blur) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 }
 
 func (Blur) Prep() {}
+
+func init() {
+	must("blur", newBlur)
+}

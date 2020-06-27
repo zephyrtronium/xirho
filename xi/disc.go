@@ -9,8 +9,8 @@ import (
 // Disc does disc.
 type Disc struct{}
 
-// NewDisc is a factory for Disc.
-func NewDisc() xirho.F {
+// newDisc is a factory for Disc.
+func newDisc() xirho.F {
 	return Disc{}
 }
 
@@ -23,3 +23,7 @@ func (Disc) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 }
 
 func (Disc) Prep() {}
+
+func init() {
+	must("disc", newDisc)
+}

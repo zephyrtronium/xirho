@@ -8,8 +8,8 @@ type Then struct {
 	Funcs xirho.FuncList `xirho:"funcs"`
 }
 
-// NewThen is a factory for Then, defaulting to an empty function list.
-func NewThen() xirho.F {
+// newThen is a factory for Then, defaulting to an empty function list.
+func newThen() xirho.F {
 	return &Then{}
 }
 
@@ -24,4 +24,8 @@ func (f *Then) Prep() {
 	for _, v := range f.Funcs {
 		v.Prep()
 	}
+}
+
+func init() {
+	must("then", newThen)
 }

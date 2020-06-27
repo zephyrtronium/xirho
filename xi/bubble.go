@@ -5,8 +5,8 @@ import "github.com/zephyrtronium/xirho"
 // Bubble maps the plane to a sphere.
 type Bubble struct{}
 
-// NewBubble is a factory for Bubble.
-func NewBubble() xirho.F {
+// newBubble is a factory for Bubble.
+func newBubble() xirho.F {
 	return Bubble{}
 }
 
@@ -19,3 +19,7 @@ func (Bubble) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 }
 
 func (Bubble) Prep() {}
+
+func init() {
+	must("bubble", newBubble)
+}

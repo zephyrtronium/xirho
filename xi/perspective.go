@@ -7,8 +7,8 @@ type Perspective struct {
 	Distance xirho.Real `xirho:"distance"`
 }
 
-// NewPerspective is a factory for Perspective, defaulting to a distance of 1.
-func NewPerspective() xirho.F {
+// newPerspective is a factory for Perspective, defaulting to a distance of 1.
+func newPerspective() xirho.F {
 	return &Perspective{Distance: 1}
 }
 
@@ -20,3 +20,7 @@ func (f *Perspective) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 }
 
 func (f *Perspective) Prep() {}
+
+func init() {
+	must("perspective", newPerspective)
+}

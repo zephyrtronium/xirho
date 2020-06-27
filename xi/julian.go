@@ -13,8 +13,8 @@ type JuliaN struct {
 	Dist  xirho.Real `xirho:"dist"`
 }
 
-// NewJuliaN is a factory for JuliaN, defaulting Power to 3 and Dist to 1.
-func NewJuliaN() xirho.F {
+// newJuliaN is a factory for JuliaN, defaulting Power to 3 and Dist to 1.
+func newJuliaN() xirho.F {
 	return &JuliaN{Power: 3, Dist: 1}
 }
 
@@ -33,3 +33,7 @@ func (f *JuliaN) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 }
 
 func (f *JuliaN) Prep() {}
+
+func init() {
+	must("julian", newJuliaN)
+}

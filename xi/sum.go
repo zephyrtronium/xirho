@@ -9,8 +9,8 @@ type Sum struct {
 	Color xirho.Func     `xirho:"color"`
 }
 
-// NewSum is a factory for Sum, defaulting to an empty function list.
-func NewSum() xirho.F {
+// newSum is a factory for Sum, defaulting to an empty function list.
+func newSum() xirho.F {
 	return &Sum{}
 }
 
@@ -36,4 +36,8 @@ func (f *Sum) Prep() {
 	if f.Color.F != nil {
 		f.Color.Prep()
 	}
+}
+
+func init() {
+	must("sum", newSum)
 }
