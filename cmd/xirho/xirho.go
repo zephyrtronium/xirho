@@ -305,47 +305,88 @@ func affspd(ax xirho.Ax, color, speed float64) xirho.F {
 
 // ---- grand julian params ----
 
+// func params() xirho.System {
+// 	return xirho.System{
+// 		Funcs:   []xirho.F{first(), second(), third(), fourth()},
+// 		Final:   final(),
+// 		Weights: []float64{1, 12, 2, 2},
+// 		Graph:   defaultGraph(4),
+// 	}
+// }
+
+// func first() xirho.F {
+// 	ax := xirho.Ax{}
+// 	ax.Eye().Scale(10, 10, 10)
+// 	ay := xirho.Ax{}
+// 	ay.Eye().Scale(0.185, 0.185, 0.185)
+// 	return then(xi.Blur{}, &xi.Affine{Ax: ax}, xi.Bubble{}, &xi.Affine{Ax: ay}, &xi.ColorSpeed{Color: 0.5, Speed: 0.5})
+// }
+
+// func second() xirho.F {
+// 	ax := xirho.Ax{}
+// 	ax.Eye().RotZ(math.Pi/4).Scale(1, 1, 0).Translate(0, 0.3, 0)
+// 	return then(affspd(ax, 0, 0.75), &xi.JuliaN{Power: 2, Dist: -1})
+// }
+
+// func third() xirho.F {
+// 	ax := xirho.Ax{}
+// 	ax.Eye().RotZ(math.Pi / 4)
+// 	ay := xirho.Ax{}
+// 	ay.Eye().Scale(0.2, 0.2, 0)
+// 	return then(&xi.Affine{Ax: ax}, &xi.JuliaN{Power: 15, Dist: -1}, affspd(ay, 1, 0.8))
+// }
+
+// func fourth() xirho.F {
+// 	ax := xirho.Ax{}
+// 	ax.Eye().RotZ(math.Pi / 4)
+// 	ay := xirho.Ax{}
+// 	ay.Eye().Scale(0.3, 0.3, 0)
+// 	return then(&xi.Affine{Ax: ax}, &xi.JuliaN{Power: 8, Dist: -1}, affspd(ay, 1, 0.8))
+// }
+
+// func final() xirho.F {
+// 	ax := xirho.Ax{}
+// 	ax.Eye().Translate(0.4, 0, 0)
+// 	return then(&xi.Affine{Ax: ax}, xi.Spherical{})
+// }
+
+// ---- Sierpinski gasket params ----
+
 func params() xirho.System {
 	return xirho.System{
 		Funcs:   []xirho.F{first(), second(), third(), fourth()},
 		Final:   final(),
-		Weights: []float64{1, 12, 2, 2},
+		Weights: []float64{1, 1, 1, 1},
 		Graph:   defaultGraph(4),
 	}
 }
 
 func first() xirho.F {
 	ax := xirho.Ax{}
-	ax.Eye().Scale(10, 10, 10)
-	ay := xirho.Ax{}
-	ay.Eye().Scale(0.185, 0.185, 0.185)
-	return then(xi.Blur{}, &xi.Affine{Ax: ax}, xi.Bubble{}, &xi.Affine{Ax: ay}, &xi.ColorSpeed{Color: 0.5, Speed: 0.5})
+	ax.Eye().Scale(0.5, 0.5, 0.5)
+	return affspd(ax, 1, 0.25)
 }
 
 func second() xirho.F {
 	ax := xirho.Ax{}
-	ax.Eye().RotZ(math.Pi/4).Scale(1, 1, 0).Translate(0, 0.3, 0)
-	return then(affspd(ax, 0, 0.75), &xi.JuliaN{Power: 2, Dist: -1})
+	ax.Eye().Scale(0.5, 0.5, 0.5).Translate(1, 0, 0)
+	return affspd(ax, 0.25, 0.25)
 }
 
 func third() xirho.F {
 	ax := xirho.Ax{}
-	ax.Eye().RotZ(math.Pi / 4)
-	ay := xirho.Ax{}
-	ay.Eye().Scale(0.2, 0.2, 0)
-	return then(&xi.Affine{Ax: ax}, &xi.JuliaN{Power: 15, Dist: -1}, affspd(ay, 1, 0.8))
+	ax.Eye().Scale(0.5, 0.5, 0.5).Translate(0, 1, 0)
+	return affspd(ax, 0.5, 0.75)
 }
 
 func fourth() xirho.F {
 	ax := xirho.Ax{}
-	ax.Eye().RotZ(math.Pi / 4)
-	ay := xirho.Ax{}
-	ay.Eye().Scale(0.3, 0.3, 0)
-	return then(&xi.Affine{Ax: ax}, &xi.JuliaN{Power: 8, Dist: -1}, affspd(ay, 1, 0.8))
+	ax.Eye().Scale(0.5, 0.5, 0.5).Translate(0, 0, 1)
+	return affspd(ax, 0, 0.125)
 }
 
 func final() xirho.F {
 	ax := xirho.Ax{}
-	ax.Eye().Translate(0.5, 0, 0)
-	return then(&xi.Affine{Ax: ax}, xi.Spherical{})
+	ax.Eye().RotX(-math.Pi/3).RotY(math.Pi/3).RotZ(-math.Pi/6).Translate(0, 0, -0.5)
+	return then(&xi.Affine{Ax: ax}, &xi.Perspective{Distance: 1.5})
 }
