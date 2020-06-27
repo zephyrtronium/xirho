@@ -20,4 +20,8 @@ func (f *Then) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 	return in
 }
 
-func (f *Then) Prep() {}
+func (f *Then) Prep() {
+	for _, v := range f.Funcs {
+		v.Prep()
+	}
+}

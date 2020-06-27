@@ -14,9 +14,10 @@ func NewSpherical() xirho.F {
 }
 
 func (Spherical) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
-	r := in.X*in.X + in.Y*in.Y
+	r := in.X*in.X + in.Y*in.Y + in.Z*in.Z
 	in.X /= r
 	in.Y /= r
+	in.Z /= r
 	return in
 }
 
