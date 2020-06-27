@@ -1,44 +1,43 @@
 package xirho
 
-import "math"
+import (
+	"math"
+
+	"golang.org/x/image/math/f64"
+)
 
 // Ax is an affine transform.
-type Ax struct {
-	// A is the linear (multiplicative) component of the transform.
-	A [3][3]float64
-	// B is the translation (additive) component of the transform.
-	B [3]float64
-}
+type Ax f64.Aff4
 
 // Eye sets the transform to the identity transform and returns it.
 func (ax *Ax) Eye() *Ax {
 	*ax = Ax{
-		A: [3][3]float64{
-			{1, 0, 0},
-			{0, 1, 0},
-			{0, 0, 1},
-		},
+		1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 1, 0,
 	}
 	return ax
 }
 
 // Translate translates the transform and returns it.
 func (ax *Ax) Translate(dx, dy, dz float64) *Ax {
-	ax.B = [3]float64{
-		ax.B[0] + dx,
-		ax.B[1] + dy,
-		ax.B[2] + dz,
-	}
+	(*ax)[3] += dx
+	(*ax)[7] += dy
+	(*ax)[11] += dz
 	return ax
 }
 
 // Scale scales the transform along each axis and returns it.
 func (ax *Ax) Scale(sx, sy, sz float64) *Ax {
-	ax.A = [3][3]float64{
-		{ax.A[0][0] * sx, ax.A[0][1] * sy, ax.A[0][2] * sz},
-		{ax.A[1][0] * sx, ax.A[1][1] * sy, ax.A[1][2] * sz},
-		{ax.A[2][0] * sx, ax.A[2][1] * sy, ax.A[2][2] * sz},
-	}
+	(*ax)[0] *= sx
+	(*ax)[1] *= sy
+	(*ax)[2] *= sz
+	(*ax)[4] *= sx
+	(*ax)[5] *= sy
+	(*ax)[6] *= sz
+	(*ax)[8] *= sx
+	(*ax)[9] *= sy
+	(*ax)[10] *= sz
 	return ax
 }
 
@@ -46,11 +45,9 @@ func (ax *Ax) Scale(sx, sy, sz float64) *Ax {
 // is the rotation in the y/z plane in radians.
 func (ax *Ax) RotX(tx float64) *Ax {
 	sx, cx := math.Sincos(tx)
-	ax.A = [3][3]float64{
-		{ax.A[0][0], ax.A[0][1]*cx - ax.A[0][2]*sx, ax.A[0][1]*sx + ax.A[0][2]*cx},
-		{ax.A[1][0], ax.A[1][1]*cx - ax.A[1][2]*sx, ax.A[1][1]*sx + ax.A[1][2]*cx},
-		{ax.A[2][0], ax.A[2][1]*cx - ax.A[2][2]*sx, ax.A[2][1]*sx + ax.A[2][2]*cx},
-	}
+	(*ax)[1], (*ax)[2] = (*ax)[1]*cx-(*ax)[2]*sx, (*ax)[1]*sx+(*ax)[2]*cx
+	(*ax)[5], (*ax)[6] = (*ax)[5]*cx-(*ax)[6]*sx, (*ax)[5]*sx+(*ax)[6]*cx
+	(*ax)[9], (*ax)[10] = (*ax)[9]*cx-(*ax)[10]*sx, (*ax)[9]*sx+(*ax)[10]*cx
 	return ax
 }
 
@@ -58,11 +55,9 @@ func (ax *Ax) RotX(tx float64) *Ax {
 // is the rotation in the x/z plane in radians.
 func (ax *Ax) RotY(ty float64) *Ax {
 	sy, cy := math.Sincos(ty)
-	ax.A = [3][3]float64{
-		{ax.A[0][0]*cy + ax.A[0][2]*sy, ax.A[0][1], ax.A[0][2]*cy - ax.A[0][0]*sy},
-		{ax.A[1][0]*cy + ax.A[1][2]*sy, ax.A[1][1], ax.A[1][2]*cy - ax.A[1][0]*sy},
-		{ax.A[2][0]*cy + ax.A[2][2]*sy, ax.A[2][1], ax.A[2][2]*cy - ax.A[2][0]*sy},
-	}
+	(*ax)[0], (*ax)[2] = (*ax)[0]*cy+(*ax)[2]*sy, (*ax)[2]*cy-(*ax)[0]*sy
+	(*ax)[4], (*ax)[6] = (*ax)[4]*cy+(*ax)[6]*sy, (*ax)[6]*cy-(*ax)[4]*sy
+	(*ax)[8], (*ax)[10] = (*ax)[8]*cy+(*ax)[10]*sy, (*ax)[10]*cy-(*ax)[8]*sy
 	return ax
 }
 
@@ -70,11 +65,9 @@ func (ax *Ax) RotY(ty float64) *Ax {
 // is the rotation in the x/y plane in radians.
 func (ax *Ax) RotZ(tz float64) *Ax {
 	sz, cz := math.Sincos(tz)
-	ax.A = [3][3]float64{
-		{ax.A[0][0]*cz - ax.A[0][1]*sz, ax.A[0][0]*sz + ax.A[0][1]*cz, ax.A[0][2]},
-		{ax.A[1][0]*cz - ax.A[1][1]*sz, ax.A[1][0]*sz + ax.A[1][1]*cz, ax.A[1][2]},
-		{ax.A[2][0]*cz - ax.A[2][1]*sz, ax.A[2][0]*sz + ax.A[2][1]*cz, ax.A[2][2]},
-	}
+	(*ax)[0], (*ax)[1] = (*ax)[0]*cz-(*ax)[1]*sz, (*ax)[0]*sz+(*ax)[1]*cz
+	(*ax)[4], (*ax)[5] = (*ax)[4]*cz-(*ax)[5]*sz, (*ax)[4]*sz+(*ax)[5]*cz
+	(*ax)[8], (*ax)[9] = (*ax)[8]*cz-(*ax)[9]*sz, (*ax)[8]*sz+(*ax)[9]*cz
 	return ax
 }
 
@@ -82,9 +75,9 @@ func (ax *Ax) RotZ(tz float64) *Ax {
 
 // Tx transforms a coordinate with an affine transform.
 func Tx(ax *Ax, x, y, z float64) (tx, ty, tz float64) {
-	tx = ax.A[0][0]*x + ax.A[0][1]*y + ax.A[0][2]*z + ax.B[0]
-	ty = ax.A[1][0]*x + ax.A[1][1]*y + ax.A[1][2]*z + ax.B[1]
-	tz = ax.A[2][0]*x + ax.A[2][1]*y + ax.A[2][2]*z + ax.B[2]
+	tx = (*ax)[0]*x + (*ax)[1]*y + (*ax)[2]*z + (*ax)[3]
+	ty = (*ax)[4]*x + (*ax)[5]*y + (*ax)[6]*z + (*ax)[7]
+	tz = (*ax)[8]*x + (*ax)[9]*y + (*ax)[10]*z + (*ax)[11]
 	return
 }
 
