@@ -6,7 +6,7 @@ import "github.com/zephyrtronium/xirho"
 // additional function controls the color coordinate.
 type Sum struct {
 	Funcs xirho.FuncList `xirho:"funcs"`
-	Color xirho.Func     `xirho:"color"`
+	Color xirho.Func     `xirho:"color,optional"`
 }
 
 // newSum is a factory for Sum, defaulting to an empty function list.

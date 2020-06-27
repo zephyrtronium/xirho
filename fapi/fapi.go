@@ -96,7 +96,8 @@ func getParam(f reflect.StructField, v reflect.Value) Param {
 	case rAffine:
 		return affineFor(name, val.(*xirho.Affine))
 	case rFunc:
-		return funcFor(name, val.(*xirho.Func))
+		opt := len(tag) == 2 && tag[1] == "optional"
+		return funcFor(name, opt, val.(*xirho.Func))
 	case rFuncList:
 		return funcListFor(name, val.(*xirho.FuncList))
 	default:

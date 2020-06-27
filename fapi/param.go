@@ -178,16 +178,22 @@ func affineFor(name string, v *xirho.Affine) Param {
 	}
 }
 
-// Func is a function parameter that is itself a function.
+// Func is a function parameter that is itself a function. After the parameter
+// name, a Func field may include an additional comma-separated tag containing
+// the string "optional". Func fields marked optional may be set to nil.
 type Func struct {
 	V *xirho.Func
+	// Optional indicates whether the parameter is allowed to be nil.
+	Optional bool
+
 	paramName
 }
 
 // funcFor creates a Func function parameter.
-func funcFor(name string, v *xirho.Func) Param {
+func funcFor(name string, opt bool, v *xirho.Func) Param {
 	return Func{
 		V:         v,
+		Optional:  opt,
 		paramName: paramName(name),
 	}
 }
