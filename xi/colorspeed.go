@@ -2,26 +2,26 @@ package xi
 
 import "github.com/zephyrtronium/xirho"
 
+// ColorSpeed performs exponential smoothing on the input color coordinate
+// toward a chosen color.
 type ColorSpeed struct {
-	color, speed float64
-
-	p []xirho.Param
+	// Color is the color coordinate toward which inputs move.
+	Color xirho.Real `xirho:"color,0,1"`
+	// Speed is the smoothing rate. A value of 0 means the output color always
+	// equals Color; a value of 1 means the output color always equals the
+	// input color.
+	Speed xirho.Real `xirho:"speed,0,1"`
 }
 
-func NewColorSpeed(color, speed float64) xirho.F {
-	c := &ColorSpeed{color: color, speed: speed}
-	c.p = []xirho.Param{
-		xirho.RealParam(&c.color, "color", true, 0, 1),
-		xirho.RealParam(&c.speed, "speed", true, 0, 1),
-	}
-	return c
+// NewColorSpeed is a factory for ColorSpeed, defaulting Color to 0 and Speed
+// to 1.
+func NewColorSpeed() xirho.F {
+	return &ColorSpeed{Speed: 1}
 }
 
 func (f *ColorSpeed) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
-	in.C = in.C*f.speed + (1-f.speed)*f.color
+	in.C = in.C*float64(f.Speed) + float64((1-f.Speed)*f.Color)
 	return in
 }
 
-func (f *ColorSpeed) Params() []xirho.Param {
-	return f.p
-}
+func (f *ColorSpeed) Prep() {}

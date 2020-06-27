@@ -5,34 +5,24 @@ import "github.com/zephyrtronium/xirho"
 // Sum performs a list of functions, summing the spatial coordinates and
 // averaging the color coordinate.
 type Sum struct {
-	funcs []xirho.F
-
-	p []xirho.Param
+	Funcs xirho.FuncList `xirho:"funcs"`
 }
 
-// NewSum creates a Sum function.
-func NewSum(funcs ...xirho.F) xirho.F {
-	f := &Sum{
-		funcs: append([]xirho.F{}, funcs...), // copy
-	}
-	f.p = []xirho.Param{
-		xirho.FuncListParam(&f.funcs, "funcs"),
-	}
-	return f
+// NewSum is a factory for Sum, defaulting to an empty function list.
+func NewSum() xirho.F {
+	return &Sum{}
 }
 
 func (f *Sum) Calc(in xirho.P, rng *xirho.RNG) (out xirho.P) {
-	for _, v := range f.funcs {
+	for _, v := range f.Funcs {
 		p := v.Calc(in, rng)
 		out.X += p.X
 		out.Y += p.Y
 		out.Z += p.Z
 		out.C += p.C
 	}
-	out.C /= float64(len(f.funcs))
+	out.C /= float64(len(f.Funcs))
 	return out
 }
 
-func (f *Sum) Params() []xirho.Param {
-	return f.p
-}
+func (f *Sum) Prep() {}

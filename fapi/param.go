@@ -1,10 +1,11 @@
-package xirho
+package fapi
 
-// Param is a function parameter which may vary per function instance. The only
-// implementations of Param are Flag, List, Int, Angle, Real, Complex, Vec3,
-// Affine, Func, and FuncList.
+import "github.com/zephyrtronium/xirho"
+
+// Param is a user-controlled function parameter. Each implementing type wraps
+// a corresponding xirho.Param type.
 type Param interface {
-	// Name returns the name of the parameter.
+	// Name returns the parameter name.
 	Name() string
 
 	// isParam ensures that no external types may implement Param.
@@ -21,43 +22,55 @@ func (p paramName) Name() string {
 
 // Flag is a boolean function parameter.
 type Flag struct {
-	// V is a reference to the parameter value.
-	V *bool
+	V *xirho.Flag
 	paramName
 }
 
-// FlagParam creates a Flag function parameter.
-func FlagParam(v *bool, name string) Param {
+// flagFor creates a Flag function parameter.
+func flagFor(name string, v *xirho.Flag) Param {
 	return Flag{
 		V:         v,
 		paramName: paramName(name),
 	}
 }
 
-// List is a function parameter to choose among a list of strings.
+// List is a function parameter to choose among a list of strings. After the
+// parameter name, a List field may include any number of additional
+// comma-separated tags to define the display names of each option. For
+// example, to define a parameter allowing the user to choose between "fast",
+// "accurate", or "balanced", do:
+//
+//		type Example struct {
+//			Method xirho.List `xirho:"method,fast,accurate,balanced"`
+//		}
 type List struct {
-	// V is a reference to the selected index.
-	V *int
-	// Opts is the list of options for display. It should never be modified.
-	Opts []string
+	V *xirho.List
+	// opts is the list of options for display.
+	opts []string
 
 	paramName
 }
 
-// ListParam creates a List function parameter.
-func ListParam(idx *int, name string, opts ...string) Param {
+// listFor creates a List function parameter.
+func listFor(name string, idx *xirho.List, opts ...string) Param {
 	opts = append([]string{}, opts...) // copy
 	return List{
 		V:         idx,
 		paramName: paramName(name),
-		Opts:      opts,
+		opts:      opts,
 	}
 }
 
-// Int is an integer function parameter, possibly bounded.
+// Int is an integer function parameter. After the parameter name, an Int field
+// may include two additional comma-separated tags to define the lowest and
+// highest permitted values. For example, to define a parameter allowing the
+// user to choose any integer in [-3, 12], do:
+//
+//		type Example struct {
+//			P xirho.Int `xirho:"p,-3,12"`
+//		}
 type Int struct {
-	// V is a reference to the parameter value.
-	V *int64
+	V *xirho.Int
 	// Bounded indicates whether external interfaces should respect Lo and Hi.
 	Bounded bool
 	// Lo and Hi indicate the minimum and maximum values, inclusive, that an
@@ -67,8 +80,8 @@ type Int struct {
 	paramName
 }
 
-// IntParam creates an Int function parameter.
-func IntParam(v *int64, name string, bounded bool, lo, hi int64) Param {
+// intFor creates an Int function parameter.
+func intFor(name string, v *xirho.Int, bounded bool, lo, hi int64) Param {
 	return Int{
 		V:         v,
 		paramName: paramName(name),
@@ -81,23 +94,28 @@ func IntParam(v *int64, name string, bounded bool, lo, hi int64) Param {
 // Angle is an angle function parameter. External interfaces wrap its value
 // into the interval (-pi, pi].
 type Angle struct {
-	// V is a reference to the parameter value.
-	V *float64
+	V *xirho.Angle
 	paramName
 }
 
-// AngleParam creates an Angle function parameter.
-func AngleParam(v *float64, name string) Param {
+// angleFor creates an Angle function parameter.
+func angleFor(name string, v *xirho.Angle) Param {
 	return Angle{
 		V:         v,
 		paramName: paramName(name),
 	}
 }
 
-// Real is a floating-point function parameter, possibly bounded.
+// Real is a floating-point function parameter. After the parameter name, a
+// Real field may include two additional comma-separated tags to define the
+// lowest and highest permitted values. For example, to define a parameter
+// allowing the user to choose any real in [-2π, 2π], do:
+//
+//		type Example struct {
+//			P xirho.Real `xirho:"p,-6.283185307179586,6.283185307179586"`
+//		}
 type Real struct {
-	// V is a reference to the parameter value.
-	V *float64
+	V *xirho.Real
 	// Bounded indicates whether external interfaces should respect Lo and Hi.
 	Bounded bool
 	// Lo and Hi indicate the minimum and maximum values, inclusive, that an
@@ -107,8 +125,8 @@ type Real struct {
 	paramName
 }
 
-// RealParam creates a Real function parameter.
-func RealParam(v *float64, name string, bounded bool, lo, hi float64) Param {
+// realFor creates a Real function parameter.
+func realFor(name string, v *xirho.Real, bounded bool, lo, hi float64) Param {
 	return Real{
 		V:         v,
 		paramName: paramName(name),
@@ -120,13 +138,12 @@ func RealParam(v *float64, name string, bounded bool, lo, hi float64) Param {
 
 // Complex is an unconstrained function parameter in R^2.
 type Complex struct {
-	// V is a reference to the parameter value.
-	V *complex128
+	V *xirho.Complex
 	paramName
 }
 
-// ComplexParam creates a Complex function parameter.
-func ComplexParam(v *complex128, name string) Param {
+// complexFor creates a Complex function parameter.
+func complexFor(name string, v *xirho.Complex) Param {
 	return Complex{
 		V:         v,
 		paramName: paramName(name),
@@ -135,13 +152,12 @@ func ComplexParam(v *complex128, name string) Param {
 
 // Vec3 is an unconstrained function parameter in R^3.
 type Vec3 struct {
-	// V is a reference to the parameter value.
-	V *[3]float64
+	V *xirho.Vec3
 	paramName
 }
 
-// Vec3Param creates a Vec3 function parameter.
-func Vec3Param(v *[3]float64, name string) Param {
+// vec3For creates a Vec3 function parameter.
+func vec3For(name string, v *xirho.Vec3) Param {
 	return Vec3{
 		V:         v,
 		paramName: paramName(name),
@@ -150,12 +166,12 @@ func Vec3Param(v *[3]float64, name string) Param {
 
 // Affine is an affine transform function parameter.
 type Affine struct {
-	V *Ax
+	V *xirho.Affine
 	paramName
 }
 
-// AffineParam creates an Affine function parameter.
-func AffineParam(v *Ax, name string) Param {
+// affineFor creates an Affine function parameter.
+func affineFor(name string, v *xirho.Affine) Param {
 	return Affine{
 		V:         v,
 		paramName: paramName(name),
@@ -164,12 +180,12 @@ func AffineParam(v *Ax, name string) Param {
 
 // Func is a function parameter that is itself a function.
 type Func struct {
-	V *F
+	V *xirho.Func
 	paramName
 }
 
-// FuncParam creates a Func function parameter.
-func FuncParam(v *F, name string) Param {
+// funcFor creates a Func function parameter.
+func funcFor(name string, v *xirho.Func) Param {
 	return Func{
 		V:         v,
 		paramName: paramName(name),
@@ -178,12 +194,12 @@ func FuncParam(v *F, name string) Param {
 
 // FuncList is a function parameter holding a list of functions.
 type FuncList struct {
-	V *[]F
+	V *xirho.FuncList
 	paramName
 }
 
-// FuncListParam creates a FuncList function parameter.
-func FuncListParam(v *[]F, name string) Param {
+// funcListFor creates a FuncList function parameter.
+func funcListFor(name string, v *xirho.FuncList) Param {
 	return FuncList{
 		V:         v,
 		paramName: paramName(name),

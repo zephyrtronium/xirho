@@ -7,8 +7,10 @@ import (
 	"github.com/zephyrtronium/xirho"
 )
 
+// Blur produces a noisy solid circle with unit radius.
 type Blur struct{}
 
+// NewBlur is a factory for Blur.
 func NewBlur() xirho.F {
 	return Blur{}
 }
@@ -22,6 +24,4 @@ func (Blur) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 	return in
 }
 
-func (Blur) Params() []xirho.Param {
-	return nil
-}
+func (Blur) Prep() {}

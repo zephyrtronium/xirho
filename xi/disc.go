@@ -6,9 +6,10 @@ import (
 	"github.com/zephyrtronium/xirho"
 )
 
-// Disc does disc
+// Disc does disc.
 type Disc struct{}
 
+// NewDisc is a factory for Disc.
 func NewDisc() xirho.F {
 	return Disc{}
 }
@@ -21,6 +22,4 @@ func (Disc) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 	return in
 }
 
-func (Disc) Params() []xirho.Param {
-	return nil
-}
+func (Disc) Prep() {}

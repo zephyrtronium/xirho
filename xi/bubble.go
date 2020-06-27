@@ -2,8 +2,10 @@ package xi
 
 import "github.com/zephyrtronium/xirho"
 
+// Bubble maps the plane to a sphere.
 type Bubble struct{}
 
+// NewBubble is a factory for Bubble.
 func NewBubble() xirho.F {
 	return Bubble{}
 }
@@ -16,6 +18,4 @@ func (Bubble) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 	return in
 }
 
-func (Bubble) Params() []xirho.Param {
-	return nil
-}
+func (Bubble) Prep() {}

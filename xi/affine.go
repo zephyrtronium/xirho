@@ -2,37 +2,26 @@ package xi
 
 import "github.com/zephyrtronium/xirho"
 
+// Affine performs an affine transform.
 type Affine struct {
-	ax    xirho.Ax
-	c, sp float64
-
-	p []xirho.Param
+	Ax xirho.Affine `xirho:"transform"`
 }
 
-func NewAffine(ax xirho.Ax, color, speed float64) xirho.F {
-	tx := &Affine{
-		ax: ax,
-		c:  color,
-		sp: speed,
-	}
-	tx.p = []xirho.Param{
-		xirho.AffineParam(&tx.ax, "transform"),
-		xirho.RealParam(&tx.c, "color", true, 0, 1),
-		xirho.RealParam(&tx.sp, "color weight", true, 0, 1),
-	}
+// NewAffine is a factory for Affine, defaulting to an identity transform.
+func NewAffine() xirho.F {
+	tx := &Affine{}
+	tx.Ax.Eye()
 	return tx
 }
 
 func (v *Affine) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
-	x, y, z := xirho.Tx(&v.ax, in.X, in.Y, in.Z)
+	x, y, z := xirho.Tx(&v.Ax, in.X, in.Y, in.Z)
 	return xirho.P{
 		X: x,
 		Y: y,
 		Z: z,
-		C: v.sp*in.C + (1-v.sp)*v.c,
+		C: in.C,
 	}
 }
 
-func (v *Affine) Params() []xirho.Param {
-	return v.p
-}
+func (v *Affine) Prep() {}

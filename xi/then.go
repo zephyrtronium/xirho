@@ -5,29 +5,19 @@ import "github.com/zephyrtronium/xirho"
 // Then performs a list of functions performed in a set order, without plotting
 // intermediate results.
 type Then struct {
-	funcs []xirho.F
-
-	p []xirho.Param
+	Funcs xirho.FuncList `xirho:"funcs"`
 }
 
-// NewThen creates a Then function.
-func NewThen(funcs ...xirho.F) xirho.F {
-	f := &Then{
-		funcs: append([]xirho.F{}, funcs...), // copy
-	}
-	f.p = []xirho.Param{
-		xirho.FuncListParam(&f.funcs, "funcs"),
-	}
-	return f
+// NewThen is a factory for Then, defaulting to an empty function list.
+func NewThen() xirho.F {
+	return &Then{}
 }
 
 func (f *Then) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
-	for _, v := range f.funcs {
+	for _, v := range f.Funcs {
 		in = v.Calc(in, rng)
 	}
 	return in
 }
 
-func (f *Then) Params() []xirho.Param {
-	return f.p
-}
+func (f *Then) Prep() {}

@@ -197,131 +197,155 @@ func defaultGraph(n int) [][]float64 {
 	return r
 }
 
-// ---- disc julian params ----
+func then(fs ...xirho.F) xirho.F {
+	return &xi.Then{Funcs: fs}
+}
 
-func params() xirho.System {
-	return xirho.System{
-		Funcs:   []xirho.F{first(), second()},
-		Final:   final(),
-		Weights: []float64{30, 1},
-		Graph:   defaultGraph(2),
+func affspd(ax xirho.Ax, color, speed float64) xirho.F {
+	return &xi.Then{
+		Funcs: xirho.FuncList{
+			&xi.Affine{Ax: ax},
+			&xi.ColorSpeed{Color: xirho.Real(color), Speed: xirho.Real(speed)},
+		},
 	}
 }
 
-func first() xirho.F {
-	ax := xirho.Ax{}
-	ax.Eye().RotZ(-math.Pi/6).Scale(0.9, 0.9, 0)
-	return xi.NewThen(xi.NewAffine(ax, 0, 0.75), xi.NewDisc())
-}
-
-func second() xirho.F {
-	j := xi.NewJuliaN()
-	*j.Params()[0].(xirho.Int).V = 30
-	*j.Params()[1].(xirho.Real).V = -1
-	return xi.NewThen(j, xi.NewColorSpeed(1, 0.3))
-}
-
-func final() xirho.F {
-	ax := xirho.Ax{}
-	ax.Eye().Scale(3, 3, 0)
-	ay := xirho.Ax{}
-	ay.Eye().RotZ(math.Pi/4).Scale(2.5, 2.5, 0)
-	return xi.NewThen(xi.NewAffine(ax, 0, 1), xi.NewPolar(), xi.NewAffine(ay, 0, 1))
-}
-
-// ---- spherical gasket params ----
+// ---- disc julian params ----
 
 // func params() xirho.System {
 // 	return xirho.System{
-// 		Funcs: []xirho.F{first(), second(), third(), fourth()},
-// 		Final: final(),
-// 		Weights: []float64{6, 8, 1, 1},
-// 		Graph: defaultGraph(4),
+// 		Funcs:   []xirho.F{first(), second()},
+// 		Final:   final(),
+// 		Weights: []float64{30, 1},
+// 		Graph:   defaultGraph(2),
 // 	}
 // }
 
 // func first() xirho.F {
 // 	ax := xirho.Ax{}
-// 	ax.Eye().RotZ(-math.Pi/2).Translate(1, 0, 0)
-// 	return xi.NewThen(xi.NewAffine(ax, 0, 0.25), xi.NewSpherical())
+// 	ax.Eye().RotZ(-math.Pi/6).Scale(0.9, 0.9, 0)
+// 	return &xi.Then{
+// 		Funcs: xirho.FuncList{
+// 			&xi.Affine{Ax: ax},
+// 			&xi.ColorSpeed{Color: 0, Speed: 0.75},
+// 			xi.Disc{},
+// 		},
+// 	}
 // }
 
 // func second() xirho.F {
-// 	ax := xirho.Ax{}
-// 	ax.Eye().RotZ(math.Pi / 2)
-// 	return xi.NewThen(xi.NewAffine(ax, 1, 0.75), xi.NewSpherical())
-// }
-
-// func third() xirho.F {
-// 	ax := xirho.Ax{}
-// 	ax.Eye().Translate(3, 0, 0)
-// 	return xi.NewAffine(ax, 0.5, 0.9)
-// }
-
-// func fourth() xirho.F {
-// 	ax := xirho.Ax{}
-// 	ax.Eye().Translate(-3, 0, 0)
-// 	return xi.NewAffine(ax, 0.5, 0.9)
+// 	return &xi.Then{
+// 		Funcs: xirho.FuncList{
+// 			&xi.JuliaN{Power: 30, Dist: -1},
+// 			&xi.ColorSpeed{Color: 1, Speed: 0.3},
+// 		},
+// 	}
 // }
 
 // func final() xirho.F {
 // 	ax := xirho.Ax{}
-// 	ax.Eye().Translate(0.5, 0, 0)
-// 	return xi.NewThen(xi.NewAffine(ax, 0, 1), xi.NewSpherical())
+// 	ax.Eye().Scale(3, 3, 0)
+// 	ay := xirho.Ax{}
+// 	ay.Eye().RotZ(math.Pi/4).Scale(2.5, 2.5, 0)
+// 	return &xi.Then{
+// 		Funcs: xirho.FuncList{
+// 			&xi.Affine{Ax: ax},
+// 			xi.Polar{},
+// 			&xi.Affine{Ax: ay},
+// 		},
+// 	}
 // }
 
-// ---- grand julian params ----
+// ---- spherical gasket params ----
 
 // func params() xirho.System {
 // 	return xirho.System{
 // 		Funcs:   []xirho.F{first(), second(), third(), fourth()},
 // 		Final:   final(),
-// 		Weights: []float64{1, 12, 2, 2},
+// 		Weights: []float64{6, 8, 1, 1},
 // 		Graph:   defaultGraph(4),
 // 	}
 // }
 
 // func first() xirho.F {
 // 	ax := xirho.Ax{}
-// 	ax.Eye().Scale(10, 10, 10)
-// 	ay := xirho.Ax{}
-// 	ay.Eye().Scale(0.185, 0.185, 0.185)
-// 	return xi.NewThen(xi.NewBlur(), xi.NewAffine(ax, 0, 1), xi.NewBubble(), xi.NewAffine(ay, 0.5, 0.5))
+// 	ax.Eye().RotZ(-math.Pi/2).Translate(1, 0, 0)
+// 	return then(
+// 		&xi.Affine{Ax: ax},
+// 		&xi.ColorSpeed{Color: 0, Speed: 0.25},
+// 		xi.Spherical{})
 // }
 
 // func second() xirho.F {
 // 	ax := xirho.Ax{}
-// 	ax.Eye().RotZ(math.Pi/4).Scale(1, 1, 0).Translate(0, 0.3, 0)
-// 	j := xi.NewJuliaN()
-// 	*j.Params()[0].(xirho.Int).V = 2
-// 	*j.Params()[1].(xirho.Real).V = -1
-// 	return xi.NewThen(xi.NewAffine(ax, 0, 0.75), j)
+// 	ax.Eye().RotZ(math.Pi / 2)
+// 	return then(
+// 		&xi.Affine{Ax: ax},
+// 		&xi.ColorSpeed{Color: 1, Speed: 0.75},
+// 		xi.Spherical{})
 // }
 
 // func third() xirho.F {
 // 	ax := xirho.Ax{}
-// 	ax.Eye().RotZ(math.Pi / 4)
-// 	ay := xirho.Ax{}
-// 	ay.Eye().Scale(0.2, 0.2, 0)
-// 	j := xi.NewJuliaN()
-// 	*j.Params()[0].(xirho.Int).V = 15
-// 	*j.Params()[1].(xirho.Real).V = -1
-// 	return xi.NewThen(xi.NewAffine(ax, 0, 0), j, xi.NewAffine(ay, 1, 0.8))
+// 	ax.Eye().Translate(3, 0, 0)
+// 	return affspd(ax, 0.5, 0.9)
 // }
 
 // func fourth() xirho.F {
 // 	ax := xirho.Ax{}
-// 	ax.Eye().RotZ(math.Pi / 4)
-// 	ay := xirho.Ax{}
-// 	ay.Eye().Scale(0.3, 0.3, 0)
-// 	j := xi.NewJuliaN()
-// 	*j.Params()[0].(xirho.Int).V = 8
-// 	*j.Params()[1].(xirho.Real).V = -1
-// 	return xi.NewThen(xi.NewAffine(ax, 0, 0), j, xi.NewAffine(ay, 1, 0.8))
+// 	ax.Eye().Translate(-3, 0, 0)
+// 	return affspd(ax, 0.5, 0.9)
 // }
 
 // func final() xirho.F {
 // 	ax := xirho.Ax{}
 // 	ax.Eye().Translate(0.5, 0, 0)
-// 	return xi.NewThen(xi.NewAffine(ax, 0, 1), xi.NewSpherical())
+// 	return then(&xi.Affine{Ax: ax}, xi.Spherical{})
 // }
+
+// ---- grand julian params ----
+
+func params() xirho.System {
+	return xirho.System{
+		Funcs:   []xirho.F{first(), second(), third(), fourth()},
+		Final:   final(),
+		Weights: []float64{1, 12, 2, 2},
+		Graph:   defaultGraph(4),
+	}
+}
+
+func first() xirho.F {
+	ax := xirho.Ax{}
+	ax.Eye().Scale(10, 10, 10)
+	ay := xirho.Ax{}
+	ay.Eye().Scale(0.185, 0.185, 0.185)
+	return then(xi.Blur{}, &xi.Affine{Ax: ax}, xi.Bubble{}, &xi.Affine{Ax: ay}, &xi.ColorSpeed{Color: 0.5, Speed: 0.5})
+}
+
+func second() xirho.F {
+	ax := xirho.Ax{}
+	ax.Eye().RotZ(math.Pi/4).Scale(1, 1, 0).Translate(0, 0.3, 0)
+	return then(affspd(ax, 0, 0.75), &xi.JuliaN{Power: 2, Dist: -1})
+}
+
+func third() xirho.F {
+	ax := xirho.Ax{}
+	ax.Eye().RotZ(math.Pi / 4)
+	ay := xirho.Ax{}
+	ay.Eye().Scale(0.2, 0.2, 0)
+	return then(&xi.Affine{Ax: ax}, &xi.JuliaN{Power: 15, Dist: -1}, affspd(ay, 1, 0.8))
+}
+
+func fourth() xirho.F {
+	ax := xirho.Ax{}
+	ax.Eye().RotZ(math.Pi / 4)
+	ay := xirho.Ax{}
+	ay.Eye().Scale(0.3, 0.3, 0)
+	return then(&xi.Affine{Ax: ax}, &xi.JuliaN{Power: 8, Dist: -1}, affspd(ay, 1, 0.8))
+}
+
+func final() xirho.F {
+	ax := xirho.Ax{}
+	ax.Eye().Translate(0.5, 0, 0)
+	return then(&xi.Affine{Ax: ax}, xi.Spherical{})
+}

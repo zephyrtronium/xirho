@@ -6,8 +6,10 @@ import (
 	"github.com/zephyrtronium/xirho"
 )
 
+// Polar maps the x/y rectangular coordinates of the input to polar.
 type Polar struct{}
 
+// NewPolar is a factory for Polar.
 func NewPolar() xirho.F {
 	return Polar{}
 }
@@ -20,6 +22,4 @@ func (Polar) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 	return in
 }
 
-func (Polar) Params() []xirho.Param {
-	return nil
-}
+func (Polar) Prep() {}
