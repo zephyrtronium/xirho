@@ -24,6 +24,9 @@ import (
 func For(f xirho.F) []Param {
 	var r []Param
 	val := reflect.ValueOf(f)
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
 	typ := val.Type()
 	if typ.Kind() != reflect.Struct {
 		return nil

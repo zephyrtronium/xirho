@@ -2,12 +2,13 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"image"
 	"image/color"
 	"image/png"
+	"io"
 	"log"
-	"math"
 	"os"
 	"os/signal"
 	"runtime"
@@ -18,11 +19,12 @@ import (
 
 	"github.com/dim13/colormap"
 	"github.com/zephyrtronium/xirho"
+	"github.com/zephyrtronium/xirho/encoding"
 	"github.com/zephyrtronium/xirho/xi"
 )
 
 func main() {
-	var outname, profname string
+	var outname, profname, inname string
 	var sigint bool
 	var timeout time.Duration
 	var iters, hits int64
@@ -31,8 +33,10 @@ func main() {
 	var gamma float64
 	var resample string
 	var procs int
+	var echo bool
 	flag.StringVar(&outname, "png", "", "output filename (default stdout)")
 	flag.StringVar(&profname, "prof", "", "CPU profile output (default no profiling)")
+	flag.StringVar(&inname, "in", "", "input json filename (default stdin)")
 	flag.BoolVar(&sigint, "C", true, "save image on interrupt instead of exiting")
 	flag.DurationVar(&timeout, "dur", 0, "max duration to render (default ignored)")
 	flag.Int64Var(&iters, "iters", 0, "max iters (default ignored)")
@@ -43,10 +47,11 @@ func main() {
 	flag.Float64Var(&gamma, "gamma", 1, "gamma factor")
 	flag.StringVar(&resample, "resample", "catmull-rom", "resampling method (catmull-rom, bilinear, approx-bilinear, or nearest)")
 	flag.IntVar(&procs, "procs", runtime.GOMAXPROCS(0), "concurrent render routines")
+	flag.BoolVar(&echo, "echo", false, "print system encoding before rendering")
 	flag.Parse()
 	resampler := resamplers[resample]
 	if resampler == nil {
-		log.Fatal("no resampler named", resample)
+		log.Fatalln("no resampler named", resample)
 	}
 	if profname != "" {
 		prof, err := os.Create(profname)
@@ -57,15 +62,6 @@ func main() {
 			panic(err)
 		}
 		defer pprof.StopCPUProfile()
-	}
-	out := os.Stdout
-	if outname != "" {
-		var err error
-		out, err = os.Create(outname)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer out.Close()
 	}
 	ctx := context.Background()
 	var cancel context.CancelFunc
@@ -86,18 +82,30 @@ func main() {
 		hits = iters / 5
 	}
 
-	system := params()
-	cam := xirho.Ax{}
-	cam.Eye().Scale(0.6, 0.6, 0)
+	var in io.Reader = os.Stdin
+	if inname != "" {
+		f, err := os.Open(inname)
+		if err != nil {
+			log.Fatalln("error opening input:", err)
+		}
+		in = f
+	}
+	d := json.NewDecoder(in)
+	r, _, err := encoding.Unmarshal(d)
+	if err != nil {
+		log.Fatalln("error unmarshaling system:", err)
+	}
 	log.Println("allocating histogram, estimated", xirho.HistMem(width*osa, height*osa)>>20, "MB")
-	r := xirho.R{
-		Hist:    xirho.NewHist(width*osa, height*osa, gamma),
-		System:  system,
-		Camera:  cam,
-		Palette: mkpalette(),
-		Procs:   procs,
-		N:       iters,
-		Q:       hits,
+	r.Hist = xirho.NewHist(width*osa, height*osa, gamma)
+	r.Procs = procs
+	r.N = iters
+	r.Q = hits
+	if echo {
+		m, err := encoding.Marshal(r)
+		if err != nil {
+			log.Fatalln("error reading system from input:", err)
+		}
+		log.Printf("system:\n%s\n", m)
 	}
 	log.Println("rendering up to", r.N, "iters or", r.Q, "hits or", timeout)
 	r.Render(ctx)
@@ -107,14 +115,21 @@ func main() {
 	draw.Draw(img, img.Bounds(), image.NewUniform(color.NRGBA64{A: 0xffff}), image.Point{}, draw.Src)
 	log.Printf("drawing onto image of size %dx%d", width, height)
 	resampler.Scale(img, img.Bounds(), r.Hist, r.Hist.Bounds(), draw.Over, nil)
+	out := os.Stdout
 	if outname != "" {
 		log.Println("encoding to", outname)
+		var err error
+		out, err = os.Create(outname)
+		if err != nil {
+			log.Fatalln("error creating output file:", err)
+		}
+		defer out.Close()
 	} else {
 		log.Println("encoding to stdout")
 	}
-	err := png.Encode(out, img)
+	err = png.Encode(out, img)
 	if err != nil {
-		panic(err)
+		log.Fatalln("error encoding image:", err)
 	}
 }
 
@@ -208,185 +223,4 @@ func affspd(ax xirho.Ax, color, speed float64) xirho.F {
 			&xi.ColorSpeed{Color: xirho.Real(color), Speed: xirho.Real(speed)},
 		},
 	}
-}
-
-// ---- disc julian params ----
-
-// func params() xirho.System {
-// 	return xirho.System{
-// 		Funcs:   []xirho.F{first(), second()},
-// 		Final:   final(),
-// 		Weights: []float64{30, 1},
-// 		Graph:   defaultGraph(2),
-// 	}
-// }
-
-// func first() xirho.F {
-// 	ax := xirho.Ax{}
-// 	ax.Eye().RotZ(-math.Pi/6).Scale(0.9, 0.9, 0)
-// 	return &xi.Then{
-// 		Funcs: xirho.FuncList{
-// 			&xi.Affine{Ax: ax},
-// 			&xi.ColorSpeed{Color: 0, Speed: 0.75},
-// 			xi.Disc{},
-// 		},
-// 	}
-// }
-
-// func second() xirho.F {
-// 	return &xi.Then{
-// 		Funcs: xirho.FuncList{
-// 			&xi.JuliaN{Power: 30, Dist: -1},
-// 			&xi.ColorSpeed{Color: 1, Speed: 0.3},
-// 		},
-// 	}
-// }
-
-// func final() xirho.F {
-// 	ax := xirho.Ax{}
-// 	ax.Eye().Scale(3, 3, 0)
-// 	ay := xirho.Ax{}
-// 	ay.Eye().RotZ(math.Pi/4).Scale(2.5, 2.5, 0)
-// 	return &xi.Then{
-// 		Funcs: xirho.FuncList{
-// 			&xi.Affine{Ax: ax},
-// 			xi.Polar{},
-// 			&xi.Affine{Ax: ay},
-// 		},
-// 	}
-// }
-
-// ---- spherical gasket params ----
-
-// func params() xirho.System {
-// 	return xirho.System{
-// 		Funcs:   []xirho.F{first(), second(), third(), fourth()},
-// 		Final:   final(),
-// 		Weights: []float64{6, 8, 1, 1},
-// 		Graph:   defaultGraph(4),
-// 	}
-// }
-
-// func first() xirho.F {
-// 	ax := xirho.Ax{}
-// 	ax.Eye().RotZ(-math.Pi/2).Translate(1, 0, 0)
-// 	return then(
-// 		&xi.Affine{Ax: ax},
-// 		&xi.ColorSpeed{Color: 0, Speed: 0.25},
-// 		xi.Spherical{})
-// }
-
-// func second() xirho.F {
-// 	ax := xirho.Ax{}
-// 	ax.Eye().RotZ(math.Pi / 2)
-// 	return then(
-// 		&xi.Affine{Ax: ax},
-// 		&xi.ColorSpeed{Color: 1, Speed: 0.75},
-// 		xi.Spherical{})
-// }
-
-// func third() xirho.F {
-// 	ax := xirho.Ax{}
-// 	ax.Eye().Translate(3, 0, 0)
-// 	return affspd(ax, 0.5, 0.9)
-// }
-
-// func fourth() xirho.F {
-// 	ax := xirho.Ax{}
-// 	ax.Eye().Translate(-3, 0, 0)
-// 	return affspd(ax, 0.5, 0.9)
-// }
-
-// func final() xirho.F {
-// 	ax := xirho.Ax{}
-// 	ax.Eye().Translate(0.5, 0, 0)
-// 	return then(&xi.Affine{Ax: ax}, xi.Spherical{})
-// }
-
-// ---- grand julian params ----
-
-// func params() xirho.System {
-// 	return xirho.System{
-// 		Funcs:   []xirho.F{first(), second(), third(), fourth()},
-// 		Final:   final(),
-// 		Weights: []float64{1, 12, 2, 2},
-// 		Graph:   defaultGraph(4),
-// 	}
-// }
-
-// func first() xirho.F {
-// 	ax := xirho.Ax{}
-// 	ax.Eye().Scale(10, 10, 10)
-// 	ay := xirho.Ax{}
-// 	ay.Eye().Scale(0.185, 0.185, 0.185)
-// 	return then(xi.Blur{}, &xi.Affine{Ax: ax}, xi.Bubble{}, &xi.Affine{Ax: ay}, &xi.ColorSpeed{Color: 0.5, Speed: 0.5})
-// }
-
-// func second() xirho.F {
-// 	ax := xirho.Ax{}
-// 	ax.Eye().RotZ(math.Pi/4).Scale(1, 1, 0).Translate(0, 0.3, 0)
-// 	return then(affspd(ax, 0, 0.75), &xi.JuliaN{Power: 2, Dist: -1})
-// }
-
-// func third() xirho.F {
-// 	ax := xirho.Ax{}
-// 	ax.Eye().RotZ(math.Pi / 4)
-// 	ay := xirho.Ax{}
-// 	ay.Eye().Scale(0.2, 0.2, 0)
-// 	return then(&xi.Affine{Ax: ax}, &xi.JuliaN{Power: 15, Dist: -1}, affspd(ay, 1, 0.8))
-// }
-
-// func fourth() xirho.F {
-// 	ax := xirho.Ax{}
-// 	ax.Eye().RotZ(math.Pi / 4)
-// 	ay := xirho.Ax{}
-// 	ay.Eye().Scale(0.3, 0.3, 0)
-// 	return then(&xi.Affine{Ax: ax}, &xi.JuliaN{Power: 8, Dist: -1}, affspd(ay, 1, 0.8))
-// }
-
-// func final() xirho.F {
-// 	ax := xirho.Ax{}
-// 	ax.Eye().Translate(0.4, 0, 0)
-// 	return then(&xi.Affine{Ax: ax}, xi.Spherical{})
-// }
-
-// ---- Sierpinski gasket params ----
-
-func params() xirho.System {
-	return xirho.System{
-		Funcs:   []xirho.F{first(), second(), third(), fourth()},
-		Final:   final(),
-		Weights: []float64{1, 1, 1, 1},
-		Graph:   defaultGraph(4),
-	}
-}
-
-func first() xirho.F {
-	ax := xirho.Ax{}
-	ax.Eye().Scale(0.5, 0.5, 0.5)
-	return affspd(ax, 1, 0.25)
-}
-
-func second() xirho.F {
-	ax := xirho.Ax{}
-	ax.Eye().Scale(0.5, 0.5, 0.5).Translate(1, 0, 0)
-	return affspd(ax, 0.25, 0.25)
-}
-
-func third() xirho.F {
-	ax := xirho.Ax{}
-	ax.Eye().Scale(0.5, 0.5, 0.5).Translate(0, 1, 0)
-	return affspd(ax, 0.5, 0.75)
-}
-
-func fourth() xirho.F {
-	ax := xirho.Ax{}
-	ax.Eye().Scale(0.5, 0.5, 0.5).Translate(0, 0, 1)
-	return affspd(ax, 0, 0.125)
-}
-
-func final() xirho.F {
-	ax := xirho.Ax{}
-	ax.Eye().RotX(-math.Pi/3).RotY(math.Pi/3).RotZ(-math.Pi/6).Translate(0, 0, -0.5)
-	return then(&xi.Affine{Ax: ax}, &xi.Perspective{Distance: 1.5})
 }
