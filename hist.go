@@ -70,6 +70,11 @@ func (h *Hist) index(x, y int) int {
 	return y*h.cols + x
 }
 
+// clscale is log10(0xffff). Histogram counts are in [0, 0xffff], but the flame
+// algorithm is based on colors in [0, 1]. Rescaling final results to that
+// range noticeably improves the brightness and coloration of images.
+const clscale = 4.8164733037652496
+
 // prep computes information needed to convert bins to colors.
 func (h *Hist) prep() {
 	// Find the maximum and compute lb.
@@ -79,7 +84,7 @@ func (h *Hist) prep() {
 			m = n
 		}
 	}
-	h.lb = math.Log(float64(m))
+	h.lb = math.Log10(float64(m)) - clscale
 	atomic.StoreInt32(&h.stat, 1)
 }
 
@@ -122,9 +127,9 @@ func (h *Hist) At(x, y int) color.Color {
 
 // cscale scales a bin count to a color component.
 func cscale(n uint64, lb float64) uint16 {
-	a := math.Log(float64(n)) / lb // logarithmic tone mapping
-	a *= 65536                     // scale to uint16
-	if a < 0 {                     // clip to uint16
+	a := (math.Log10(float64(n)) - clscale) / lb // logarithmic tone mapping
+	a *= 65536                                   // scale to uint16
+	if a < 0 {                                   // clip to uint16
 		a = 0
 	} else if a > 65535 {
 		a = 65535
@@ -134,10 +139,10 @@ func cscale(n uint64, lb float64) uint16 {
 
 // cscaleg scales a bin count to a color component with gamma.
 func cscaleg(n uint64, lb, exp float64) uint16 {
-	a := math.Log(float64(n)) / lb // logarithmic tone mapping
-	a = math.Pow(a, exp)           // gamma
-	a *= 65536                     // scale to uint16
-	if a < 0 {                     // clip to uint16
+	a := (math.Log10(float64(n)) - clscale) / lb // logarithmic tone mapping
+	a = math.Pow(a, exp)                         // gamma
+	a *= 65536                                   // scale to uint16
+	if a < 0 {                                   // clip to uint16
 		a = 0
 	} else if a > 65535 {
 		a = 65535
