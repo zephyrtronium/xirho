@@ -124,9 +124,9 @@ func Unmarshal(d *json.Decoder) (render *xirho.R, aspect float64, err error) {
 	for i := range render.Palette {
 		render.Palette[i] = color.NRGBA64{
 			A: binary.BigEndian.Uint16(palette[2*i:]),
-			R: binary.BigEndian.Uint16(palette[2*i+len(render.Palette):]),
-			G: binary.BigEndian.Uint16(palette[2*i+2*len(render.Palette):]),
-			B: binary.BigEndian.Uint16(palette[2*i+3*len(render.Palette):]),
+			R: binary.BigEndian.Uint16(palette[2*(i+len(render.Palette)):]),
+			G: binary.BigEndian.Uint16(palette[2*(i+2*len(render.Palette)):]),
+			B: binary.BigEndian.Uint16(palette[2*(i+3*len(render.Palette)):]),
 		}
 	}
 	return
