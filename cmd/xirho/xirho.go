@@ -17,10 +17,8 @@ import (
 
 	"golang.org/x/image/draw"
 
-	"github.com/dim13/colormap"
 	"github.com/zephyrtronium/xirho"
 	"github.com/zephyrtronium/xirho/encoding"
-	"github.com/zephyrtronium/xirho/xi"
 )
 
 func main() {
@@ -138,89 +136,4 @@ var resamplers = map[string]draw.Scaler{
 	"bilinear":        draw.BiLinear,
 	"approx-bilinear": draw.ApproxBiLinear,
 	"nearest":         draw.NearestNeighbor,
-}
-
-func mkpalette() []color.NRGBA64 {
-	// ---- matplotlib colormaps ----
-	// cmap := colormap.Viridis
-	// cmap := colormap.Inferno
-	// cmap := colormap.Magma
-	// cmap := colormap.Plasma
-	// v := make([]color.NRGBA64, len(cmap))
-	// for i, c := range cmap {
-	// 	r, g, b, a := c.RGBA()
-	// 	v[i] = color.NRGBA64{R: uint16(r), G: uint16(g), B: uint16(b), A: uint16(a)}
-	// }
-	// return v
-	// ---- rgb hexagon ----
-	return []color.NRGBA64{
-		{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
-		{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
-		{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
-		{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
-		{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
-		{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
-		{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
-		{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
-		{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
-		{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
-		{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
-		{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
-		{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
-		{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
-		{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
-		{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
-		{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
-		{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
-		{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
-		{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
-		{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
-		{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
-		{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
-		{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
-		{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
-		{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
-		{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
-		{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
-		{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
-		{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
-		{R: 0xffff, G: 0x0000, B: 0x0000, A: 0xffff},
-		{R: 0xffff, G: 0xffff, B: 0x0000, A: 0xffff},
-		{R: 0x0000, G: 0xffff, B: 0x0000, A: 0xffff},
-		{R: 0x0000, G: 0xffff, B: 0xffff, A: 0xffff},
-		{R: 0x0000, G: 0x0000, B: 0xffff, A: 0xffff},
-		{R: 0xffff, G: 0x0000, B: 0xffff, A: 0xffff},
-	}
-	// ---- grayscale ----
-	// r := make([]color.NRGBA64, 256)
-	// for i := range r {
-	// 	r[i] = color.NRGBA64{R: uint16(i * i), G: uint16(i * i), B: uint16(i * i), A: 0xffff}
-	// }
-	// return r
-}
-
-var _ = colormap.Inferno
-
-func defaultGraph(n int) [][]float64 {
-	r := make([][]float64, n)
-	for i := range r {
-		r[i] = make([]float64, n)
-		for j := range r[i] {
-			r[i][j] = 1
-		}
-	}
-	return r
-}
-
-func then(fs ...xirho.F) xirho.F {
-	return &xi.Then{Funcs: fs}
-}
-
-func affspd(ax xirho.Ax, color, speed float64) xirho.F {
-	return &xi.Then{
-		Funcs: xirho.FuncList{
-			&xi.Affine{Ax: ax},
-			&xi.ColorSpeed{Color: xirho.Real(color), Speed: xirho.Real(speed)},
-		},
-	}
 }
