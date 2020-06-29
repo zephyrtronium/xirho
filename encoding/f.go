@@ -32,27 +32,32 @@ func newFuncm(f xirho.F) (*funcm, error) {
 	for _, parm := range api {
 		switch p := parm.(type) {
 		case fapi.Flag:
-			r.Params[p.Name()] = *p.V
+			r.Params[p.Name()] = p.Get()
 		case fapi.List:
-			r.Params[p.Name()] = *p.V
+			r.Params[p.Name()] = p.Get()
 		case fapi.Int:
-			r.Params[p.Name()] = *p.V
+			r.Params[p.Name()] = p.Get()
 		case fapi.Angle:
-			r.Params[p.Name()] = *p.V
+			r.Params[p.Name()] = p.Get()
 		case fapi.Real:
-			r.Params[p.Name()] = *p.V
+			r.Params[p.Name()] = p.Get()
 		case fapi.Complex:
-			v := *p.V
+			v := p.Get()
 			r.Params[p.Name()] = [2]float64{real(v), imag(v)}
 		case fapi.Vec3:
-			r.Params[p.Name()] = *p.V
+			r.Params[p.Name()] = p.Get()
 		case fapi.Affine:
-			r.Params[p.Name()] = *p.V
+			r.Params[p.Name()] = p.Get()
 		case fapi.Func:
-			r.Params[p.Name()] = *p.V
+			v, err := newFuncm(p.Get())
+			if err != nil {
+				return nil, err
+			}
+			r.Params[p.Name()] = v
 		case fapi.FuncList:
-			v := make([]*funcm, len(*p.V))
-			for i, x := range *p.V {
+			pv := p.Get()
+			v := make([]*funcm, len(pv))
+			for i, x := range pv {
 				nf, err := newFuncm(x)
 				if err != nil {
 					return nil, err
@@ -89,31 +94,41 @@ func unf(f *funcm) (v xirho.F, err error) {
 			if !ok {
 				return nil, fmt.Errorf("expected bool for %s but got %#v", parm.Name(), x)
 			}
-			*p.V = xirho.Flag(t)
+			if err := p.Set(xirho.Flag(t)); err != nil {
+				return nil, err
+			}
 		case fapi.List:
 			t, err := getint(p.Name(), x)
 			if err != nil {
 				return nil, err
 			}
-			*p.V = xirho.List(t)
+			if err := p.Set(xirho.List(t)); err != nil {
+				return nil, err
+			}
 		case fapi.Int:
 			t, err := getint(p.Name(), x)
 			if err != nil {
 				return nil, err
 			}
-			*p.V = xirho.Int(t)
+			if err := p.Set(xirho.Int(t)); err != nil {
+				return nil, err
+			}
 		case fapi.Angle:
 			t, err := getfloat(p.Name(), x)
 			if err != nil {
 				return nil, err
 			}
-			*p.V = xirho.Angle(t)
+			if err := p.Set(xirho.Angle(t)); err != nil {
+				return nil, err
+			}
 		case fapi.Real:
 			t, err := getfloat(p.Name(), x)
 			if err != nil {
 				return nil, err
 			}
-			*p.V = xirho.Real(t)
+			if err := p.Set(xirho.Real(t)); err != nil {
+				return nil, err
+			}
 		case fapi.Complex:
 			t, err := getfloatlist(p.Name(), x)
 			if err != nil {
@@ -122,7 +137,9 @@ func unf(f *funcm) (v xirho.F, err error) {
 			if len(t) != 2 {
 				return nil, fmt.Errorf("expected complex for %s but got %#v", p.Name(), x)
 			}
-			*p.V = xirho.Complex(complex(t[0], t[1]))
+			if err := p.Set(xirho.Complex(complex(t[0], t[1]))); err != nil {
+				return nil, err
+			}
 		case fapi.Vec3:
 			t, err := getfloatlist(p.Name(), x)
 			if err != nil {
@@ -131,7 +148,9 @@ func unf(f *funcm) (v xirho.F, err error) {
 			if len(t) != 3 {
 				return nil, fmt.Errorf("expected vec3 for %s but got %#v", p.Name(), x)
 			}
-			*p.V = xirho.Vec3{t[0], t[1], t[2]}
+			if err := p.Set(xirho.Vec3{t[0], t[1], t[2]}); err != nil {
+				return nil, err
+			}
 		case fapi.Affine:
 			t, err := getfloatlist(p.Name(), x)
 			if err != nil {
@@ -141,11 +160,16 @@ func unf(f *funcm) (v xirho.F, err error) {
 			if copy(b[:], t) != len(b) {
 				return nil, fmt.Errorf("expected affine for %s but got %#v", p.Name(), x)
 			}
-			*p.V = b
+			if err := p.Set(b); err != nil {
+				return nil, err
+			}
 		case fapi.Func:
 			if x == nil {
-				// Funcs are allowed to be nil (from time to time).
-				// TODO: still use the setter once they exist
+				// Optional funcs are allowed to be nil. The setter will tell
+				// us if it isn't optional.
+				if err := p.Set(nil); err != nil {
+					return nil, err
+				}
 				break
 			}
 			t, err := getfunc(p.Name(), x)
@@ -156,7 +180,9 @@ func unf(f *funcm) (v xirho.F, err error) {
 			if err != nil {
 				return nil, err
 			}
-			*p.V = xirho.Func{F: nf}
+			if err := p.Set(nf); err != nil {
+				return nil, err
+			}
 		case fapi.FuncList:
 			fl, ok := x.([]interface{})
 			if !ok {
@@ -173,7 +199,9 @@ func unf(f *funcm) (v xirho.F, err error) {
 					return nil, err
 				}
 			}
-			*p.V = r
+			if err := p.Set(r); err != nil {
+				return nil, err
+			}
 		default:
 			panic(fmt.Errorf("xirho: unhandled fapi.Param %#v", p))
 		}

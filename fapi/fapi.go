@@ -73,7 +73,7 @@ func getParam(f reflect.StructField, v reflect.Value) Param {
 				panic(fmt.Errorf("xirho: Int lo > hi"))
 			}
 		}
-		return intFor(name, val.(*xirho.Int), bdd, lo, hi)
+		return intFor(name, val.(*xirho.Int), bdd, xirho.Int(lo), xirho.Int(hi))
 	case rAngle:
 		return angleFor(name, val.(*xirho.Angle))
 	case rReal:
@@ -91,7 +91,7 @@ func getParam(f reflect.StructField, v reflect.Value) Param {
 				panic(fmt.Errorf("xirho: Real lo > hi"))
 			}
 		}
-		return realFor(name, val.(*xirho.Real), bdd, lo, hi)
+		return realFor(name, val.(*xirho.Real), bdd, xirho.Real(lo), xirho.Real(hi))
 	case rComplex:
 		return complexFor(name, val.(*xirho.Complex))
 	case rVec3:
