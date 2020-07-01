@@ -97,8 +97,7 @@ func main() {
 	}
 	log.Println("allocating histogram, estimated", xirho.HistMem(width*osa, height*osa)>>20, "MB")
 	r.Hist = xirho.NewHist(width*osa, height*osa)
-	r.Hist.SetGamma(gamma, tr)
-	r.Hist.SetBrightness(bright)
+	r.Hist.SetBrightness(bright, gamma, tr)
 	r.Procs = procs
 	r.N = iters
 	r.Q = hits

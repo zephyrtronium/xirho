@@ -11,7 +11,6 @@ import (
 
 // Hist is a uniform two-dimensional histogram.
 type Hist struct {
-	// TODO: benchmark SoA versus AoS
 	// bins is the histogram bins.
 	counts []histBin
 	// rows and cols are the histogram size.
@@ -25,9 +24,8 @@ type Hist struct {
 	// tr is the gamma threshold. The gamma factor is not applied to bins
 	// with less than this fraction of the max counts.
 	tr float64
-	// br is brightness, a 32.16 fixed-point multiplier for color channels
-	// relative to alpha.
-	br uint64
+	// br is brightness, a multiplier for color channels relative to alpha.
+	br float64
 	// stat is 1 if Stat has been called since the last use of Add.
 	stat int32
 }
@@ -61,9 +59,9 @@ func (h *Hist) Add(x, y int, c color.NRGBA64) {
 	atomic.StoreInt32(&h.stat, 0)
 	k := h.index(x, y)
 	bin := &h.counts[k]
-	atomic.AddUint64(&bin.r, uint64(c.R)*h.br>>16)
-	atomic.AddUint64(&bin.g, uint64(c.G)*h.br>>16)
-	atomic.AddUint64(&bin.b, uint64(c.B)*h.br>>16)
+	atomic.AddUint64(&bin.r, uint64(c.R))
+	atomic.AddUint64(&bin.g, uint64(c.G))
+	atomic.AddUint64(&bin.b, uint64(c.B))
 	atomic.AddUint64(&bin.n, uint64(c.A))
 }
 
@@ -98,28 +96,14 @@ func (h *Hist) prep() {
 	atomic.StoreInt32(&h.stat, 1)
 }
 
-// SetGamma sets the gamma factor and threshold for output pixels.
-func (h *Hist) SetGamma(gamma, thresh float64) {
+// SetBrightness sets the brightness parameters for the rendered image. br
+// controls the brightness of color channels relative to alpha. gamma applies
+// nonlinear brightness to the alpha channel to balance low-count bins, but
+// only applies to bins exceeding a relative count of tr.
+func (h *Hist) SetBrightness(br, gamma, tr float64) {
+	h.br = math.Exp(br)
 	h.exp = 1 / gamma
-	h.tr = thresh
-}
-
-// SetBrightness sets the brightness, which is a multiplier for the color
-// channels (i.e. excluding alpha). Brightness is logarithmic to account for
-// the logarithmic tone mapping; values larger than ln(2^32) (about 22.18) are
-// limited to that value. NaN values result in no change.
-func (h *Hist) SetBrightness(b float64) {
-	b = math.Exp(b)
-	if math.IsNaN(b) {
-		return
-	}
-	const up = float64((1<<32)<<16-1) / (1 << 16)
-	if b < 0 {
-		b = 0
-	} else if b > up {
-		b = up
-	}
-	h.br = uint64(b * (1 << 16))
+	h.tr = tr
 }
 
 // --- image.Image implementation for easy resizing ---
@@ -152,18 +136,19 @@ func (h *Hist) At(x, y int) color.Color {
 		return color.RGBA64{}
 	}
 	return color.RGBA64{
-		R: cscale(r, h.lb),
-		G: cscale(g, h.lb),
-		B: cscale(b, h.lb),
+		R: cscale(r, h.br, h.lb),
+		G: cscale(g, h.br, h.lb),
+		B: cscale(b, h.br, h.lb),
 		A: cscaleg(n, h.mn, h.lb, h.exp),
 	}
 }
 
 // cscale scales a bin count to a color component.
-func cscale(n uint64, lb float64) uint16 {
-	a := (math.Log10(float64(n)) - clscale) / lb // logarithmic tone mapping
-	a *= 65536                                   // scale to uint16
-	if a < 0 {                                   // clip to uint16
+func cscale(n uint64, br, lb float64) uint16 {
+	a := float64(n) * br               // brightness
+	a = (math.Log10(a) - clscale) / lb // logarithmic tone mapping
+	a *= 65536                         // scale to uint16
+	if a < 0 {                         // clip to uint16
 		a = 0
 	} else if a > 65535 {
 		a = 65535
