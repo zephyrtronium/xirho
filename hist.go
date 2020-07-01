@@ -18,8 +18,13 @@ type Hist struct {
 	rows, cols int
 	// lb is the logarithm of the maximum bin count.
 	lb float64
+	// mn is the minimum bin count to which gamma is applied.
+	mn uint64
 	// exp is the reciprocal of the gamma factor applied to output pixels.
 	exp float64
+	// tr is the gamma threshold. The gamma factor is not applied to bins
+	// with less than this fraction of the max counts.
+	tr float64
 	// br is brightness, a 32.16 fixed-point multiplier for color channels
 	// relative to alpha.
 	br uint64
@@ -89,12 +94,14 @@ func (h *Hist) prep() {
 		}
 	}
 	h.lb = math.Log10(float64(m)) - clscale
+	h.mn = uint64(float64(m) * h.tr)
 	atomic.StoreInt32(&h.stat, 1)
 }
 
-// SetGamma sets the gamma factor for output pixels.
-func (h *Hist) SetGamma(gamma float64) {
+// SetGamma sets the gamma factor and threshold for output pixels.
+func (h *Hist) SetGamma(gamma, thresh float64) {
 	h.exp = 1 / gamma
+	h.tr = thresh
 }
 
 // SetBrightness sets the brightness, which is a multiplier for the color
@@ -148,7 +155,7 @@ func (h *Hist) At(x, y int) color.Color {
 		R: cscale(r, h.lb),
 		G: cscale(g, h.lb),
 		B: cscale(b, h.lb),
-		A: cscaleg(n, h.lb, h.exp),
+		A: cscaleg(n, h.mn, h.lb, h.exp),
 	}
 }
 
@@ -165,11 +172,13 @@ func cscale(n uint64, lb float64) uint16 {
 }
 
 // cscaleg scales a bin count to a color component with gamma.
-func cscaleg(n uint64, lb, exp float64) uint16 {
+func cscaleg(n, mn uint64, lb, exp float64) uint16 {
 	a := (math.Log10(float64(n)) - clscale) / lb // logarithmic tone mapping
-	a = math.Pow(a, exp)                         // gamma
-	a *= 65536                                   // scale to uint16
-	if a < 0 {                                   // clip to uint16
+	if n > mn {
+		a = math.Pow(a, exp) // gamma
+	}
+	a *= 65536 // scale to uint16
+	if a < 0 { // clip to uint16
 		a = 0
 	} else if a > 65535 {
 		a = 65535

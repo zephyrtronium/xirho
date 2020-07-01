@@ -28,7 +28,7 @@ func main() {
 	var iters, hits int64
 	var width, height int
 	var osa int
-	var gamma, bright float64
+	var gamma, tr, bright float64
 	var resample string
 	var procs int
 	var echo bool
@@ -43,6 +43,7 @@ func main() {
 	flag.IntVar(&height, "height", 1024, "output image height")
 	flag.IntVar(&osa, "osa", 1, "oversampling; histogram bins per pixel per axis")
 	flag.Float64Var(&gamma, "gamma", 1, "gamma factor")
+	flag.Float64Var(&tr, "thresh", 0, "gamma threshold")
 	flag.Float64Var(&bright, "bright", 1, "brightness")
 	flag.StringVar(&resample, "resample", "catmull-rom", "resampling method (catmull-rom, bilinear, approx-bilinear, or nearest)")
 	flag.IntVar(&procs, "procs", runtime.GOMAXPROCS(0), "concurrent render routines")
@@ -96,7 +97,7 @@ func main() {
 	}
 	log.Println("allocating histogram, estimated", xirho.HistMem(width*osa, height*osa)>>20, "MB")
 	r.Hist = xirho.NewHist(width*osa, height*osa)
-	r.Hist.SetGamma(gamma)
+	r.Hist.SetGamma(gamma, tr)
 	r.Hist.SetBrightness(bright)
 	r.Procs = procs
 	r.N = iters
