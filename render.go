@@ -38,6 +38,9 @@ type R struct {
 
 	// aspect is the aspect ratio of the histogram.
 	aspect float64
+
+	// Meta contains metadata about the fractal.
+	Meta *Metadata
 }
 
 // Render renders a System onto a Hist. It returns after the context closes or
@@ -120,4 +123,18 @@ func (r *R) Iters() int64 {
 // to call this while the renderer is running.
 func (r *R) Hits() int64 {
 	return atomic.LoadInt64(&r.q)
+}
+
+// Metadata holds metadata about a fractal.
+type Metadata struct {
+	// Title is the name of the fractal.
+	Title string `json:"title"`
+	// Authors is the list of people who created the fractal.
+	Authors []string `json:"authors"`
+	// Date is the time the fractal was last modified.
+	Date time.Time `json:"date"`
+	// License is the license under which the fractal parameters are shared.
+	// Typically this would be the title of the license, e.g. "CC4-BY-SA",
+	// rather than the full license text.
+	License string `json:"license"`
 }

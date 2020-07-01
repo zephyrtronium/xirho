@@ -28,6 +28,10 @@ type System struct {
 	// must be of size len(Funcs) × len(Funcs), and each element must be a
 	// finite, nonnegative number.
 	Graph [][]float64
+
+	// Labels gives the labels for each non-final function in the system, if it
+	// is not nil.
+	Labels []string
 }
 
 // iterator manages the iterations of a System by a single goroutine.

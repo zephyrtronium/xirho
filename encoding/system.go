@@ -17,11 +17,13 @@ import (
 // NOTE: The definition of marshaler must be kept up to date with xirho.System
 // and xirho.R.
 type marshaler struct {
+	Meta *xirho.Metadata `json:"meta,omitempty"`
 	// system params
 	Funcs   []*funcm    `json:"funcs"`
 	Final   *funcm      `json:"final,omitempty"`
 	Weights []float64   `json:"weights"`
 	Graph   [][]float64 `json:"graph"`
+	Labels  []string    `json:"labels,omitempty"`
 	// renderer params
 	Aspect float64  `json:"aspect"`
 	Camera xirho.Ax `json:"camera"`
@@ -40,9 +42,11 @@ func Marshal(r *xirho.R) ([]byte, error) {
 		return nil, err
 	}
 	m := marshaler{
+		Meta:    r.Meta,
 		Funcs:   make([]*funcm, len(r.System.Funcs)),
 		Weights: r.System.Weights,
 		Graph:   r.System.Graph,
+		Labels:  r.System.Labels,
 		Camera:  r.Camera,
 	}
 	for i, f := range r.System.Funcs {
