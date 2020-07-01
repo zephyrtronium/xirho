@@ -20,6 +20,9 @@ type Hist struct {
 	lb float64
 	// exp is the reciprocal of the gamma factor applied to output pixels.
 	exp float64
+	// br is brightness, a 32.16 fixed-point multiplier for color channels
+	// relative to alpha.
+	br uint64
 	// stat is 1 if Stat has been called since the last use of Add.
 	stat int32
 }
@@ -37,12 +40,13 @@ func HistMem(width, height int) int {
 }
 
 // NewHist allocates a histogram.
-func NewHist(width, height int, gamma float64) *Hist {
+func NewHist(width, height int) *Hist {
 	return &Hist{
 		counts: make([]histBin, width*height),
 		rows:   height,
 		cols:   width,
-		exp:    1 / gamma,
+		exp:    1,
+		br:     1 << 16,
 	}
 }
 
@@ -52,9 +56,9 @@ func (h *Hist) Add(x, y int, c color.NRGBA64) {
 	atomic.StoreInt32(&h.stat, 0)
 	k := h.index(x, y)
 	bin := &h.counts[k]
-	atomic.AddUint64(&bin.r, uint64(c.R))
-	atomic.AddUint64(&bin.g, uint64(c.G))
-	atomic.AddUint64(&bin.b, uint64(c.B))
+	atomic.AddUint64(&bin.r, uint64(c.R)*h.br>>16)
+	atomic.AddUint64(&bin.g, uint64(c.G)*h.br>>16)
+	atomic.AddUint64(&bin.b, uint64(c.B)*h.br>>16)
 	atomic.AddUint64(&bin.n, uint64(c.A))
 }
 
@@ -86,6 +90,29 @@ func (h *Hist) prep() {
 	}
 	h.lb = math.Log10(float64(m)) - clscale
 	atomic.StoreInt32(&h.stat, 1)
+}
+
+// SetGamma sets the gamma factor for output pixels.
+func (h *Hist) SetGamma(gamma float64) {
+	h.exp = 1 / gamma
+}
+
+// SetBrightness sets the brightness, which is a multiplier for the color
+// channels (i.e. excluding alpha). Brightness is logarithmic to account for
+// the logarithmic tone mapping; values larger than ln(2^32) (about 22.18) are
+// limited to that value. NaN values result in no change.
+func (h *Hist) SetBrightness(b float64) {
+	b = math.Exp(b)
+	if math.IsNaN(b) {
+		return
+	}
+	const up = float64((1<<32)<<16-1) / (1 << 16)
+	if b < 0 {
+		b = 0
+	} else if b > up {
+		b = up
+	}
+	h.br = uint64(b * (1 << 16))
 }
 
 // --- image.Image implementation for easy resizing ---
