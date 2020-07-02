@@ -3,6 +3,7 @@ package xirho
 import (
 	"context"
 	"image/color"
+	"runtime"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -53,9 +54,13 @@ func (r *R) Render(ctx context.Context) {
 	rng := newRNG()
 	r.aspect = float64(r.Hist.rows) / float64(r.Hist.cols)
 	ctx, cancel := context.WithCancel(ctx)
+	procs := r.Procs
+	if procs <= 0 {
+		procs = runtime.GOMAXPROCS(0)
+	}
 	var wg sync.WaitGroup
-	wg.Add(r.Procs)
-	for i := 0; i < r.Procs; i++ {
+	wg.Add(procs)
+	for i := 0; i < procs; i++ {
 		go func(rng RNG) {
 			r.System.Iter(ctx, r, rng)
 			wg.Done()
