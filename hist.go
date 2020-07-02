@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"math"
+	"runtime"
 	"sync/atomic"
 	"unsafe"
 )
@@ -42,14 +43,34 @@ func HistMem(width, height int) int {
 	return int(unsafe.Sizeof(Hist{})) + width*height*int(unsafe.Sizeof(histBin{}))
 }
 
-// NewHist allocates a histogram.
+// NewHist allocates a histogram. An alternative to this function is to create
+// a zero Hist value and call Reset and SetBrightness to initialize it.
 func NewHist(width, height int) *Hist {
 	return &Hist{
 		counts: make([]histBin, width*height),
 		rows:   height,
 		cols:   width,
 		exp:    1,
-		br:     1 << 16,
+		br:     1,
+	}
+}
+
+// Reset reinitializes the histogram counts. If the given width and height are
+// not equal to the histogram's current respective sizes, then the histogram is
+// completely reallocated.
+func (h *Hist) Reset(width, height int) {
+	if width != h.cols || height != h.rows {
+		// Histograms can be very large, so we want to ensure the current
+		// counts are collected before we attempt to allocate new ones.
+		h.counts = nil
+		runtime.GC()
+		h.counts = make([]histBin, width*height)
+		h.rows = height
+		h.cols = width
+		return
+	}
+	for i := range h.counts {
+		h.counts[i] = histBin{}
 	}
 }
 

@@ -28,6 +28,8 @@ type marshaler struct {
 	Aspect float64  `json:"aspect"`
 	Camera xirho.Ax `json:"camera"`
 	Gamma  float64  `json:"gamma"`
+	Thresh float64  `json:"thresh"`
+	Bright float64  `json:"bright"`
 	// Palette is formed by concatenating each channel of the NRGBA64 palette
 	// in ARGB order as big-endian, then LZW-encoding the result.
 	Palette []byte `json:"palette"`
@@ -89,10 +91,10 @@ func Marshal(r *xirho.R) ([]byte, error) {
 }
 
 // Unmarshal decodes a xirho renderer from serialized JSON. The returned aspect
-// is the number of columns per row in the histogram. The histogram is not
-// allocated, and the Procs, N, and Q fields are left 0. Calling UseNumber on
-// the decoder allows Unmarshal to guarantee full precision for xirho.Int
-// function parameters.
+// is the number of columns per row in the histogram. The histogram should have
+// its Reset method called before use. The Procs, N, and Q fields are left 0.
+// Calling UseNumber on the decoder allows Unmarshal to guarantee full
+// precision for xirho.Int function parameters.
 func Unmarshal(d *json.Decoder) (render *xirho.R, aspect float64, err error) {
 	// TODO: wrap errors
 	m := marshaler{}
@@ -100,6 +102,7 @@ func Unmarshal(d *json.Decoder) (render *xirho.R, aspect float64, err error) {
 		return
 	}
 	render = &xirho.R{
+		Hist: &xirho.Hist{},
 		System: xirho.System{
 			Funcs:   make([]xirho.F, len(m.Funcs)),
 			Weights: m.Weights,
@@ -118,6 +121,7 @@ func Unmarshal(d *json.Decoder) (render *xirho.R, aspect float64, err error) {
 	if err != nil {
 		return
 	}
+	render.Hist.SetBrightness(m.Bright, m.Gamma, m.Thresh)
 	z := lzw.NewReader(bytes.NewReader(m.Palette), lzw.LSB, 8)
 	var buf bytes.Buffer
 	if _, err = io.Copy(&buf, z); err != nil {

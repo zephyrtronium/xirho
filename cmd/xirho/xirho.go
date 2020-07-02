@@ -96,7 +96,7 @@ func main() {
 		log.Fatalln("error unmarshaling system:", err)
 	}
 	log.Println("allocating histogram, estimated", xirho.HistMem(width*osa, height*osa)>>20, "MB")
-	r.Hist = xirho.NewHist(width*osa, height*osa)
+	r.Hist.Reset(width*osa, height*osa)
 	r.Hist.SetBrightness(bright, gamma, tr)
 	r.Procs = procs
 	r.N = iters
