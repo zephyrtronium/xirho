@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"encoding/xml"
 	"flag"
 	"image"
 	"image/color"
@@ -19,10 +20,11 @@ import (
 
 	"github.com/zephyrtronium/xirho"
 	"github.com/zephyrtronium/xirho/encoding"
+	"github.com/zephyrtronium/xirho/encoding/flame"
 )
 
 func main() {
-	var outname, profname, inname string
+	var outname, profname, inname, flamename string
 	var sigint bool
 	var timeout time.Duration
 	var iters, hits int64
@@ -35,6 +37,7 @@ func main() {
 	flag.StringVar(&outname, "png", "", "output filename (default stdout)")
 	flag.StringVar(&profname, "prof", "", "CPU profile output (default no profiling)")
 	flag.StringVar(&inname, "in", "", "input json filename (default stdin)")
+	flag.StringVar(&flamename, "flame", "", "input flame filename")
 	flag.BoolVar(&sigint, "C", true, "save image on interrupt instead of exiting")
 	flag.DurationVar(&timeout, "dur", 0, "max duration to render (default ignored)")
 	flag.Int64Var(&iters, "iters", 0, "max iters (default ignored)")
@@ -82,18 +85,32 @@ func main() {
 		hits = iters / 5
 	}
 
-	var in io.Reader = os.Stdin
-	if inname != "" {
-		f, err := os.Open(inname)
+	var r *xirho.R
+	var err error
+	if flamename == "" {
+		var in io.Reader = os.Stdin
+		if inname != "" {
+			f, err := os.Open(inname)
+			if err != nil {
+				log.Fatalln("error opening input:", err)
+			}
+			in = f
+		}
+		d := json.NewDecoder(in)
+		r, _, err = encoding.Unmarshal(d)
+		if err != nil {
+			log.Fatalln("error unmarshaling system:", err)
+		}
+	} else {
+		in, err := os.Open(flamename)
 		if err != nil {
 			log.Fatalln("error opening input:", err)
 		}
-		in = f
-	}
-	d := json.NewDecoder(in)
-	r, _, err := encoding.Unmarshal(d)
-	if err != nil {
-		log.Fatalln("error unmarshaling system:", err)
+		d := xml.NewDecoder(in)
+		r, _, _, err = flame.Unmarshal(d)
+		if err != nil {
+			log.Fatalln("error unmarshaling system:", err)
+		}
 	}
 	log.Println("allocating histogram, estimated", xirho.HistMem(width*osa, height*osa)>>20, "MB")
 	r.Hist.Reset(width*osa, height*osa)
