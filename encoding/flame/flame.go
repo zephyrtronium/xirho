@@ -91,7 +91,8 @@ func Unmarshal(d *xml.Decoder) (r *xirho.R, aspect float64, bg color.NRGBA64, er
 		Camera:  cam,
 		Palette: parsepalette(flm.Palette),
 	}
-	// TODO: brightness and gamma, perspective
+	r.Hist.SetBrightness(flm.Brightness, flm.Gamma, flm.Thresh)
+	// TODO: perspective
 	return
 }
 
@@ -302,6 +303,7 @@ type flame struct {
 	Background string     `xml:"background,attr"`
 	Brightness float64    `xml:"brightness,attr"`
 	Gamma      float64    `xml:"gamma,attr"`
+	Thresh     float64    `xml:"gamma_threshold,attr"`
 	Xforms     []xform    `xml:"xform"`
 	Final      finalxform `xml:"finalxform"`
 	Palette    palette    `xml:"palette"`
