@@ -1,3 +1,4 @@
+// Package encoding implements marshaling and unmarshaling function systems.
 package encoding
 
 import (

@@ -1,4 +1,11 @@
 // Package flame implements parsing the XML-based Flame format.
+//
+// The unmarshaler ignores any unknown variation types. To allow it to load
+// new types, add to the Funcs map.
+//
+// While the goal is to produce results identical to Apophysis, it may not be
+// possible in all cases.
+//
 package flame
 
 import (

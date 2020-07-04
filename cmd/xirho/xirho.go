@@ -1,3 +1,4 @@
+// The xirho command implements a basic renderer using xirho.
 package main
 
 import (

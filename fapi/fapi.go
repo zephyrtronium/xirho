@@ -1,3 +1,10 @@
+// Package fapi creates a generic public API for xirho function types.
+//
+// The For function uses reflection to gather a list of modifiable parameters.
+// This can be used to implement serialization formats or to provide user
+// interfaces for functions. Parameter types are based on semantics rather than
+// on representation to allow for more natural user interfaces.
+//
 package fapi
 
 import (
