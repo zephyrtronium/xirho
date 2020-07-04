@@ -127,6 +127,14 @@ func (h *Hist) SetBrightness(br, gamma, tr float64) {
 	h.tr = tr
 }
 
+// Brightness returns the last brightness parameters passed to SetBrightness.
+func (h *Hist) Brightness() (br, gamma, tr float64) {
+	br = math.Log(h.br)
+	gamma = 1 / h.exp
+	tr = h.tr
+	return br, gamma, tr
+}
+
 // --- image.Image implementation for easy resizing ---
 
 // ColorModel returns the histogram's internal color model.

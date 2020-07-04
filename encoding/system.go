@@ -44,6 +44,7 @@ func Marshal(r *xirho.R) ([]byte, error) {
 	if err := r.System.Check(); err != nil {
 		return nil, err
 	}
+	br, gamma, tr := r.Hist.Brightness()
 	m := marshaler{
 		Meta:    r.Meta,
 		Funcs:   make([]*funcm, len(r.System.Funcs)),
@@ -51,6 +52,9 @@ func Marshal(r *xirho.R) ([]byte, error) {
 		Graph:   r.System.Graph,
 		Labels:  r.System.Labels,
 		Camera:  r.Camera,
+		Gamma:   gamma,
+		Thresh:  tr,
+		Bright:  br,
 	}
 	for i, f := range r.System.Funcs {
 		e, err := newFuncm(f)
