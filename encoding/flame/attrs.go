@@ -10,23 +10,24 @@ import (
 // e.g. julian is an entry but julian_power is not, as the parser should handle
 // the parameters.
 var Funcs = map[string]Parser{
-	"linear":      parseLinear,
-	"linear3D":    parseLinear,
-	"blur":        parseBlur,
-	"pre_blur":    parsePreblur,
-	"bubble":      parseBubble,
-	"elliptic":    parseElliptic,
-	"disc":        parseDisc,
-	"flatten":     parseFlatten,
-	"julia":       parseJulia,
-	"julian":      parseJulian,
-	"mobius":      parseMobius,
-	"mobiq":       parseMobiq,
-	"polar":       parsePolar,
-	"spherical":   parseSpherical,
-	"spherical3D": parseSpherical3D,
-	"splits":      parseSplits,
-	"splits3D":    parseSplits3D,
+	"linear":        parseLinear,
+	"linear3D":      parseLinear,
+	"blur":          parseBlur,
+	"pre_blur":      parsePreblur,
+	"bubble":        parseBubble,
+	"elliptic":      parseElliptic,
+	"disc":          parseDisc,
+	"flatten":       parseFlatten,
+	"julia":         parseJulia,
+	"julian":        parseJulian,
+	"mobius":        parseMobius,
+	"mobiq":         parseMobiq,
+	"polar":         parsePolar,
+	"spherical":     parseSpherical,
+	"spherical3D":   parseSpherical3D,
+	"pre_spherical": parsePrespherical,
+	"splits":        parseSplits,
+	"splits3D":      parseSplits3D,
 }
 
 // Parser is a function which parses a xirho function from XML attributes.
@@ -38,20 +39,6 @@ func parseLinear(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {
 	v := attrs["linear"] + attrs["linear3D"]
 	ax.Eye().Scale(v, v, v)
 	in.Funcs = append(in.Funcs, &xi.Affine{Ax: ax})
-}
-
-func parseSpherical(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {
-	f := xi.Then{
-		Funcs: []xirho.F{
-			xi.Spherical{},
-			xi.Flatten{},
-		},
-	}
-	in.Funcs = append(in.Funcs, maybeScaled(&f, attrs["spherical"]))
-}
-
-func parseSpherical3D(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {
-	in.Funcs = append(in.Funcs, maybeScaled(xi.Spherical{}, attrs["spherical3D"]))
 }
 
 func parseBlur(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {
@@ -112,7 +99,7 @@ func parseMobius(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {
 			&f,
 		},
 	}
-	in.Funcs = append(in.Funcs, &t)
+	in.Funcs = append(in.Funcs, maybeScaled(&t, attrs["mobius"]))
 }
 
 func parseMobiq(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {
@@ -127,11 +114,35 @@ func parseMobiq(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {
 		Dvec:   xirho.Vec3{attrs["mobiq_dx"], attrs["mobiq_dy"], attrs["mobiq_dz"]},
 		InZero: 3,
 	}
-	in.Funcs = append(in.Funcs, &f)
+	in.Funcs = append(in.Funcs, maybeScaled(&f, attrs["mobiq"]))
 }
 
 func parsePolar(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {
 	in.Funcs = append(in.Funcs, maybeScaled(xi.Polar{}, attrs["polar"]))
+}
+
+func parseSpherical(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {
+	f := xi.Then{
+		Funcs: []xirho.F{
+			xi.Flatten{},
+			xi.Spherical{},
+		},
+	}
+	in.Funcs = append(in.Funcs, maybeScaled(&f, attrs["spherical"]))
+}
+
+func parseSpherical3D(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {
+	in.Funcs = append(in.Funcs, maybeScaled(xi.Spherical{}, attrs["spherical3D"]))
+}
+
+func parsePrespherical(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {
+	f := xi.Then{
+		Funcs: []xirho.F{
+			xi.Flatten{},
+			xi.Spherical{},
+		},
+	}
+	pre.Funcs = append(pre.Funcs, maybeScaled(&f, attrs["pre_spherical"]))
 }
 
 func parseSplits(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {
@@ -145,7 +156,7 @@ func parseSplits(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {
 			&f,
 		},
 	}
-	in.Funcs = append(in.Funcs, &t)
+	in.Funcs = append(in.Funcs, maybeScaled(&t, attrs["splits"]))
 }
 
 func parseSplits3D(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {
@@ -154,7 +165,7 @@ func parseSplits3D(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax)
 		Y: xirho.Real(attrs["splits3D_y"]),
 		Z: xirho.Real(attrs["splits3D_z"]),
 	}
-	in.Funcs = append(in.Funcs, &f)
+	in.Funcs = append(in.Funcs, maybeScaled(&f, attrs["splits3D"]))
 }
 
 // maybeScaled returns f if v is 1 or a Then with f and Scale by v otherwise.
