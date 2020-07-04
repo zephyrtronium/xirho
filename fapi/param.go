@@ -373,7 +373,7 @@ func (p Func) Set(v xirho.F) error {
 	if !p.opt && v == nil {
 		return NotOptional{Param: p}
 	}
-	*p.v = xirho.Func{v}
+	*p.v = xirho.Func{F: v}
 	return nil
 }
 
