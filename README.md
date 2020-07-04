@@ -1,6 +1,6 @@
-# xirho
+# ξρ
 
-xirho is a simple generalized iterated function system plotter. It makes pretty pictures out of math.
+Xirho is a simple generalized iterated function system plotter. It makes pretty pictures out of math.
 
 ---
 
@@ -30,7 +30,7 @@ The "fractal flame" algorithm is a way of generalizing IFS: allowing arbitrary f
 
 ---
 
-xirho is a pretty basic fractal flame renderer, with only a handful of function types available (for now). It doesn't support designing a system interactively (yet). The renderer is flexible thanks to Go's powerful type system, and it's fast because of its completely lock-free parallel design.
+Xirho is a pretty basic fractal flame renderer, with only a handful of function types available (for now). It doesn't support designing a system interactively (yet). The renderer is flexible thanks to Go's powerful type system, and it's fast because of its completely lock-free parallel design. It's simpler algorithmically than its counterparts, and that simplicity leads to some generalizations that may be interesting to explore.
 
 Ultimately, xirho is a pet project that I've wanted to implement for a decade to address the bugs in [Apophysis](https://en.wikipedia.org/wiki/Apophysis_(software)) and the commercial limitations in [Chaotica](https://www.chaoticafractals.com/) (which is still an outstanding piece of software!). xirho isn't intended to be the fastest IFS renderer, nor the most versatile, and it's explicitly avoiding compatibility with those other tools and their mimics. But it's something I enjoy working on, so it will get better than it is.
 
