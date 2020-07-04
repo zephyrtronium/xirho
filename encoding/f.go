@@ -49,6 +49,10 @@ func newFuncm(f xirho.F) (*funcm, error) {
 		case fapi.Affine:
 			r.Params[p.Name()] = p.Get()
 		case fapi.Func:
+			if p.Get() == nil {
+				r.Params[p.Name()] = nil
+				continue
+			}
 			v, err := newFuncm(p.Get())
 			if err != nil {
 				return nil, err
