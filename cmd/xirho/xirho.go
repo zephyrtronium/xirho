@@ -108,10 +108,11 @@ func main() {
 			log.Fatalln("error opening input:", err)
 		}
 		d := xml.NewDecoder(in)
-		r, _, _, err = flame.Unmarshal(d)
+		flm, err := flame.Unmarshal(d)
 		if err != nil {
 			log.Fatalln("error unmarshaling system:", err)
 		}
+		r = flm.R
 	}
 	log.Println("allocating histogram, estimated", xirho.HistMem(width*osa, height*osa)>>20, "MB")
 	r.Hist.Reset(width*osa, height*osa)

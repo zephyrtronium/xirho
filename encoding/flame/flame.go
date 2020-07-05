@@ -20,17 +20,63 @@ import (
 	"github.com/zephyrtronium/xirho/xi"
 )
 
-// Unmarshal decodes a renderer from Flame XML.
-func Unmarshal(d *xml.Decoder) (r *xirho.R, aspect float64, bg color.NRGBA64, err error) {
-	var flm flame
-	if err = d.Decode(&flm); err != nil {
-		return
+// Flame holds a decoded renderer and extra information about it.
+type Flame struct {
+	// Name is the name of the flame.
+	Name string
+	// R is the renderer for the system. Its histogram should be Reset to the
+	// appropriate size before rendering.
+	R *xirho.R
+	// Aspect is the aspect ratio (number of columns per row in the image, or
+	// width divided by height) of the system as encoded in the flame file.
+	Aspect float64
+	// BG is the background color for the system. The alpha component is always
+	// maximized.
+	BG color.NRGBA64
+	// Err holds any error that occurred while decoding this flame.
+	Err error
+}
+
+// UnmarshalAll decodes all systems in an Apophysis flame file. The decoder
+// must be positioned at a flames element. The returned error is independent of
+// errors in the decoded flames, and it may be nil even if no flames were
+// successfully decoded.
+func UnmarshalAll(d *xml.Decoder) ([]Flame, error) {
+	var flms flames
+	if err := d.Decode(&flms); err != nil {
+		return nil, err
 	}
+	r := make([]Flame, len(flms.Flames))
+	for i, flm := range flms.Flames {
+		r[i] = convert(flm)
+	}
+	return r, nil
+}
+
+// Unmarshal decodes a renderer from Flame XML. The decoder must be positioned
+// at a flame element, rather than at the flames element at the start of a
+// typical file; one may use d.Token() or d.RawToken() to advance the decoder
+// to the correct position. The returned error is the same as the Flame's Err
+// field.
+func Unmarshal(d *xml.Decoder) (Flame, error) {
+	var flm flame
+	if err := d.Decode(&flm); err != nil {
+		return Flame{}, err
+	}
+	r := convert(flm)
+	return r, r.Err
+}
+
+// convert converts a decoded flame into a xirho renderer. The Err field of the
+// result contains any error that occurs.
+func convert(flm flame) (r Flame) {
+	r.Name = flm.Name
 	sz, err := nums(flm.Size)
 	if err != nil {
-		return
+		r.Err = err
+		return r
 	}
-	aspect = sz[0] / sz[1]
+	r.Aspect = sz[0] / sz[1]
 	tr, err := nums(flm.Center)
 	if err != nil {
 		return
@@ -50,7 +96,7 @@ func Unmarshal(d *xml.Decoder) (r *xirho.R, aspect float64, bg color.NRGBA64, er
 	if err != nil {
 		return
 	}
-	bg = color.NRGBA64{
+	r.BG = color.NRGBA64{
 		R: uint16(bgc[0] * 0xffff),
 		G: uint16(bgc[1] * 0xffff),
 		B: uint16(bgc[2] * 0xffff),
@@ -90,13 +136,13 @@ func Unmarshal(d *xml.Decoder) (r *xirho.R, aspect float64, bg color.NRGBA64, er
 		}
 		system.Final = df.f
 	}
-	r = &xirho.R{
+	r.R = &xirho.R{
 		Hist:    &xirho.Hist{},
 		System:  system,
 		Camera:  cam,
 		Palette: parsepalette(flm.Palette),
 	}
-	r.Hist.SetBrightness(flm.Brightness, flm.Gamma, flm.Thresh)
+	r.R.Hist.SetBrightness(flm.Brightness, flm.Gamma, flm.Thresh)
 	// TODO: perspective
 	return
 }
@@ -293,6 +339,12 @@ func parsepalette(p palette) []color.NRGBA64 {
 		}
 	}
 	return r
+}
+
+type flames struct {
+	XMLName xml.Name `xml:"flames"`
+	Name    string   `xml:"name,attr"`
+	Flames  []flame  `xml:"flame"`
 }
 
 type flame struct {
