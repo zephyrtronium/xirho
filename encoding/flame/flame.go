@@ -66,13 +66,11 @@ func Unmarshal(d *xml.Decoder) (r *xirho.R, aspect float64, bg color.NRGBA64, er
 		df, err = decodexf(xf, false)
 		system.Funcs[i] = df.f
 		system.Weights[i] = df.weight
-		if df.graph == nil {
-			df.graph = make([]float64, len(flm.Xforms))
-			for j := range df.graph {
-				df.graph[j] = 1
-			}
+		// Apophysis omits graph weights of 1 past the last that isn't 1.
+		system.Graph[i] = make([]float64, len(flm.Xforms))
+		for j := copy(system.Graph[i], df.graph); j < len(system.Graph[i]); j++ {
+			system.Graph[i][j] = 1
 		}
-		system.Graph[i] = df.graph
 	}
 	if flm.Final.XMLName.Local != "" {
 		// A finalxform is an xform with a different name and some missing fields,
