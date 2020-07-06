@@ -43,6 +43,17 @@ type iterator struct {
 	w []uint64
 }
 
+// Prep calls the Prep method of each function in the system. It should be
+// called once before any call to Iter.
+func (s System) Prep() {
+	for _, f := range s.Funcs {
+		f.Prep()
+	}
+	if s.Final != nil {
+		s.Final.Prep()
+	}
+}
+
 // Iter iterates the function system and sends output points over results. It
 // continues iterating until the context's Done channel is closed. rng should
 // be seeded to a distinct state for each call to this method. Iter panics if

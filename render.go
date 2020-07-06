@@ -58,6 +58,7 @@ func (r *R) Render(ctx context.Context) {
 	if procs <= 0 {
 		procs = runtime.GOMAXPROCS(0)
 	}
+	r.System.Prep()
 	var wg sync.WaitGroup
 	wg.Add(procs)
 	for i := 0; i < procs; i++ {
