@@ -1,6 +1,6 @@
 # xirho/img
 
-This directory contains example xirho systems and their rendered outputs. Each of these systems was adapted by hand from a template in Apophysis 7X.
+This directory contains example xirho systems and their rendered outputs. The disc julian, grand julian, and spherical gasket were adapted by hand from templates in Apophysis 7X. The Sierpinski gasket is a well-known IFS. Splits-elliptic was adapted from [Fiery-Fire and SaTaNiA's Apophysis tutorial](https://www.deviantart.com/satania/art/Tutorial-Splits-elliptic-150422119).
 
 ## Disc Julian
 
@@ -25,3 +25,9 @@ The Sierpinski gasket was among the earliest fractal shapes to be described, and
 ![Spherical gasket](spherical.png)
 
 Spherical is the rather simple function of "reflection about the unit sphere," and combining it with some affines leads to this beautifully intricate fractal. The gasket shape is more precisely this system without the two translated affines and the final; render it to see what it looks like. 😉
+
+## Splits-Elliptic
+
+![Splits-elliptic](splitselliptic.png)
+
+Splits-elliptic is another classically popular flame style. Since the style is more complicated to implement in xirho than in most other IFS programs, I took the opportunity to create a final transform that is also impossible without xirho's flexibility.
