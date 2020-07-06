@@ -122,9 +122,11 @@ func Unmarshal(d *json.Decoder) (render *xirho.R, aspect float64, err error) {
 			return
 		}
 	}
-	render.System.Final, err = unf(m.Final)
-	if err != nil {
-		return
+	if m.Final != nil {
+		render.System.Final, err = unf(m.Final)
+		if err != nil {
+			return
+		}
 	}
 	render.Hist.SetBrightness(m.Bright, m.Gamma, m.Thresh)
 	z := lzw.NewReader(bytes.NewReader(m.Palette), lzw.LSB, 8)
