@@ -10,13 +10,17 @@ By default, the parser recognizes the following variations and their parameters:
 - pre_blur
 - bubble
 - elliptic (not identical to Apophysis's elliptic)
+- curl
+- cylinder
 - disc
 - flatten
 - julia (not tested and probably wrong)
 - julian
+- log
 - mobius
 - mobiq
 - polar
+- rod (rod_blur parameter is ignored)
 - spherical
 - spherical3D
 - pre_spherical

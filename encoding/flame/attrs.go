@@ -1,6 +1,8 @@
 package flame
 
 import (
+	"math"
+
 	"github.com/zephyrtronium/xirho"
 	"github.com/zephyrtronium/xirho/xi"
 )
@@ -16,13 +18,17 @@ var Funcs = map[string]Parser{
 	"pre_blur":      parsePreblur,
 	"bubble":        parseBubble,
 	"elliptic":      parseElliptic,
+	"curl":          parseCurl,
+	"cylinder":      parseCylinder,
 	"disc":          parseDisc,
 	"flatten":       parseFlatten,
 	"julia":         parseJulia,
 	"julian":        parseJulian,
+	"log":           parseLog,
 	"mobius":        parseMobius,
 	"mobiq":         parseMobiq,
 	"polar":         parsePolar,
+	"rod":           parseRod,
 	"spherical":     parseSpherical,
 	"spherical3D":   parseSpherical3D,
 	"pre_spherical": parsePrespherical,
@@ -57,6 +63,18 @@ func parseElliptic(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax)
 	in.Funcs = append(in.Funcs, maybeScaled(xi.CElliptic{}, attrs["elliptic"]))
 }
 
+func parseCurl(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {
+	v := xi.Curl{
+		C1: xirho.Real(attrs["curl_c1"]),
+		C2: xirho.Real(attrs["curl_c2"]),
+	}
+	in.Funcs = append(in.Funcs, maybeScaled(&v, attrs["curl"]))
+}
+
+func parseCylinder(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {
+	in.Funcs = append(in.Funcs, maybeScaled(xi.Cylinder{}, attrs["cylinder"]))
+}
+
 func parseDisc(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {
 	in.Funcs = append(in.Funcs, maybeScaled(xi.Disc{}, attrs["disc"]))
 }
@@ -79,6 +97,14 @@ func parseJulian(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {
 		Dist:  xirho.Real(attrs["julian_dist"]),
 	}
 	in.Funcs = append(in.Funcs, maybeScaled(&f, attrs["julian"]))
+}
+
+func parseLog(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {
+	f := xi.Log{Base: xirho.Complex(complex(attrs["log_base"], 0))}
+	if f.Base == 0 {
+		f.Base = math.E
+	}
+	in.Funcs = append(in.Funcs, maybeScaled(&f, attrs["log"]))
 }
 
 func parseMobius(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {
@@ -119,6 +145,10 @@ func parseMobiq(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {
 
 func parsePolar(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {
 	in.Funcs = append(in.Funcs, maybeScaled(xi.Polar{}, attrs["polar"]))
+}
+
+func parseRod(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {
+	in.Funcs = append(in.Funcs, &xi.Rod{Radius: xirho.Real(attrs["rod"])})
 }
 
 func parseSpherical(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {

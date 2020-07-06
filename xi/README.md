@@ -9,12 +9,16 @@ The following function types (variations) are implemented here:
 - Bubble
 - CElliptic (similar to elliptic)
 - ColorSpeed (like color and color symmetry in Apophysis)
+- Curl
+- Cylinder
 - Disc
 - Flatten
 - JuliaN
+- Log
 - Mobius (a 3D version, like the mobiq plugin)
 - Perspective (like in the Apophysis render settings)
 - Polar
+- Rod
 - Scale (like linear or linear3D)
 - Spherical
 - Splits (the 3D version)
@@ -45,3 +49,10 @@ import _ "example.org/anime"
 ```
 
 Then `go build -buildmode=plugin plugin.go` will create a Go plugin that a renderer program could load dynamically and automatically have madoka and homura. Note that Go does not implement `-buildmode=plugin` on Windows.
+
+If xi is the best place for a new variation, e.g. because it is very common in Apophysis, then make sure to follow the following steps:
+
+- Create the function type with `Calc` and `Prep` methods.
+- Register any factories in a `func init()`. There must be at least one factory, to ensure that the type implements `xirho.F`.
+- Add it to this README, in the list near the top.
+- Create Flame parsers in package `xirho/encoding/flame` and add it to the README there.
