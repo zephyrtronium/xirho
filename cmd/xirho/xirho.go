@@ -35,6 +35,7 @@ func main() {
 	var resample string
 	var procs int
 	var echo bool
+	var bgr, bgg, bgb, bga int
 	flag.StringVar(&outname, "png", "", "output filename (default stdout)")
 	flag.StringVar(&profname, "prof", "", "CPU profile output (default no profiling)")
 	flag.StringVar(&inname, "in", "", "input json filename (default stdin)")
@@ -52,6 +53,10 @@ func main() {
 	flag.StringVar(&resample, "resample", "catmull-rom", "resampling method (catmull-rom, bilinear, approx-bilinear, or nearest)")
 	flag.IntVar(&procs, "procs", runtime.GOMAXPROCS(0), "concurrent render routines")
 	flag.BoolVar(&echo, "echo", false, "print system encoding before rendering")
+	flag.IntVar(&bgr, "bg.r", 0, "background red (0-255)")
+	flag.IntVar(&bgg, "bg.g", 0, "background green (0-255)")
+	flag.IntVar(&bgb, "bg.b", 0, "background blue (0-255)")
+	flag.IntVar(&bga, "bg.a", 255, "background alpha (0-255)")
 	flag.Parse()
 	resampler := resamplers[resample]
 	if resampler == nil {
@@ -132,7 +137,13 @@ func main() {
 	log.Println("finished render with", r.Iters(), "iters,", r.Hits(), "hits")
 	signal.Reset(os.Interrupt) // no rendering for ^C to interrupt
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
-	draw.Draw(img, img.Bounds(), image.NewUniform(color.NRGBA64{A: 0xffff}), image.Point{}, draw.Src)
+	u := color.NRGBA{
+		R: uint8(bgr),
+		G: uint8(bgg),
+		B: uint8(bgb),
+		A: uint8(bga),
+	}
+	draw.Draw(img, img.Bounds(), image.NewUniform(u), image.Point{}, draw.Src)
 	log.Printf("drawing onto image of size %dx%d", width, height)
 	resampler.Scale(img, img.Bounds(), r.Hist, r.Hist.Bounds(), draw.Over, nil)
 	out := os.Stdout
