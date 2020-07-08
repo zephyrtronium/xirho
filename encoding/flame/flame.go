@@ -84,14 +84,15 @@ func convert(flm flame) (r Flame) {
 	var cam xirho.Ax
 	cam.Eye()
 	msz := sz[0]
-	if sz[1] > msz { // <?
+	if sz[1] > msz {
 		msz = sz[1]
 	}
-	cam.Scale(4*flm.Scale/msz, 4*flm.Scale/msz, 4*flm.Scale/msz) // ?
+	scale := 2 * flm.Scale / msz
+	cam.Scale(scale, scale, scale)
 	cam.RotX(-flm.Yaw)
 	cam.RotY(-flm.Pitch)
 	cam.RotZ(-flm.Angle)
-	cam.Translate(-tr[0], -tr[1], flm.Zpos)
+	cam.Translate(-tr[0]*scale, -tr[1]*scale, flm.Zpos*scale)
 	bgc, err := nums(flm.Background)
 	if err != nil {
 		return
@@ -179,29 +180,17 @@ func decodexf(xf xform, final bool) (d decoded, err error) {
 		return
 	}
 	// Check for variations that are really part of the transform.
-	if v, ok := vars["linear"]; ok {
-		ax.Scale(v, v, v)
-	}
-	if v, ok := vars["linear3D"]; ok {
-		ax.Scale(v, v, v)
-	}
-	if _, ok := vars["flatten"]; ok {
-		ax.Scale(1, 1, 0)
-	}
 	if v, ok := vars["pre_zscale"]; ok {
 		ax.Scale(1, 1, v)
 	}
 	if v, ok := vars["pre_ztranslate"]; ok {
 		ax.Translate(0, 0, v)
 	}
-	if v, ok := vars["pre_rotate_x"]; ok { // was that the name?
+	if v, ok := vars["pre_rotate_x"]; ok {
 		ax.RotX(v)
 	}
 	if v, ok := vars["pre_rotate_y"]; ok {
 		ax.RotY(v)
-	}
-	if v, ok := vars["pre_rotate_z"]; ok { // I think this one exists too
-		ax.RotZ(v)
 	}
 	// Decode post-transform, if it exists.
 	px := xirho.Eye()
