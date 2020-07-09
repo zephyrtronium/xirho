@@ -89,7 +89,7 @@ func (r *R) Render(ctx context.Context) {
 }
 
 // plot plots a point.
-func (r *R) plot(p P) bool {
+func (r *R) plot(p P, op uint64) bool {
 	atomic.AddInt64(&r.n, 1)
 	if !p.IsValid() {
 		return false
@@ -115,6 +115,7 @@ func (r *R) plot(p P) bool {
 		c = len(r.Palette) - 1
 	}
 	color := r.Palette[c]
+	color.A = uint16(uint64(color.A) * op >> 47) // opacity
 	r.Hist.Add(col, row, color)
 	return true
 }

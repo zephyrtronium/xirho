@@ -22,6 +22,7 @@ type marshaler struct {
 	// system params
 	Funcs   []*funcm    `json:"funcs"`
 	Final   *funcm      `json:"final,omitempty"`
+	Opacity []float64   `json:"opacity"`
 	Weights []float64   `json:"weights"`
 	Graph   [][]float64 `json:"graph"`
 	Labels  []string    `json:"labels,omitempty"`
@@ -48,6 +49,7 @@ func Marshal(r *xirho.R) ([]byte, error) {
 	m := marshaler{
 		Meta:    r.Meta,
 		Funcs:   make([]*funcm, len(r.System.Funcs)),
+		Opacity: r.System.Opacity,
 		Weights: r.System.Weights,
 		Graph:   r.System.Graph,
 		Labels:  r.System.Labels,
@@ -110,6 +112,7 @@ func Unmarshal(d *json.Decoder) (render *xirho.R, aspect float64, err error) {
 		Hist: &xirho.Hist{},
 		System: xirho.System{
 			Funcs:   make([]xirho.F, len(m.Funcs)),
+			Opacity: m.Opacity,
 			Weights: m.Weights,
 			Graph:   m.Graph,
 		},

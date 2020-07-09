@@ -105,12 +105,14 @@ func convert(flm flame) (r Flame) {
 	}
 	system := xirho.System{
 		Funcs:   make([]xirho.F, len(flm.Xforms)),
+		Opacity: make([]float64, len(flm.Xforms)),
 		Weights: make([]float64, len(flm.Xforms)),
 		Graph:   make([][]float64, len(flm.Xforms)),
 	}
 	var df decoded
 	for i, xf := range flm.Xforms {
 		df, err = decodexf(xf, false)
+		system.Opacity[i] = df.op
 		system.Funcs[i] = df.f
 		system.Weights[i] = df.weight
 		// Apophysis omits graph weights of 1 past the last that isn't 1.
@@ -151,12 +153,14 @@ func convert(flm flame) (r Flame) {
 // decoded is a decoded transform.
 type decoded struct {
 	f      xirho.F
+	op     float64
 	weight float64
 	graph  []float64
 }
 
 // decodexf decodes an xform.
 func decodexf(xf xform, final bool) (d decoded, err error) {
+	d.op = xf.Opacity
 	d.weight = xf.Weight
 	if xf.Chaos != "" {
 		d.graph, err = nums(xf.Chaos)

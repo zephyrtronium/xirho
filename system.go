@@ -20,6 +20,10 @@ type System struct {
 	Funcs []F
 	// Final is an additional function applied after each function if non-nil.
 	Final F
+	// Opacity scales the alpha channel of points plotted by each function. It
+	// must be the same length as Funcs, and each element must be in the
+	// interval [0, 1].
+	Opacity []float64
 	// Weights controls the proportion of iterations which map to each func. It
 	// must be the same length as Funcs, and each element must be a
 	// finite, nonnegative number.
@@ -39,6 +43,8 @@ type iterator struct {
 	System
 	// rng is the iterator's source of randomness.
 	rng RNG
+	// op is the pre-multiplied opacities of each function in the system.
+	op []uint64
 	// w is the pre-multiplied weights of each edge in the directed graph.
 	w []uint64
 }
@@ -63,7 +69,7 @@ func (s System) Iter(ctx context.Context, r *R, rng RNG) {
 		panic(err)
 	}
 	it := iterator{System: s, rng: rng}
-	it.calcGraph()
+	it.prep()
 	p, k := it.fuse() // p may not be valid!
 	done := ctx.Done()
 	var n, q int64
@@ -84,7 +90,7 @@ func (s System) Iter(ctx context.Context, r *R, rng RNG) {
 				continue
 			}
 			fp := it.final(p)
-			if r.plot(fp) {
+			if r.plot(fp, it.op[k]) {
 				q++
 				if q == 0x1000 {
 					atomic.AddInt64(&r.q, q)
@@ -98,11 +104,22 @@ func (s System) Iter(ctx context.Context, r *R, rng RNG) {
 }
 
 // Check verifies that the system is properly configured: it has as many
-// weights as functions, the directed graph links to every function, and
-// neither the weights nor the directed graph contain a negative or non-finite
-// element. If any of these conditions is false, then the returned error
-// describes the problem.
+// opacities and weights as functions, the directed graph links to every
+// function, no opacities are outside [0, 1], and neither the weights nor the
+// directed graph contain a negative or non-finite element. If any of these
+// conditions is false, then the returned error describes the problem.
 func (s System) Check() error {
+	if len(s.Funcs) != len(s.Opacity) {
+		return fmt.Errorf("xirho: size mismatch, have %d funcs and %d opacities", len(s.Funcs), len(s.Opacity))
+	}
+	for i, x := range s.Opacity {
+		if x-x != 0 {
+			return fmt.Errorf("xirho: non-finite opacity %v for func %d", x, i)
+		}
+		if x < 0 || x > 1 {
+			return fmt.Errorf("xirho: out of bounds opacity %v for func %d", x, i)
+		}
+	}
 	if len(s.Funcs) != len(s.Weights) {
 		return fmt.Errorf("xirho: size mismatch, have %d funcs and %d weights", len(s.Funcs), len(s.Weights))
 	}
@@ -173,9 +190,10 @@ func (it *iterator) next(k int) int {
 	panic("unreachable")
 }
 
-// calcGraph sets up the iterator's weighted directed graph which controls the
-// probability of each function being chosen based on the current one.
-func (it *iterator) calcGraph() {
+// prep sets up the iterator's weighted directed graph, which controls the
+// probability of each function being chosen based on the current one, and
+// pre-multiplies brightnesses
+func (it *iterator) prep() {
 	switch l := len(it.Funcs); l {
 	case 0:
 		it.w = nil
@@ -217,6 +235,12 @@ func (it *iterator) calcGraph() {
 				it.w[i*len(it.Funcs)+j] = uint64(x / sum * scale)
 			}
 		}
+	}
+	// Calculate opacity multipliers. Opacity is a 16.0 by 1.47 fixed-point
+	// multiplication.
+	it.op = make([]uint64, len(it.Funcs))
+	for i, x := range it.Opacity {
+		it.op[i] = uint64(x * (1 << 47))
 	}
 }
 
