@@ -89,10 +89,10 @@ func convert(flm flame) (r Flame) {
 	}
 	scale := 2 * flm.Scale / msz
 	cam.Scale(scale, scale, scale)
-	cam.RotX(-flm.Yaw)
-	cam.RotY(-flm.Pitch)
-	cam.RotZ(-flm.Angle)
 	cam.Translate(-tr[0]*scale, -tr[1]*scale, flm.Zpos*scale)
+	cam.RotX(flm.Yaw)
+	cam.RotY(flm.Pitch)
+	cam.RotZ(flm.Angle)
 	bgc, err := nums(flm.Background)
 	if err != nil {
 		return
