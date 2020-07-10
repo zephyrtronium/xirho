@@ -72,9 +72,14 @@ func Unmarshal(d *xml.Decoder) (Flame, error) {
 func convert(flm flame) (r Flame) {
 	r.Name = flm.Name
 	sz, err := nums(flm.Size)
+	defer func() {
+		// Ensure the error is relayed upward.
+		if err != nil {
+			r.Err = err
+		}
+	}()
 	if err != nil {
-		r.Err = err
-		return r
+		return
 	}
 	r.Aspect = sz[0] / sz[1]
 	tr, err := nums(flm.Center)
@@ -112,6 +117,9 @@ func convert(flm flame) (r Flame) {
 	var df decoded
 	for i, xf := range flm.Xforms {
 		df, err = decodexf(xf, false)
+		if err != nil {
+			return
+		}
 		system.Opacity[i] = df.op
 		system.Funcs[i] = df.f
 		system.Weights[i] = df.weight
@@ -171,6 +179,11 @@ func decodexf(xf xform, final bool) (d decoded, err error) {
 	// Collect variations first so we can check them for basic ones.
 	vars := make(map[string]float64, len(xf.Attrs))
 	for _, attr := range xf.Attrs {
+		if attr.Name.Local == "plotmode" && attr.Value == "off" {
+			// plotmode="off" appears to be a synonym for opacity="0" in
+			// *ancient* versions of Apophysis.
+			continue
+		}
 		var v float64
 		v, err = strconv.ParseFloat(attr.Value, 64)
 		if err != nil {
