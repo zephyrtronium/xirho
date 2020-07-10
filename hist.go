@@ -165,29 +165,17 @@ func (h *Hist) At(x, y int) color.Color {
 		return color.RGBA64{}
 	}
 	return color.RGBA64{
-		R: cscale(r, h.br, h.lb),
-		G: cscale(g, h.br, h.lb),
-		B: cscale(b, h.br, h.lb),
-		A: cscaleg(n, h.mn, h.lb, h.exp),
+		R: cscaleg(r, h.mn, h.br, h.lb, h.exp),
+		G: cscaleg(g, h.mn, h.br, h.lb, h.exp),
+		B: cscaleg(b, h.mn, h.br, h.lb, h.exp),
+		A: cscaleg(n, h.mn, 1, h.lb, h.exp),
 	}
-}
-
-// cscale scales a bin count to a color component.
-func cscale(n uint64, br, lb float64) uint16 {
-	a := float64(n) * br               // brightness
-	a = (math.Log10(a) - clscale) / lb // logarithmic tone mapping
-	a *= 65536                         // scale to uint16
-	if a < 0 {                         // clip to uint16
-		a = 0
-	} else if a > 65535 {
-		a = 65535
-	}
-	return uint16(a)
 }
 
 // cscaleg scales a bin count to a color component with gamma.
-func cscaleg(n, mn uint64, lb, exp float64) uint16 {
-	a := (math.Log10(float64(n)) - clscale) / lb // logarithmic tone mapping
+func cscaleg(n, mn uint64, br, lb, exp float64) uint16 {
+	a := float64(n) * br               // brightness
+	a = (math.Log10(a) - clscale) / lb // logarithmic tone mapping
 	if n > mn {
 		a = math.Pow(a, exp) // gamma
 	}
