@@ -3,7 +3,7 @@ package fapi
 import "fmt"
 
 // OutOfBoundsInt is an error returned when attempting to set an Int or List to
-// a value which is out of the parameter's defined limits. 
+// a value which is out of the parameter's defined limits.
 type OutOfBoundsInt struct {
 	// Param is the parameter which the caller attempted to set.
 	Param Param
