@@ -1,1 +1,320 @@
-{"funcs":[{"name":"then","params":{"funcs":[{"name":"blur"},{"name":"affine","params":{"transform":[10,0,0,0,0,10,0,0,0,0,10,0]}},{"name":"bubble"},{"name":"affine","params":{"transform":[0.185,0,0,0,0,0.185,0,0,0,0,0.185,0]}},{"name":"colorspeed","params":{"color":0.5,"speed":0.5}}]}},{"name":"then","params":{"funcs":[{"name":"then","params":{"funcs":[{"name":"affine","params":{"transform":[0.7071067811865476,0.7071067811865475,0,0,-0.7071067811865475,0.7071067811865476,0,0.3,0,0,0,0]}},{"name":"colorspeed","params":{"color":0,"speed":0.75}}]}},{"name":"julian","params":{"dist":-1,"power":2}}]}},{"name":"then","params":{"funcs":[{"name":"affine","params":{"transform":[0.7071067811865476,0.7071067811865475,0,0,-0.7071067811865475,0.7071067811865476,0,0,0,0,1,0]}},{"name":"julian","params":{"dist":-1,"power":15}},{"name":"then","params":{"funcs":[{"name":"affine","params":{"transform":[0.2,0,0,0,0,0.2,0,0,0,0,0,0]}},{"name":"colorspeed","params":{"color":1,"speed":0.8}}]}}]}},{"name":"then","params":{"funcs":[{"name":"affine","params":{"transform":[0.7071067811865476,0.7071067811865475,0,0,-0.7071067811865475,0.7071067811865476,0,0,0,0,1,0]}},{"name":"julian","params":{"dist":-1,"power":8}},{"name":"then","params":{"funcs":[{"name":"affine","params":{"transform":[0.3,0,0,0,0,0.3,0,0,0,0,0,0]}},{"name":"colorspeed","params":{"color":1,"speed":0.8}}]}}]}}],"final":{"name":"then","params":{"funcs":[{"name":"affine","params":{"transform":[1,0,0,0.4,0,1,0,0,0,0,1,0]}},{"name":"spherical"}]}},"weights":[1,12,2,2],"graph":[[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,1,1,1]],"aspect":1,"camera":[0.6,0,0,0,0,0.6,0,0,0,0,0,0],"gamma":0,"palette":"/wQOJFjQ4EGECRUuVAjA4UODDyEWlOgwYsWLEjNOtEgRo0eNICcSrAhgY0eSJUcOLHnSpEiULD+mDEkwIA=="}
+{
+    "funcs": [
+        {
+            "name": "then",
+            "params": {
+                "funcs": [
+                    {
+                        "name": "blur"
+                    },
+                    {
+                        "name": "affine",
+                        "params": {
+                            "transform": [
+                                10,
+                                0,
+                                0,
+                                0,
+                                0,
+                                10,
+                                0,
+                                0,
+                                0,
+                                0,
+                                10,
+                                0
+                            ]
+                        }
+                    },
+                    {
+                        "name": "bubble"
+                    },
+                    {
+                        "name": "affine",
+                        "params": {
+                            "transform": [
+                                0.185,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0.185,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0.185,
+                                0
+                            ]
+                        }
+                    },
+                    {
+                        "name": "colorspeed",
+                        "params": {
+                            "color": 0.5,
+                            "speed": 0.5
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "then",
+            "params": {
+                "funcs": [
+                    {
+                        "name": "then",
+                        "params": {
+                            "funcs": [
+                                {
+                                    "name": "affine",
+                                    "params": {
+                                        "transform": [
+                                            0.7071067811865476,
+                                            0.7071067811865475,
+                                            0,
+                                            0,
+                                            -0.7071067811865475,
+                                            0.7071067811865476,
+                                            0,
+                                            0.3,
+                                            0,
+                                            0,
+                                            0,
+                                            0
+                                        ]
+                                    }
+                                },
+                                {
+                                    "name": "colorspeed",
+                                    "params": {
+                                        "color": 0,
+                                        "speed": 0.75
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "julian",
+                        "params": {
+                            "dist": -1,
+                            "power": 2
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "then",
+            "params": {
+                "funcs": [
+                    {
+                        "name": "affine",
+                        "params": {
+                            "transform": [
+                                0.7071067811865476,
+                                0.7071067811865475,
+                                0,
+                                0,
+                                -0.7071067811865475,
+                                0.7071067811865476,
+                                0,
+                                0,
+                                0,
+                                0,
+                                1,
+                                0
+                            ]
+                        }
+                    },
+                    {
+                        "name": "julian",
+                        "params": {
+                            "dist": -1,
+                            "power": 15
+                        }
+                    },
+                    {
+                        "name": "then",
+                        "params": {
+                            "funcs": [
+                                {
+                                    "name": "affine",
+                                    "params": {
+                                        "transform": [
+                                            0.2,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0.2,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0
+                                        ]
+                                    }
+                                },
+                                {
+                                    "name": "colorspeed",
+                                    "params": {
+                                        "color": 1,
+                                        "speed": 0.8
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "then",
+            "params": {
+                "funcs": [
+                    {
+                        "name": "affine",
+                        "params": {
+                            "transform": [
+                                0.7071067811865476,
+                                0.7071067811865475,
+                                0,
+                                0,
+                                -0.7071067811865475,
+                                0.7071067811865476,
+                                0,
+                                0,
+                                0,
+                                0,
+                                1,
+                                0
+                            ]
+                        }
+                    },
+                    {
+                        "name": "julian",
+                        "params": {
+                            "dist": -1,
+                            "power": 8
+                        }
+                    },
+                    {
+                        "name": "then",
+                        "params": {
+                            "funcs": [
+                                {
+                                    "name": "affine",
+                                    "params": {
+                                        "transform": [
+                                            0.3,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0.3,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0
+                                        ]
+                                    }
+                                },
+                                {
+                                    "name": "colorspeed",
+                                    "params": {
+                                        "color": 1,
+                                        "speed": 0.8
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "final": {
+        "name": "then",
+        "params": {
+            "funcs": [
+                {
+                    "name": "affine",
+                    "params": {
+                        "transform": [
+                            1,
+                            0,
+                            0,
+                            0.4,
+                            0,
+                            1,
+                            0,
+                            0,
+                            0,
+                            0,
+                            1,
+                            0
+                        ]
+                    }
+                },
+                {
+                    "name": "spherical"
+                }
+            ]
+        }
+    },
+    "opacity": [1, 1, 1, 1],
+    "weights": [
+        1,
+        12,
+        2,
+        2
+    ],
+    "graph": [
+        [
+            1,
+            1,
+            1,
+            1
+        ],
+        [
+            1,
+            1,
+            1,
+            1
+        ],
+        [
+            1,
+            1,
+            1,
+            1
+        ],
+        [
+            1,
+            1,
+            1,
+            1
+        ]
+    ],
+    "aspect": 1,
+    "camera": [
+        0.6,
+        0,
+        0,
+        0,
+        0,
+        0.6,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+    ],
+    "gamma": 0,
+    "palette": "/wQOJFjQ4EGECRUuVAjA4UODDyEWlOgwYsWLEjNOtEgRo0eNICcSrAhgY0eSJUcOLHnSpEiULD+mDEkwIA=="
+}
