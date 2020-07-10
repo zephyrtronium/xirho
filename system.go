@@ -80,25 +80,30 @@ func (s System) Iter(ctx context.Context, r *R, rng RNG) {
 			atomic.AddInt64(&r.q, q)
 			return
 		default:
+			if !p.IsValid() {
+				p, k = it.fuse()
+				continue
+			}
+			p = it.Funcs[k].Calc(p, &it.rng)
+			// If a function has opacity α, that means we plot its points with
+			// probability α. If we don't plot a point, then there's no reason
+			// to apply the final, since that is only a nonlinear camera.
+			if it.op[k] >= 1<<53 || (it.op[k] > 0 && it.rng.Uint64()%(1<<53) < it.op[k]) {
+				fp := it.final(p)
+				if r.plot(fp) {
+					q++
+					if q == 0x1000 {
+						atomic.AddInt64(&r.q, q)
+						q = 0
+					}
+				}
+			}
+			k = it.next(k)
 			n++
 			if n == 0x1000 {
 				atomic.AddInt64(&r.n, n)
 				n = 0
 			}
-			if !p.IsValid() {
-				p, k = it.fuse()
-				continue
-			}
-			fp := it.final(p)
-			if r.plot(fp, it.op[k]) {
-				q++
-				if q == 0x1000 {
-					atomic.AddInt64(&r.q, q)
-					q = 0
-				}
-			}
-			p = it.Funcs[k].Calc(p, &it.rng)
-			k = it.next(k)
 		}
 	}
 }
@@ -168,7 +173,7 @@ func (it *iterator) fuse() (P, int) {
 		C: crazy.Uniform0_1{Source: &it.rng}.Next(),
 	}
 	k := it.next(crazy.RNG{Source: &it.rng}.Intn(len(it.Funcs)))
-	for i := 0; i < fuseLen+1; i++ {
+	for i := 0; i < fuseLen; i++ {
 		p = it.Funcs[k].Calc(p, &it.rng)
 		if !p.IsValid() {
 			break
@@ -236,11 +241,11 @@ func (it *iterator) prep() {
 			}
 		}
 	}
-	// Calculate opacity multipliers. Opacity is a 16.0 by 1.47 fixed-point
-	// multiplication.
+	// Calculate opacity probabilities. The idea here is essentially the same
+	// as in fixed-point weights.
 	it.op = make([]uint64, len(it.Funcs))
 	for i, x := range it.Opacity {
-		it.op[i] = uint64(x * (1 << 47))
+		it.op[i] = uint64(x * (1 << 53))
 	}
 }
 
