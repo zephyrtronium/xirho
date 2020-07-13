@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/zephyrtronium/xirho"
+	"github.com/zephyrtronium/xirho/xmath"
 )
 
 // Param is a user-controlled function parameter. Each implementing type has
@@ -190,11 +191,9 @@ func angleFor(name string, v *xirho.Angle) Param {
 
 // Set sets the angle value wrapped into the interval (-pi, pi].
 func (p Angle) Set(v xirho.Angle) error {
-	v = xirho.Angle(math.Mod(float64(v), 2*math.Pi))
-	if v > math.Pi {
-		v -= 2 * math.Pi
-	}
-	*p.v = v
+	x := xmath.Angle(float64(v))
+	// TODO: error if x is not finite
+	*p.v = xirho.Angle(x)
 	return nil
 }
 

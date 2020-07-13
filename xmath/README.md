@@ -2,4 +2,4 @@
 
 Package xmath provides mathematics routines convenient to xirho and its components.
 
-Currently, this only provides the RNG implementation.
+Currently, this provides the RNG implementation and some helpers for coordinate systems.

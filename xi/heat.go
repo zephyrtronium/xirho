@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/zephyrtronium/xirho"
+	"github.com/zephyrtronium/xirho/xmath"
 )
 
 // Heat applies transverse and radial waves.
@@ -22,20 +23,12 @@ type Heat struct {
 }
 
 func (v *Heat) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
-	r := math.Sqrt(in.X*in.X + in.Y*in.Y + in.Z*in.Z)
-	theta := math.Atan2(in.Y, in.X)
-	phi := math.Acos(in.Z / r)
+	r, theta, phi := xmath.Spherical(in.X, in.Y, in.Z)
 	r += float64(v.RA) * math.Sin((2*math.Pi*r+float64(v.RP))/float64(v.RT))
 	theta += float64(v.ThetaA) * math.Sin((2*math.Pi*r+float64(v.ThetaP))/float64(v.ThetaT))
 	phi += float64(v.PhiA) * math.Sin((2*math.Pi*r+float64(v.PhiP))/float64(v.PhiT))
-	st, ct := math.Sincos(theta)
-	sp, cp := math.Sincos(phi)
-	return xirho.P{
-		X: r * ct * sp,
-		Y: r * st * sp,
-		Z: r * cp,
-		C: in.C,
-	}
+	in.X, in.Y, in.Z = xmath.FromSpherical(r, theta, phi)
+	return in
 }
 
 func (v *Heat) Prep() {}
