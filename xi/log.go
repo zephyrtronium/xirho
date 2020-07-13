@@ -26,5 +26,5 @@ func (v *Log) Prep() {
 }
 
 func init() {
-	Register("log", func() xirho.F { return &Log{Base: math.E} })
+	must("log", func() xirho.F { return &Log{Base: math.E} })
 }

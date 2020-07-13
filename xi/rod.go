@@ -24,5 +24,5 @@ func (v *Rod) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 func (v *Rod) Prep() {}
 
 func init() {
-	Register("rod", func() xirho.F { return &Rod{Radius: 0.1} })
+	must("rod", func() xirho.F { return &Rod{Radius: 0.1} })
 }

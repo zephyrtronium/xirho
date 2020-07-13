@@ -24,6 +24,6 @@ func (CElliptic) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 func (CElliptic) Prep() {}
 
 func init() {
-	Register("celliptic", newConfElliptic)
+	must("celliptic", newConfElliptic)
 	// maybe elliptic as well?
 }

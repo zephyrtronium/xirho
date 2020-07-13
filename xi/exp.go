@@ -26,5 +26,5 @@ func (v *Exp) Prep() {
 }
 
 func init() {
-	Register("exp", func() xirho.F { return &Exp{Base: math.E} })
+	must("exp", func() xirho.F { return &Exp{Base: math.E} })
 }

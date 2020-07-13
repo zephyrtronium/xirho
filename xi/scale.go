@@ -17,5 +17,5 @@ func (v *Scale) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 func (v *Scale) Prep() {}
 
 func init() {
-	Register("scale", func() xirho.F { return &Scale{Amount: 1} })
+	must("scale", func() xirho.F { return &Scale{Amount: 1} })
 }

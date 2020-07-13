@@ -19,6 +19,6 @@ func (Gaussblur) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 func (Gaussblur) Prep() {}
 
 func init() {
-	Register("gaussblur", func() xirho.F { return Gaussblur{} })
-	Register("gaussian_blur", func() xirho.F { return Gaussblur{} })
+	must("gaussblur", func() xirho.F { return Gaussblur{} })
+	must("gaussian_blur", func() xirho.F { return Gaussblur{} })
 }

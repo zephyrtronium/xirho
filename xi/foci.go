@@ -21,5 +21,5 @@ func (Foci) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 func (Foci) Prep() {}
 
 func init() {
-	Register("foci", func() xirho.F { return Foci{} })
+	must("foci", func() xirho.F { return Foci{} })
 }

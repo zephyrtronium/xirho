@@ -53,5 +53,5 @@ func newLazySusan() xirho.F {
 }
 
 func init() {
-	Register("lazysusan", newLazySusan)
+	must("lazysusan", newLazySusan)
 }

@@ -23,5 +23,5 @@ func (v *Scry) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 func (v *Scry) Prep() {}
 
 func init() {
-	Register("scry", func() xirho.F { return &Scry{Radius: 1} })
+	must("scry", func() xirho.F { return &Scry{Radius: 1} })
 }

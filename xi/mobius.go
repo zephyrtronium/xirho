@@ -84,6 +84,6 @@ func (v *Mobius) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 func (v *Mobius) Prep() {}
 
 func init() {
-	Register("mobius", newMobius)
-	Register("mobiq", newMobius)
+	must("mobius", newMobius)
+	must("mobiq", newMobius)
 }

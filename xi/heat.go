@@ -48,5 +48,5 @@ func newHeat() xirho.F {
 }
 
 func init() {
-	Register("heat", newHeat)
+	must("heat", newHeat)
 }

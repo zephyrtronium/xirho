@@ -20,5 +20,5 @@ func (v *Curl) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 func (v *Curl) Prep() {}
 
 func init() {
-	Register("curl", func() xirho.F { return &Curl{} })
+	must("curl", func() xirho.F { return &Curl{} })
 }

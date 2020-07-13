@@ -28,5 +28,5 @@ func (v *Exblur) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 func (v *Exblur) Prep() {}
 
 func init() {
-	Register("exblur", func() xirho.F { return &Exblur{Dist: 0.5} })
+	must("exblur", func() xirho.F { return &Exblur{Dist: 0.5} })
 }

@@ -35,6 +35,6 @@ func (v *Splits) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 func (v *Splits) Prep() {}
 
 func init() {
-	Register("splits", newSplits)
-	Register("splits3D", newSplits)
+	must("splits", newSplits)
+	must("splits3D", newSplits)
 }

@@ -28,5 +28,5 @@ func (v *Bipolar) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 func (v *Bipolar) Prep() {}
 
 func init() {
-	Register("bipolar", func() xirho.F { return &Bipolar{} })
+	must("bipolar", func() xirho.F { return &Bipolar{} })
 }

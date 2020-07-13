@@ -36,5 +36,5 @@ func newFarblur() xirho.F {
 }
 
 func init() {
-	Register("farblur", newFarblur)
+	must("farblur", newFarblur)
 }

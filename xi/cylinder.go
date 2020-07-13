@@ -20,5 +20,5 @@ func (Cylinder) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 func (Cylinder) Prep() {}
 
 func init() {
-	Register("cylinder", func() xirho.F { return Cylinder{} })
+	must("cylinder", func() xirho.F { return Cylinder{} })
 }
