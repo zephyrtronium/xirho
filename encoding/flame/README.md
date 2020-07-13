@@ -6,6 +6,7 @@ By default, the parser recognizes the following variations and their parameters:
 
 - linear (always treated as 3D)
 - linear3D
+- bipolar
 - blur
 - pre_blur
 - bubble
@@ -13,19 +14,27 @@ By default, the parser recognizes the following variations and their parameters:
 - curl
 - cylinder
 - disc
+- exp
+- expo
 - flatten
+- foci
+- gaussian_blur
+- post_heat
 - julia (not tested and probably wrong)
 - julian
+- lazysusan
 - log
 - mobius
 - mobiq
 - polar
 - rod (rod_blur parameter is ignored)
+- scry
 - spherical
 - spherical3D
 - pre_spherical
 - splits
 - splits3D
+- unpolar
 
 ## Adding variations
 

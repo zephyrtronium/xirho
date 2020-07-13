@@ -5,6 +5,7 @@ Package xi provides function registration and implementations for xirho.
 The following function types (variations) are implemented here:
 
 - Affine (the "triangles" in Apophysis)
+- Bipolar
 - Blur
 - Bubble
 - CElliptic (similar to elliptic)
@@ -12,14 +13,22 @@ The following function types (variations) are implemented here:
 - Curl
 - Cylinder
 - Disc
+- Exblur
+- Exp
+- Farblur
 - Flatten
+- Foci
+- Gaussblur
+- Heat
 - JuliaN
+- LazySusan
 - Log
 - Mobius (a 3D version, like the mobiq plugin)
 - Perspective (like in the Apophysis render settings)
 - Polar
 - Rod
 - Scale (like linear or linear3D)
+- Scry
 - Spherical
 - Splits (the 3D version)
 - Sum (roughly implements the behavior of multiple variations in Apophysis)
