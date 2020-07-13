@@ -2,8 +2,9 @@
 //
 // External packages adding new function types only need to Register a factory
 // here to automatically work with xirho serialization and user interfaces.
-// Conversely, user interfaces will be primarily interested in the New and
-// NameOf functions, as most of the rest of the work is done in package fapi.
+// Conversely, user interfaces will be primarily interested in the New, NameOf,
+// and Names functions, as most of the rest of the work is done in package
+// fapi.
 //
 // Lastly, some users may want to use the function implementation types
 // directly, either to decode systems serialized in another format (e.g.

@@ -3,6 +3,7 @@ package xi
 import (
 	"fmt"
 	"reflect"
+	"sort"
 
 	"github.com/zephyrtronium/xirho"
 )
@@ -52,6 +53,26 @@ func New(name string) xirho.F {
 func NameOf(f xirho.F) (name string, ok bool) {
 	name, ok = f2name[reflect.TypeOf(f)]
 	return
+}
+
+// Names returns a list of all registered function names. If unique is true,
+// then only the first name registered for each underlying type is used. The
+// names are returned in lexicographically increasing order.
+func Names(unique bool) []string {
+	var r []string
+	if unique {
+		r = make([]string, 0, len(f2name))
+		for _, name := range f2name {
+			r = append(r, name)
+		}
+	} else {
+		r = make([]string, 0, len(name2f))
+		for name := range name2f {
+			r = append(r, name)
+		}
+	}
+	sort.Strings(r)
+	return r
 }
 
 // must registers a function and panics if Register returns a non-nil error.

@@ -62,6 +62,6 @@ Then `go build -buildmode=plugin plugin.go` will create a Go plugin that a rende
 If xi is the best place for a new variation, e.g. because it is very common in Apophysis, then make sure to follow the following steps:
 
 - Create the function type with `Calc` and `Prep` methods.
-- Register any factories in a `func init()`. There must be at least one factory, to ensure that the type implements `xirho.F`.
+- Register any factories in a `func init()` using `must`. There must be at least one factory, to ensure that the type implements `xirho.F`.
 - Add it to this README, in the list near the top.
 - Create Flame parsers in package `xirho/encoding/flame` and add it to the README there.
