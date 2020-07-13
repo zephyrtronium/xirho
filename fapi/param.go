@@ -192,7 +192,9 @@ func angleFor(name string, v *xirho.Angle) Param {
 // Set sets the angle value wrapped into the interval (-pi, pi].
 func (p Angle) Set(v xirho.Angle) error {
 	x := xmath.Angle(float64(v))
-	// TODO: error if x is not finite
+	if !xmath.IsFinite(x) {
+		return NotFinite{Param: p}
+	}
 	*p.v = xirho.Angle(x)
 	return nil
 }
@@ -235,6 +237,9 @@ func realFor(name string, v *xirho.Real, bounded bool, lo, hi xirho.Real) Param 
 // Set sets the real value. If the Real is bounded and v is out of its bounds,
 // an error of type OutOfBoundsReal is returned instead.
 func (p Real) Set(v xirho.Real) error {
+	if !xmath.IsFinite(float64(v)) {
+		return NotFinite{Param: p}
+	}
 	if p.bdd && (v < p.lo || p.hi < v) {
 		return OutOfBoundsReal{
 			Param: p,
@@ -282,6 +287,9 @@ func complexFor(name string, v *xirho.Complex) Param {
 
 // Set sets the complex value.
 func (p Complex) Set(v xirho.Complex) error {
+	if !xmath.IsFinite(real(v)) || !xmath.IsFinite(imag(v)) {
+		return NotFinite{Param: p}
+	}
 	*p.v = v
 	return nil
 }
@@ -307,6 +315,11 @@ func vec3For(name string, v *xirho.Vec3) Param {
 
 // Set sets the vector value.
 func (p Vec3) Set(v xirho.Vec3) error {
+	for _, x := range v {
+		if !xmath.IsFinite(x) {
+			return NotFinite{Param: p}
+		}
+	}
 	*p.v = v
 	return nil
 }
@@ -332,6 +345,11 @@ func affineFor(name string, v *xirho.Affine) Param {
 
 // Set sets the affine transform value.
 func (p Affine) Set(v xirho.Affine) error {
+	for _, x := range v {
+		if !xmath.IsFinite(x) {
+			return NotFinite{Param: p}
+		}
+	}
 	*p.v = v
 	return nil
 }
