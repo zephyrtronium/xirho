@@ -3,7 +3,6 @@ package xi
 import (
 	"math"
 
-	"github.com/zephyrtronium/crazy"
 	"github.com/zephyrtronium/xirho"
 )
 
@@ -19,8 +18,8 @@ type Farblur struct {
 func (v *Farblur) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 	ox, oy, oz := in.X-v.Origin[0], in.Y-v.Origin[1], in.Z-v.Origin[2]
 	r := ox*ox + oy*oy + oz*oz
-	g := crazy.NewNormal(rng, 0, math.Pow(r, float64(v.Dist)))
-	x, y, z := xirho.Tx(&v.Ax, g.Next(), g.Next(), g.Next())
+	s := math.Pow(r, float64(v.Dist))
+	x, y, z := xirho.Tx(&v.Ax, rng.Normal()*s, rng.Normal()*s, rng.Normal()*s)
 	in.X += x
 	in.Y += y
 	in.Z += z

@@ -3,7 +3,6 @@ package xi
 import (
 	"math"
 
-	"github.com/zephyrtronium/crazy"
 	"github.com/zephyrtronium/xirho"
 )
 
@@ -16,9 +15,8 @@ func newBlur() xirho.F {
 }
 
 func (Blur) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
-	d := crazy.Uniform0_1{rng}
-	s, c := math.Sincos(2 * math.Pi * d.Next())
-	r := d.Next()
+	s, c := math.Sincos(2 * math.Pi * rng.Uniform())
+	r := rng.Uniform()
 	in.X = r * c
 	in.Y = r * s
 	return in

@@ -7,6 +7,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/zephyrtronium/xirho/xmath"
 )
 
 // R manages the rendering of a System onto a Hist.
@@ -51,7 +53,7 @@ type R struct {
 // Render multiple times concurrently, nor to modify any of r's fields
 // concurrently.
 func (r *R) Render(ctx context.Context) {
-	rng := newRNG()
+	rng := xmath.NewRNG()
 	r.aspect = float64(r.Hist.rows) / float64(r.Hist.cols)
 	ctx, cancel := context.WithCancel(ctx)
 	procs := r.Procs

@@ -3,7 +3,6 @@ package xi
 import (
 	"math"
 
-	"github.com/zephyrtronium/crazy"
 	"github.com/zephyrtronium/xirho"
 )
 
@@ -14,11 +13,10 @@ type Rod struct {
 }
 
 func (v *Rod) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
-	u := crazy.Uniform0_1{Source: rng}
-	s, c := math.Sincos(2 * math.Pi * u.Next())
+	s, c := math.Sincos(2 * math.Pi * rng.Uniform())
 	return xirho.P{
 		X: float64(v.Radius) * s,
-		Y: in.Y + u.Next() + u.Next() + u.Next() + u.Next() - 2,
+		Y: in.Y + rng.Normal(),
 		Z: float64(v.Radius) * c,
 	}
 }

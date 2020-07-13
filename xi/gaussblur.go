@@ -1,7 +1,6 @@
 package xi
 
 import (
-	"github.com/zephyrtronium/crazy"
 	"github.com/zephyrtronium/xirho"
 )
 
@@ -9,11 +8,10 @@ import (
 type Gaussblur struct{}
 
 func (Gaussblur) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
-	r := crazy.NewNormal(rng, 0, 1)
 	return xirho.P{
-		X: r.Next(),
-		Y: r.Next(),
-		Z: r.Next(),
+		X: rng.Normal(),
+		Y: rng.Normal(),
+		Z: rng.Normal(),
 		C: in.C,
 	}
 }

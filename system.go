@@ -5,14 +5,11 @@ import (
 	"fmt"
 	"sync/atomic"
 
-	"github.com/zephyrtronium/crazy"
+	"github.com/zephyrtronium/xirho/xmath"
 )
 
 // RNG is the randomness source type.
-type RNG = crazy.Xoshiro
-
-// MaxFuncs is the maximum number of unique functions that a system may hold.
-const MaxFuncs = 65536
+type RNG = xmath.RNG
 
 // System is a generalized iterated function system.
 type System struct {
@@ -165,14 +162,13 @@ const fuseLen = 30
 
 // fuse obtains initial conditions to plot points from the system.
 func (it *iterator) fuse() (P, int) {
-	d := crazy.Uniform{Source: &it.rng, Low: -1, High: 1}
 	p := P{
-		X: d.Next(),
-		Y: d.Next(),
-		Z: d.Next(),
-		C: crazy.Uniform0_1{Source: &it.rng}.Next(),
+		X: it.rng.Uniform()*2 - 1,
+		Y: it.rng.Uniform()*2 - 1,
+		Z: it.rng.Uniform()*2 - 1,
+		C: it.rng.Uniform(),
 	}
-	k := it.next(crazy.RNG{Source: &it.rng}.Intn(len(it.Funcs)))
+	k := it.next(it.rng.Intn(len(it.Funcs)))
 	for i := 0; i < fuseLen; i++ {
 		p = it.Funcs[k].Calc(p, &it.rng)
 		if !p.IsValid() {
@@ -260,11 +256,4 @@ func cumsum(f []float64) float64 {
 		sum = f[i]
 	}
 	return sum
-}
-
-// newRNG creates a new seeded RNG instance.
-func newRNG() RNG {
-	rng := RNG{}
-	crazy.CryptoSeeded(&rng, 8)
-	return rng
 }

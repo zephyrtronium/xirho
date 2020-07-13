@@ -3,7 +3,6 @@ package xi
 import (
 	"math"
 
-	"github.com/zephyrtronium/crazy"
 	"github.com/zephyrtronium/xirho"
 )
 
@@ -21,7 +20,7 @@ func (v *Exblur) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 	// TODO: learn some geometry to do this without trig functions
 	theta := math.Atan2(oy, ox)
 	phi := math.Acos(oz / math.Sqrt(r))
-	s := math.Pow(r, float64(v.Dist))*crazy.Normal{Source: rng, StdDev: float64(v.Str)}.Next() + math.Sqrt(r)
+	s := math.Pow(r, float64(v.Dist))*rng.Normal()*float64(v.Str) + math.Sqrt(r)
 	st, ct := math.Sincos(theta)
 	sp, cp := math.Sincos(phi)
 	return xirho.P{
