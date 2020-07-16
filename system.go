@@ -105,12 +105,16 @@ func (s System) Iter(ctx context.Context, r *R, rng RNG) {
 	}
 }
 
-// Check verifies that the system is properly configured: it has as many
-// opacities and weights as functions, the directed graph links to every
-// function, no opacities are outside [0, 1], and neither the weights nor the
-// directed graph contain a negative or non-finite element. If any of these
-// conditions is false, then the returned error describes the problem.
+// Check verifies that the system is properly configured: it contains at least
+// one function, it has as many opacities and weights as functions, the
+// directed graph links to every function, no opacities are outside [0, 1], and
+// neither the weights nor the directed graph contain a negative or non-finite
+// element. If any of these conditions is false, then the returned error
+// describes the problem.
 func (s System) Check() error {
+	if s.Empty() {
+		return fmt.Errorf("xirho: cannot render an empty system")
+	}
 	if len(s.Funcs) != len(s.Opacity) {
 		return fmt.Errorf("xirho: size mismatch, have %d funcs and %d opacities", len(s.Funcs), len(s.Opacity))
 	}
@@ -147,6 +151,11 @@ func (s System) Check() error {
 		}
 	}
 	return nil
+}
+
+// Empty returns whether the system contains no functions.
+func (s System) Empty() bool {
+	return len(s.Funcs) == 0
 }
 
 // final applies the system's Final function to the point, if present.

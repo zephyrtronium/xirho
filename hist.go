@@ -74,6 +74,11 @@ func (h *Hist) Reset(width, height int) {
 	}
 }
 
+// Empty returns true if the histogram has zero size.
+func (h *Hist) Empty() bool {
+	return h.rows == 0 || h.cols == 0
+}
+
 // Add increments a histogram bucket by the given color. It is safe for
 // multiple goroutines to call this concurrently.
 func (h *Hist) Add(x, y int, c color.NRGBA64) {
