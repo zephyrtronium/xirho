@@ -38,35 +38,35 @@ type marshaler struct {
 }
 
 // Marshal creates a JSON encoding of the renderer and system information
-// needed to serialize the system. If r.System.Check returns a non-nil error,
+// needed to serialize the system. If system.Check returns a non-nil error,
 // then that error is returned instead.
-func Marshal(r *xirho.R) ([]byte, error) {
+func Marshal(system *xirho.System, r *xirho.R) ([]byte, error) {
 	// TODO: wrap errors
-	if err := r.System.Check(); err != nil {
+	if err := system.Check(); err != nil {
 		return nil, err
 	}
 	br, gamma, tr := r.Hist.Brightness()
 	m := marshaler{
 		Meta:    r.Meta,
-		Funcs:   make([]*funcm, len(r.System.Funcs)),
-		Opacity: r.System.Opacity,
-		Weights: r.System.Weights,
-		Graph:   r.System.Graph,
-		Labels:  r.System.Labels,
+		Funcs:   make([]*funcm, len(system.Funcs)),
+		Opacity: system.Opacity,
+		Weights: system.Weights,
+		Graph:   system.Graph,
+		Labels:  system.Labels,
 		Camera:  r.Camera,
 		Gamma:   gamma,
 		Thresh:  tr,
 		Bright:  br,
 	}
-	for i, f := range r.System.Funcs {
+	for i, f := range system.Funcs {
 		e, err := newFuncm(f)
 		if err != nil {
 			return nil, err
 		}
 		m.Funcs[i] = e
 	}
-	if r.System.Final != nil {
-		e, err := newFuncm(r.System.Final)
+	if system.Final != nil {
+		e, err := newFuncm(system.Final)
 		if err != nil {
 			return nil, err
 		}
@@ -102,31 +102,31 @@ func Marshal(r *xirho.R) ([]byte, error) {
 // its Reset method called before use. The Procs, N, and Q fields are left 0.
 // Calling UseNumber on the decoder allows Unmarshal to guarantee full
 // precision for xirho.Int function parameters.
-func Unmarshal(d *json.Decoder) (render *xirho.R, aspect float64, err error) {
+func Unmarshal(d *json.Decoder) (system *xirho.System, render *xirho.R, aspect float64, err error) {
 	// TODO: wrap errors
 	m := marshaler{}
 	if err = d.Decode(&m); err != nil {
 		return
 	}
 	render = &xirho.R{
-		Hist: &xirho.Hist{},
-		System: xirho.System{
-			Funcs:   make([]xirho.F, len(m.Funcs)),
-			Opacity: m.Opacity,
-			Weights: m.Weights,
-			Graph:   m.Graph,
-		},
+		Hist:   &xirho.Hist{},
 		Camera: m.Camera,
+	}
+	system = &xirho.System{
+		Funcs:   make([]xirho.F, len(m.Funcs)),
+		Opacity: m.Opacity,
+		Weights: m.Weights,
+		Graph:   m.Graph,
 	}
 	aspect = m.Aspect
 	for i, f := range m.Funcs {
-		render.System.Funcs[i], err = unf(f)
+		system.Funcs[i], err = unf(f)
 		if err != nil {
 			return
 		}
 	}
 	if m.Final != nil {
-		render.System.Final, err = unf(m.Final)
+		system.Final, err = unf(m.Final)
 		if err != nil {
 			return
 		}

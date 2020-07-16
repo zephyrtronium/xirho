@@ -24,6 +24,8 @@ import (
 type Flame struct {
 	// Name is the name of the flame.
 	Name string
+	// System is the encoded function system.
+	System *xirho.System
 	// R is the renderer for the system. Its histogram should be Reset to the
 	// appropriate size before rendering.
 	R *xirho.R
@@ -147,9 +149,9 @@ func convert(flm flame) (r Flame) {
 		}
 		system.Final = df.f
 	}
+	r.System = &system
 	r.R = &xirho.R{
 		Hist:    &xirho.Hist{},
-		System:  system,
 		Camera:  cam,
 		Palette: parsepalette(flm.Palette),
 	}

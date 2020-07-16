@@ -28,7 +28,6 @@ func main() {
 	var outname, profname, inname, flamename string
 	var sigint bool
 	var timeout time.Duration
-	var iters, hits int64
 	var width, height int
 	var osa int
 	var gamma, tr, bright float64
@@ -42,8 +41,6 @@ func main() {
 	flag.StringVar(&flamename, "flame", "", "input flame filename")
 	flag.BoolVar(&sigint, "C", true, "save image on interrupt instead of exiting")
 	flag.DurationVar(&timeout, "dur", 0, "max duration to render (default ignored)")
-	flag.Int64Var(&iters, "iters", 0, "max iters (default ignored)")
-	flag.Int64Var(&hits, "hits", 0, "max hits (default iters/5)")
 	flag.IntVar(&width, "width", 1024, "output image width")
 	flag.IntVar(&height, "height", 1024, "output image height")
 	flag.IntVar(&osa, "osa", 1, "oversampling; histogram bins per pixel per axis")
@@ -87,10 +84,8 @@ func main() {
 			cancel()
 		}()
 	}
-	if hits <= 0 {
-		hits = iters / 5
-	}
 
+	var system *xirho.System
 	var r *xirho.R
 	var err error
 	if flamename == "" {
@@ -103,7 +98,7 @@ func main() {
 			in = f
 		}
 		d := json.NewDecoder(in)
-		r, _, err = encoding.Unmarshal(d)
+		system, r, _, err = encoding.Unmarshal(d)
 		if err != nil {
 			log.Fatalln("error unmarshaling system:", err)
 		}
@@ -117,23 +112,22 @@ func main() {
 		if err != nil {
 			log.Fatalln("error unmarshaling system:", err)
 		}
+		system = flm.System
 		r = flm.R
 	}
 	log.Println("allocating histogram, estimated", xirho.HistMem(width*osa, height*osa)>>20, "MB")
 	r.Hist.Reset(width*osa, height*osa)
 	r.Hist.SetBrightness(bright, gamma, tr)
 	r.Procs = procs
-	r.N = iters
-	r.Q = hits
 	if echo {
-		m, err := encoding.Marshal(r)
+		m, err := encoding.Marshal(system, r)
 		if err != nil {
 			log.Fatalln("error reading system from input:", err)
 		}
 		log.Printf("system:\n%s\n", m)
 	}
-	log.Println("rendering up to", r.N, "iters or", r.Q, "hits or", timeout)
-	r.Render(ctx)
+	log.Println("rendering for", timeout, "or until ^C")
+	r.Render(ctx, system)
 	log.Println("finished render with", r.Iters(), "iters,", r.Hits(), "hits")
 	signal.Reset(os.Interrupt) // no rendering for ^C to interrupt
 	img := image.NewRGBA(image.Rect(0, 0, width, height))

@@ -140,6 +140,15 @@ func (h *Hist) Brightness() (br, gamma, tr float64) {
 	return br, gamma, tr
 }
 
+// Aspect returns the histogram's aspect ratio. If the histogram is empty, the
+// result is 0.
+func (h *Hist) Aspect() float64 {
+	if h.Empty() {
+		return 0
+	}
+	return float64(h.cols) / float64(h.rows)
+}
+
 // --- image.Image implementation for easy resizing ---
 
 // ColorModel returns the histogram's internal color model.

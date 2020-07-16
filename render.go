@@ -25,8 +25,6 @@ type R struct {
 
 	// Hist is the target histogram.
 	Hist *Hist
-	// System is the system to render.
-	System System
 	// Camera is the camera transform.
 	Camera Ax
 	// Palette is the colors used by the renderer.
@@ -34,96 +32,64 @@ type R struct {
 	// Procs is the number of goroutines to use in iterating the system. If
 	// Procs <= 0, then Render instead uses GOMAXPROCS goroutines.
 	Procs int
-	// N is the maximum number of iterations to perform. If N <= 0, then this
-	// is not used as an exit condition.
-	N int64
-	// Q is the maximum number of times to plot, i.e. the maximum number of
-	// iterations that produce points lying inside the histogram. If Q <= 0,
-	// then this is not used as an exit condition.
-	Q int64
-
-	// aspect is the aspect ratio of the histogram.
-	aspect float64
 
 	// Meta contains metadata about the fractal.
 	Meta *Metadata
 }
 
-// Render renders a System onto a Hist. It returns after the context closes or
-// after processing N points, and after all its renderer goroutines finish. It
-// is safe to call Render multiple times in succession to continue using the
-// same histogram, typically with increased N and Q. It is not safe to call
-// Render multiple times concurrently, nor to modify any of r's fields
+// Render renders a System onto a Hist. It returns after the context closes and
+// after all its renderer goroutines finish. It is safe to call Render multiple
+// times in succession to continue using the same histogram. It is not safe to
+// call Render multiple times concurrently, nor to modify any of r's fields
 // concurrently.
-func (r *R) Render(ctx context.Context) {
+func (r *R) Render(ctx context.Context, system *System) {
 	rng := xmath.NewRNG()
-	r.aspect = float64(r.Hist.rows) / float64(r.Hist.cols)
 	ctx, cancel := context.WithCancel(ctx)
 	procs := r.Procs
 	if procs <= 0 {
 		procs = runtime.GOMAXPROCS(0)
 	}
-	r.System.Prep()
+	system.Prep()
 	var wg sync.WaitGroup
 	wg.Add(procs)
 	for i := 0; i < procs; i++ {
 		go func(rng RNG) {
-			r.System.Iter(ctx, r, rng)
+			system.Iter(ctx, r, rng)
 			wg.Done()
 		}(rng)
 		rng.Jump()
 	}
-	ticker := time.NewTicker(15 * time.Millisecond)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			// If our context is cancelled, then so are the workers', but vet
-			// complains, and an extra cancel doesn't hurt anything.
-			cancel()
-			wg.Wait()
-			return
-		case <-ticker.C:
-			if (r.N > 0 && atomic.LoadInt64(&r.n) >= r.N) || (r.Q > 0 && atomic.LoadInt64(&r.q) >= r.Q) {
-				cancel()
-				wg.Wait()
-				return
-			}
-		}
-	}
+	<-ctx.Done()
+	cancel()
+	wg.Wait()
 }
 
-// RenderAsync manages asynchronous rendering. It is intended to be used
-// in a go statement.
+// RenderAsync manages asynchronous rendering. It is intended to be used in a
+// go statement. The renderer does not begin work until receiving a System and
+// other render settings over the change channel.
 //
 // RenderAsync is designed to allow a user interface to change rendering
 // parameters and receive plots safely, without needing to explicitly
 // synchronize worker goroutines. Whenever it receives items over the change or
 // plot channels, RenderAsync handles pausing and resuming workers as needed to
-// prevent data races. It also attempts to group together
-//
-// If the renderer contains a non-empty system and histogram upon calling this
-// method, RenderAsync immediately begins rendering using them, using Render's
-// rules for the number of worker goroutines. Otherwise, it waits for a
-// ChangeRender value to initialize the render parameters.
+// prevent data races. It also attempts to group together multiple changes and
+// plot requests to reduce unnecessary work.
 //
 // Once the context closes, RenderAsync stops its workers, closes the imgs
-// channel, and returns.
+// channel, and returns. If needed, other goroutines may join on RenderAsync by
+// waiting for imgs to close. Until imgs closes, it is not safe to modify or
+// read any of the renderer's fields.
 func (r *R) RenderAsync(ctx context.Context, change <-chan ChangeRender, plot <-chan PlotOnto, imgs chan<- draw.Image) {
 	rng := xmath.NewRNG()
 	rctx, cancel := context.WithCancel(ctx)
-	var wg sync.WaitGroup
 	defer close(imgs)
-	procs := 0
-	if !r.System.Empty() && !r.Hist.Empty() {
-		procs = r.Procs
-		if procs <= 0 {
-			procs = runtime.GOMAXPROCS(0)
-		}
-		r.start(rctx, &wg, procs, &rng)
-	}
-	var out chan<- draw.Image
-	var img draw.Image
+	var (
+		wg     sync.WaitGroup
+		procs  int
+		system *System
+		out    chan<- draw.Image
+		img    draw.Image
+	)
 	for {
 		select {
 		case <-ctx.Done():
@@ -136,6 +102,7 @@ func (r *R) RenderAsync(ctx context.Context, change <-chan ChangeRender, plot <-
 			x, y := r.Hist.cols, r.Hist.rows
 			wg.Wait() // TODO: select with ctx.Done
 			if !c.System.Empty() {
+				system = c.System
 				if !c.emptysz() {
 					x, y = c.Size.X, c.Size.Y
 				}
@@ -144,9 +111,8 @@ func (r *R) RenderAsync(ctx context.Context, change <-chan ChangeRender, plot <-
 				x, y = c.Size.X, c.Size.Y
 				r.Hist.Reset(x, y)
 			}
-			r.aspect = float64(y) / float64(x)
 			procs = c.Procs
-			r.start(rctx, &wg, procs, &rng)
+			r.start(rctx, &wg, procs, system, &rng)
 		case work := <-plot:
 			cancel()
 			work = drainplot(work, plot)
@@ -156,7 +122,7 @@ func (r *R) RenderAsync(ctx context.Context, change <-chan ChangeRender, plot <-
 			work.Scale.Scale(work.Image, work.Image.Bounds(), r.Hist, r.Hist.Bounds(), draw.Over, nil)
 			img = work.Image
 			out = imgs
-			r.start(rctx, &wg, procs, &rng)
+			r.start(rctx, &wg, procs, system, &rng)
 		case out <- img:
 			// out is normally nil, so this case will not be selected. It is
 			// set to imgs when we have an image to send; once we send the
@@ -168,11 +134,14 @@ func (r *R) RenderAsync(ctx context.Context, change <-chan ChangeRender, plot <-
 }
 
 // start starts worker goroutines with the given context.
-func (r *R) start(ctx context.Context, wg *sync.WaitGroup, procs int, rng *xmath.RNG) {
+func (r *R) start(ctx context.Context, wg *sync.WaitGroup, procs int, system *System, rng *xmath.RNG) {
+	if system == nil {
+		return
+	}
 	wg.Add(procs)
 	for i := 0; i < procs; i++ {
 		go func(rng xmath.RNG) {
-			r.System.Iter(ctx, r, rng)
+			system.Iter(ctx, r, rng)
 			wg.Done()
 		}(*rng)
 		rng.Jump()
@@ -187,17 +156,18 @@ func (r *R) plot(p P) bool {
 	}
 	x, y, _ := Tx(&r.Camera, p.X, p.Y, p.Z) // ignore z
 	var col, row int
-	if r.aspect <= 1 {
-		if x < -1 || x >= 1 || y < -r.aspect || y >= r.aspect {
+	aspect := r.Hist.Aspect()
+	if aspect >= 1 {
+		if x < -1 || x >= 1 || y < -1/aspect || y >= 1/aspect {
 			return false
 		}
 		col = int((x + 1) * 0.5 * float64(r.Hist.cols))
-		row = int((y/r.aspect + 1) * 0.5 * float64(r.Hist.rows))
+		row = int((y*aspect + 1) * 0.5 * float64(r.Hist.rows))
 	} else {
-		if x < -1/r.aspect || x >= 1/r.aspect || y < -1 || y >= 1 {
+		if x < -aspect || x >= aspect || y < -1 || y >= 1 {
 			return false
 		}
-		col = int((x*r.aspect + 1) * 0.5 * float64(r.Hist.cols))
+		col = int((x/aspect + 1) * 0.5 * float64(r.Hist.cols))
 		row = int((y + 1) * 0.5 * float64(r.Hist.rows))
 	}
 	c := int(p.C * float64(len(r.Palette)))
@@ -267,7 +237,7 @@ type PlotOnto struct {
 type ChangeRender struct {
 	// System is the new system to render. If the system is empty, then the
 	// renderer continues using its previous non-empty system.
-	System System
+	System *System
 	// Size is the new histogram size to render. If this is the zero value,
 	// then the histogram is neither resized nor reset. If this is equal to the
 	// histogram's current size, then all plotting progress is cleared.

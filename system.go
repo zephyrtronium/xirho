@@ -37,7 +37,7 @@ type System struct {
 
 // iterator manages the iterations of a System by a single goroutine.
 type iterator struct {
-	System
+	*System
 	// rng is the iterator's source of randomness.
 	rng RNG
 	// op is the pre-multiplied opacities of each function in the system.
@@ -48,7 +48,7 @@ type iterator struct {
 
 // Prep calls the Prep method of each function in the system. It should be
 // called once before any call to Iter.
-func (s System) Prep() {
+func (s *System) Prep() {
 	for _, f := range s.Funcs {
 		f.Prep()
 	}
@@ -61,7 +61,7 @@ func (s System) Prep() {
 // continues iterating until the context's Done channel is closed. rng should
 // be seeded to a distinct state for each call to this method. Iter panics if
 // Check returns an error.
-func (s System) Iter(ctx context.Context, r *R, rng RNG) {
+func (s *System) Iter(ctx context.Context, r *R, rng RNG) {
 	if err := s.Check(); err != nil {
 		panic(err)
 	}
@@ -89,18 +89,10 @@ func (s System) Iter(ctx context.Context, r *R, rng RNG) {
 				fp := it.final(p)
 				if r.plot(fp) {
 					q++
-					if q == 0x1000 {
-						atomic.AddInt64(&r.q, q)
-						q = 0
-					}
 				}
 			}
 			k = it.next(k)
 			n++
-			if n == 0x1000 {
-				atomic.AddInt64(&r.n, n)
-				n = 0
-			}
 		}
 	}
 }
@@ -111,7 +103,7 @@ func (s System) Iter(ctx context.Context, r *R, rng RNG) {
 // neither the weights nor the directed graph contain a negative or non-finite
 // element. If any of these conditions is false, then the returned error
 // describes the problem.
-func (s System) Check() error {
+func (s *System) Check() error {
 	if s.Empty() {
 		return fmt.Errorf("xirho: cannot render an empty system")
 	}
@@ -154,7 +146,7 @@ func (s System) Check() error {
 }
 
 // Empty returns whether the system contains no functions.
-func (s System) Empty() bool {
+func (s *System) Empty() bool {
 	return len(s.Funcs) == 0
 }
 
