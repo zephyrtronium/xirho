@@ -100,15 +100,25 @@ func (r *R) RenderAsync(ctx context.Context, change <-chan ChangeRender, plot <-
 			c = drainchg(c, change)
 			rctx, cancel = context.WithCancel(ctx)
 			x, y := r.Hist.cols, r.Hist.rows
+			reset := false
 			wg.Wait() // TODO: select with ctx.Done
 			if !c.System.Empty() {
 				system = c.System
-				if !c.emptysz() {
-					x, y = c.Size.X, c.Size.Y
-				}
-				r.Hist.Reset(x, y)
-			} else if !c.emptysz() {
+				reset = true
+			}
+			if !c.emptysz() {
 				x, y = c.Size.X, c.Size.Y
+				reset = true
+			}
+			if c.Camera != nil {
+				r.Camera = *c.Camera
+				reset = true
+			}
+			if len(c.Palette) != 0 {
+				r.Palette = append([]color.NRGBA64{}, c.Palette...)
+				reset = true
+			}
+			if reset {
 				r.Hist.Reset(x, y)
 			}
 			procs = c.Procs
@@ -135,7 +145,7 @@ func (r *R) RenderAsync(ctx context.Context, change <-chan ChangeRender, plot <-
 
 // start starts worker goroutines with the given context.
 func (r *R) start(ctx context.Context, wg *sync.WaitGroup, procs int, system System, rng *xmath.RNG) {
-	if len(system.Funcs) == 0 {
+	if system.Empty() {
 		return
 	}
 	wg.Add(procs)
@@ -242,6 +252,11 @@ type ChangeRender struct {
 	// then the histogram is neither resized nor reset. If this is equal to the
 	// histogram's current size, then all plotting progress is cleared.
 	Size image.Point
+	// Camera is the new camera transform to use, if non-nil.
+	Camera *Ax
+	// Palette is the new palette to use, if it has nonzero length. The palette
+	// is copied into the renderer.
+	Palette []color.NRGBA64
 	// Procs is the new number of worker goroutines to use. If this is zero,
 	// then the renderer does no work until receiving a nonzero Procs.
 	Procs int
