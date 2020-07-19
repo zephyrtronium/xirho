@@ -14,6 +14,11 @@ import (
 type funcm struct {
 	Name   string                 `json:"name"`
 	Params map[string]interface{} `json:"params,omitempty"`
+	// These fields exist on every funcm but are only used at the top level.
+	Opacity float64   `json:"opacity,omitempty"`
+	Weight  float64   `json:"weight,omitempty"`
+	Graph   []float64 `json:"graph,omitempty"`
+	Label   string    `json:"label,omitempty"`
 }
 
 // newFuncm creates an encoding wrapper around f. Returns an error if the

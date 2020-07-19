@@ -20,12 +20,8 @@ import (
 type marshaler struct {
 	Meta *xirho.Metadata `json:"meta,omitempty"`
 	// system params
-	Funcs   []*funcm    `json:"funcs"`
-	Final   *funcm      `json:"final,omitempty"`
-	Opacity []float64   `json:"opacity"`
-	Weights []float64   `json:"weights"`
-	Graph   [][]float64 `json:"graph"`
-	Labels  []string    `json:"labels,omitempty"`
+	Funcs []*funcm `json:"funcs"`
+	Final *funcm   `json:"final,omitempty"`
 	// renderer params
 	Aspect float64  `json:"aspect"`
 	Camera xirho.Ax `json:"camera"`
@@ -40,26 +36,26 @@ type marshaler struct {
 // Marshal creates a JSON encoding of the renderer and system information
 // needed to serialize the system. If system.Check returns a non-nil error,
 // then that error is returned instead.
-func Marshal(system *xirho.System, r *xirho.R) ([]byte, error) {
+func Marshal(system xirho.System, r *xirho.R) ([]byte, error) {
 	// TODO: wrap errors
 	if err := system.Check(); err != nil {
 		return nil, err
 	}
 	br, gamma, tr := r.Hist.Brightness()
 	m := marshaler{
-		Meta:    r.Meta,
-		Funcs:   make([]*funcm, len(system.Funcs)),
-		Opacity: system.Opacity,
-		Weights: system.Weights,
-		Graph:   system.Graph,
-		Labels:  system.Labels,
-		Camera:  r.Camera,
-		Gamma:   gamma,
-		Thresh:  tr,
-		Bright:  br,
+		Meta:   r.Meta,
+		Funcs:  make([]*funcm, len(system.Funcs)),
+		Camera: r.Camera,
+		Gamma:  gamma,
+		Thresh: tr,
+		Bright: br,
 	}
 	for i, f := range system.Funcs {
-		e, err := newFuncm(f)
+		e, err := newFuncm(f.Func)
+		e.Opacity = f.Opacity
+		e.Weight = f.Weight
+		e.Graph = f.Graph
+		e.Label = f.Label
 		if err != nil {
 			return nil, err
 		}
@@ -102,7 +98,7 @@ func Marshal(system *xirho.System, r *xirho.R) ([]byte, error) {
 // its Reset method called before use. The Procs, N, and Q fields are left 0.
 // Calling UseNumber on the decoder allows Unmarshal to guarantee full
 // precision for xirho.Int function parameters.
-func Unmarshal(d *json.Decoder) (system *xirho.System, render *xirho.R, aspect float64, err error) {
+func Unmarshal(d *json.Decoder) (system xirho.System, render *xirho.R, aspect float64, err error) {
 	// TODO: wrap errors
 	m := marshaler{}
 	if err = d.Decode(&m); err != nil {
@@ -112,18 +108,19 @@ func Unmarshal(d *json.Decoder) (system *xirho.System, render *xirho.R, aspect f
 		Hist:   &xirho.Hist{},
 		Camera: m.Camera,
 	}
-	system = &xirho.System{
-		Funcs:   make([]xirho.F, len(m.Funcs)),
-		Opacity: m.Opacity,
-		Weights: m.Weights,
-		Graph:   m.Graph,
+	system = xirho.System{
+		Funcs: make([]xirho.SysFunc, len(m.Funcs)),
 	}
 	aspect = m.Aspect
 	for i, f := range m.Funcs {
-		system.Funcs[i], err = unf(f)
+		system.Funcs[i].Func, err = unf(f)
 		if err != nil {
 			return
 		}
+		system.Funcs[i].Opacity = f.Opacity
+		system.Funcs[i].Weight = f.Weight
+		system.Funcs[i].Graph = f.Graph
+		system.Funcs[i].Label = f.Label
 	}
 	if m.Final != nil {
 		system.Final, err = unf(m.Final)

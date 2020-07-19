@@ -85,7 +85,7 @@ func main() {
 		}()
 	}
 
-	var system *xirho.System
+	var system xirho.System
 	var r *xirho.R
 	var err error
 	if flamename == "" {

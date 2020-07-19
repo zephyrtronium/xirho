@@ -1,6 +1,6 @@
 {
     "meta": {
-        "title": "Spherical gasket",
+        "title": "Disc Julian",
         "authors": [
             "Branden J Brown"
         ],
@@ -42,7 +42,10 @@
                         "name": "disc"
                     }
                 ]
-            }
+            },
+            "opacity": 1,
+            "weight": 30,
+            "graph": [1, 1]
         },
         {
             "name": "then",
@@ -63,7 +66,10 @@
                         }
                     }
                 ]
-            }
+            },
+            "opacity": 1,
+            "weight": 1,
+            "graph": [1, 1]
         }
     ],
     "final": {
@@ -125,21 +131,6 @@
             ]
         }
     },
-    "opacity": [1, 1],
-    "weights": [
-        30,
-        1
-    ],
-    "graph": [
-        [
-            1,
-            1
-        ],
-        [
-            1,
-            1
-        ]
-    ],
     "aspect": 1.7777777777777777,
     "camera": [
         1,

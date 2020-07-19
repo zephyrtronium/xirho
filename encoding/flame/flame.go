@@ -25,7 +25,7 @@ type Flame struct {
 	// Name is the name of the flame.
 	Name string
 	// System is the encoded function system.
-	System *xirho.System
+	System xirho.System
 	// R is the renderer for the system. Its histogram should be Reset to the
 	// appropriate size before rendering.
 	R *xirho.R
@@ -110,11 +110,8 @@ func convert(flm flame) (r Flame) {
 		B: uint16(bgc[2] * 0xffff),
 		A: 0xffff,
 	}
-	system := xirho.System{
-		Funcs:   make([]xirho.F, len(flm.Xforms)),
-		Opacity: make([]float64, len(flm.Xforms)),
-		Weights: make([]float64, len(flm.Xforms)),
-		Graph:   make([][]float64, len(flm.Xforms)),
+	r.System = xirho.System{
+		Funcs: make([]xirho.SysFunc, len(flm.Xforms)),
 	}
 	var df decoded
 	for i, xf := range flm.Xforms {
@@ -122,13 +119,15 @@ func convert(flm flame) (r Flame) {
 		if err != nil {
 			return
 		}
-		system.Opacity[i] = df.op
-		system.Funcs[i] = df.f
-		system.Weights[i] = df.weight
-		// Apophysis omits graph weights of 1 past the last that isn't 1.
-		system.Graph[i] = make([]float64, len(flm.Xforms))
-		for j := copy(system.Graph[i], df.graph); j < len(system.Graph[i]); j++ {
-			system.Graph[i][j] = 1
+		r.System.Funcs[i] = xirho.SysFunc{
+			Func:    df.f,
+			Opacity: df.op,
+			Weight:  df.weight,
+			// Apophysis omits graph weights of 1 past the last that isn't 1.
+			// Xirho has the same default behavior. So, we can just use the
+			// graph we get.
+			Graph: df.graph,
+			// TODO: label
 		}
 	}
 	if flm.Final.XMLName.Local != "" {
@@ -147,9 +146,8 @@ func convert(flm flame) (r Flame) {
 		if err != nil {
 			return
 		}
-		system.Final = df.f
+		r.System.Final = df.f
 	}
-	r.System = &system
 	r.R = &xirho.R{
 		Hist:    &xirho.Hist{},
 		Camera:  cam,

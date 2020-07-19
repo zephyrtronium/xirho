@@ -14,30 +14,38 @@ type RNG = xmath.RNG
 // System is a generalized iterated function system.
 type System struct {
 	// Funcs is the system's function list.
-	Funcs []F
-	// Final is an additional function applied after each function if non-nil.
+	Funcs []SysFunc
+	// Final is an additional function applied after each function, if it is
+	// non-nil. The result from Final is used only for plotting; the input to
+	// it is the same as the input to the next iteration's function.
 	Final F
-	// Opacity scales the alpha channel of points plotted by each function. It
-	// must be the same length as Funcs, and each element must be in the
-	// interval [0, 1].
-	Opacity []float64
-	// Weights controls the proportion of iterations which map to each func. It
-	// must be the same length as Funcs, and each element must be a
-	// finite, nonnegative number.
-	Weights []float64
-	// Graph is the weights from the row function to each column function. It
-	// must be of size len(Funcs) × len(Funcs), and each element must be a
-	// finite, nonnegative number.
-	Graph [][]float64
+}
 
-	// Labels gives the labels for each non-final function in the system, if it
-	// is not nil.
-	Labels []string
+// SysFunc describes the properties of a single function within a system.
+type SysFunc struct {
+	// Func is the function which transforms points.
+	Func F
+	// Opacity scales the alpha channel of points plotted by the function. It
+	// must be in the interval [0, 1].
+	Opacity float64
+	// Weight controls the proportion of iterations which map to this function.
+	// It must be a finite, nonnegative number.
+	Weight float64
+	// Graph is the weights from this function to each other function in the
+	// system. If the graph is shorter than the number of functions in the
+	// system, then the missing values are treated as being 1.
+	Graph []float64
+
+	// Label is the label for this function.
+	Label string
 }
 
 // iterator manages the iterations of a System by a single goroutine.
 type iterator struct {
-	*System
+	// funcs is the system function list.
+	funcs []F
+	// final is the system final.
+	final F
 	// rng is the iterator's source of randomness.
 	rng RNG
 	// op is the pre-multiplied opacities of each function in the system.
@@ -48,9 +56,9 @@ type iterator struct {
 
 // Prep calls the Prep method of each function in the system. It should be
 // called once before any call to Iter.
-func (s *System) Prep() {
+func (s System) Prep() {
 	for _, f := range s.Funcs {
-		f.Prep()
+		f.Func.Prep()
 	}
 	if s.Final != nil {
 		s.Final.Prep()
@@ -61,12 +69,12 @@ func (s *System) Prep() {
 // continues iterating until the context's Done channel is closed. rng should
 // be seeded to a distinct state for each call to this method. Iter panics if
 // Check returns an error.
-func (s *System) Iter(ctx context.Context, r *R, rng RNG) {
+func (s System) Iter(ctx context.Context, r *R, rng RNG) {
 	if err := s.Check(); err != nil {
 		panic(err)
 	}
-	it := iterator{System: s, rng: rng}
-	it.prep()
+	it := iterator{rng: rng}
+	it.prep(s)
 	p, k := it.fuse() // p may not be valid!
 	done := ctx.Done()
 	var n, q int64
@@ -81,12 +89,12 @@ func (s *System) Iter(ctx context.Context, r *R, rng RNG) {
 				p, k = it.fuse()
 				continue
 			}
-			p = it.Funcs[k].Calc(p, &it.rng)
+			p = it.funcs[k].Calc(p, &it.rng)
 			// If a function has opacity α, that means we plot its points with
 			// probability α. If we don't plot a point, then there's no reason
 			// to apply the final, since that is only a nonlinear camera.
 			if it.op[k] >= 1<<53 || (it.op[k] > 0 && it.rng.Uint64()%(1<<53) < it.op[k]) {
-				fp := it.final(p)
+				fp := it.doFinal(p)
 				if r.plot(fp) {
 					q++
 				}
@@ -98,42 +106,27 @@ func (s *System) Iter(ctx context.Context, r *R, rng RNG) {
 }
 
 // Check verifies that the system is properly configured: it contains at least
-// one function, it has as many opacities and weights as functions, the
-// directed graph links to every function, no opacities are outside [0, 1], and
-// neither the weights nor the directed graph contain a negative or non-finite
-// element. If any of these conditions is false, then the returned error
+// one function, no opacities are outside [0, 1], and no weight is negative or
+// non-finite. If any of these conditions is false, then the returned error
 // describes the problem.
-func (s *System) Check() error {
+func (s System) Check() error {
 	if s.Empty() {
 		return fmt.Errorf("xirho: cannot render an empty system")
 	}
-	if len(s.Funcs) != len(s.Opacity) {
-		return fmt.Errorf("xirho: size mismatch, have %d funcs and %d opacities", len(s.Funcs), len(s.Opacity))
-	}
-	for i, x := range s.Opacity {
-		if x-x != 0 {
-			return fmt.Errorf("xirho: non-finite opacity %v for func %d", x, i)
+	for i, f := range s.Funcs {
+		if f.Opacity-f.Opacity != 0 {
+			return fmt.Errorf("xirho: non-finite opacity %v for func %d", f.Opacity, i)
 		}
-		if x < 0 || x > 1 {
-			return fmt.Errorf("xirho: out of bounds opacity %v for func %d", x, i)
+		if f.Opacity < 0 || f.Opacity > 1 {
+			return fmt.Errorf("xirho: out of bounds opacity %v for func %d", f.Opacity, i)
 		}
-	}
-	if len(s.Funcs) != len(s.Weights) {
-		return fmt.Errorf("xirho: size mismatch, have %d funcs and %d weights", len(s.Funcs), len(s.Weights))
-	}
-	for i, x := range s.Weights {
-		if x-x != 0 {
-			return fmt.Errorf("xirho: non-finite weight %v for func %d", x, i)
+		if f.Weight-f.Weight != 0 {
+			return fmt.Errorf("xirho: non-finite weight %v for func %d", f.Weight, i)
 		}
-		if x < 0 {
-			return fmt.Errorf("xirho: negative weight %v for func %d", x, i)
+		if f.Weight < 0 {
+			return fmt.Errorf("xirho: negative weight %v for func %d", f.Weight, i)
 		}
-	}
-	for i, g := range s.Graph {
-		if len(s.Funcs) != len(g) {
-			return fmt.Errorf("xirho: size mismatch, have %d funcs but graph node %d has %d weights", len(s.Funcs), i, len(g))
-		}
-		for j, x := range g {
+		for j, x := range f.Graph {
 			if x-x != 0 {
 				return fmt.Errorf("xirho: non-finite weight %v for func %d to %d", x, i, j)
 			}
@@ -146,14 +139,14 @@ func (s *System) Check() error {
 }
 
 // Empty returns whether the system contains no functions.
-func (s *System) Empty() bool {
+func (s System) Empty() bool {
 	return len(s.Funcs) == 0
 }
 
-// final applies the system's Final function to the point, if present.
-func (it *iterator) final(p P) P {
-	if it.Final != nil {
-		p = it.Final.Calc(p, &it.rng)
+// doFinal applies the system's Final function to the point, if present.
+func (it *iterator) doFinal(p P) P {
+	if it.final != nil {
+		p = it.final.Calc(p, &it.rng)
 	}
 	return p
 }
@@ -169,9 +162,9 @@ func (it *iterator) fuse() (P, int) {
 		Z: it.rng.Uniform()*2 - 1,
 		C: it.rng.Uniform(),
 	}
-	k := it.next(it.rng.Intn(len(it.Funcs)))
+	k := it.next(it.rng.Intn(len(it.funcs)))
 	for i := 0; i < fuseLen; i++ {
-		p = it.Funcs[k].Calc(p, &it.rng)
+		p = it.funcs[k].Calc(p, &it.rng)
 		if !p.IsValid() {
 			break
 		}
@@ -183,7 +176,7 @@ func (it *iterator) fuse() (P, int) {
 // next obtains the next function to use from the current one.
 func (it *iterator) next(k int) int {
 	v := it.rng.Uint64() & (1<<53 - 1)
-	w := it.w[k*len(it.Funcs) : (k+1)*len(it.Funcs)]
+	w := it.w[k*len(it.funcs) : (k+1)*len(it.funcs)]
 	for i, x := range w {
 		if v < x {
 			return i
@@ -195,14 +188,21 @@ func (it *iterator) next(k int) int {
 // prep sets up the iterator's weighted directed graph, which controls the
 // probability of each function being chosen based on the current one, and
 // pre-multiplies brightnesses
-func (it *iterator) prep() {
-	switch l := len(it.Funcs); l {
+func (it *iterator) prep(s System) {
+	it.final = s.Final
+	switch l := len(s.Funcs); l {
 	case 0:
+		it.funcs = nil
 		it.w = nil
 	case 1:
+		it.funcs = []F{s.Funcs[0].Func}
 		it.w = []uint64{^uint64(0)} // even if the weight is 0
 	default:
-		it.w = make([]uint64, len(it.Funcs)*len(it.Funcs))
+		it.funcs = make([]F, len(s.Funcs))
+		for i, f := range s.Funcs {
+			it.funcs[i] = f.Func
+		}
+		it.w = make([]uint64, len(s.Funcs)*len(s.Funcs))
 		// Let F denote the set of functions in the system. Let f denote the
 		// current function.
 		// Each function in F has its own weight, and f has a weight to each
@@ -218,31 +218,34 @@ func (it *iterator) prep() {
 		// 1.0 by 2^53 means the last element will always be greater than any
 		// variate, which simplifies the loop.
 		const scale float64 = 1 << 53
-		wb := make([]float64, len(it.Funcs))
-		for i, g := range it.Graph {
-			copy(wb, g)
-			for j, x := range it.Weights {
-				wb[j] *= x
+		wb := make([]float64, len(s.Funcs))
+		for i, f := range s.Funcs {
+			for j := copy(wb, f.Graph); j < len(s.Funcs); j++ {
+				// Fill in missing values with 1.
+				wb[j] = 1
+			}
+			for j, g := range s.Funcs {
+				wb[j] *= g.Weight
 			}
 			sum := cumsum(wb)
 			if sum == 0 {
 				// 0 sum would give nan for every element. Avoid nan.
-				w := it.w[i*len(it.Funcs) : (i+1)*len(it.Funcs)]
+				w := it.w[i*len(s.Funcs) : (i+1)*len(s.Funcs)]
 				for j := range w {
 					w[j] = ^uint64(0)
 				}
 				continue
 			}
 			for j, x := range wb {
-				it.w[i*len(it.Funcs)+j] = uint64(x / sum * scale)
+				it.w[i*len(s.Funcs)+j] = uint64(x / sum * scale)
 			}
 		}
 	}
 	// Calculate opacity probabilities. The idea here is essentially the same
 	// as in fixed-point weights.
-	it.op = make([]uint64, len(it.Funcs))
-	for i, x := range it.Opacity {
-		it.op[i] = uint64(x * (1 << 53))
+	it.op = make([]uint64, len(s.Funcs))
+	for i, f := range s.Funcs {
+		it.op[i] = uint64(f.Opacity * (1 << 53))
 	}
 }
 

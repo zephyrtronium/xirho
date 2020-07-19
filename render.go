@@ -42,7 +42,7 @@ type R struct {
 // times in succession to continue using the same histogram. It is not safe to
 // call Render multiple times concurrently, nor to modify any of r's fields
 // concurrently.
-func (r *R) Render(ctx context.Context, system *System) {
+func (r *R) Render(ctx context.Context, system System) {
 	rng := xmath.NewRNG()
 	ctx, cancel := context.WithCancel(ctx)
 	procs := r.Procs
@@ -86,7 +86,7 @@ func (r *R) RenderAsync(ctx context.Context, change <-chan ChangeRender, plot <-
 	var (
 		wg     sync.WaitGroup
 		procs  int
-		system *System
+		system System
 		out    chan<- draw.Image
 		img    draw.Image
 	)
@@ -134,8 +134,8 @@ func (r *R) RenderAsync(ctx context.Context, change <-chan ChangeRender, plot <-
 }
 
 // start starts worker goroutines with the given context.
-func (r *R) start(ctx context.Context, wg *sync.WaitGroup, procs int, system *System, rng *xmath.RNG) {
-	if system == nil {
+func (r *R) start(ctx context.Context, wg *sync.WaitGroup, procs int, system System, rng *xmath.RNG) {
+	if len(system.Funcs) == 0 {
 		return
 	}
 	wg.Add(procs)
@@ -237,7 +237,7 @@ type PlotOnto struct {
 type ChangeRender struct {
 	// System is the new system to render. If the system is empty, then the
 	// renderer continues using its previous non-empty system.
-	System *System
+	System System
 	// Size is the new histogram size to render. If this is the zero value,
 	// then the histogram is neither resized nor reset. If this is equal to the
 	// histogram's current size, then all plotting progress is cleared.
