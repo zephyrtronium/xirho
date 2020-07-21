@@ -65,10 +65,10 @@ func (s System) Prep() {
 	}
 }
 
-// Iter iterates the function system and sends output points over results. It
-// continues iterating until the context's Done channel is closed. rng should
-// be seeded to a distinct state for each call to this method. Iter panics if
-// Check returns an error.
+// Iter iterates the function system and plots points onto r. It continues
+// iterating until the context's Done channel is closed. rng should be seeded
+// to a distinct state for each call to this method. Iter panics if Check
+// returns an error.
 func (s System) Iter(ctx context.Context, r *R, rng RNG) {
 	if err := s.Check(); err != nil {
 		panic(err)
