@@ -77,12 +77,12 @@ func (s System) Iter(ctx context.Context, r *R, rng RNG) {
 	it.prep(s)
 	p, k := it.fuse() // p may not be valid!
 	done := ctx.Done()
-	var n, q int64
+	var n, q int
 	for {
 		select {
 		case <-done:
-			atomic.AddInt64(&r.n, n)
-			atomic.AddInt64(&r.q, q)
+			atomic.AddInt64(&r.n, int64(n))
+			atomic.AddInt64(&r.q, int64(q))
 			return
 		default:
 			if !p.IsValid() {
@@ -101,6 +101,11 @@ func (s System) Iter(ctx context.Context, r *R, rng RNG) {
 			}
 			k = it.next(k)
 			n++
+			if n == 25000 {
+				atomic.AddInt64(&r.n, int64(n))
+				atomic.AddInt64(&r.q, int64(q))
+				n, q = 0, 0
+			}
 		}
 	}
 }
