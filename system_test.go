@@ -4,6 +4,7 @@ import (
 	"context"
 	"image/color"
 	"math"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -110,12 +111,13 @@ func TestSystemCheck(t *testing.T) {
 }
 
 type nanf struct {
-	p int
 	n int64
+	p int
+	f bool
 }
 
 func (v *nanf) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
-	v.n++
+	atomic.AddInt64(&v.n, 1)
 	switch v.p {
 	case 1:
 		return xirho.P{
@@ -135,7 +137,9 @@ func (v *nanf) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 	return xirho.P{}
 }
 
-func (v *nanf) Prep() {}
+func (v *nanf) Prep() {
+	v.f = true
+}
 
 func TestSystemIter(t *testing.T) {
 	if testing.Short() {
