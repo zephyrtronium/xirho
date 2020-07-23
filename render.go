@@ -29,23 +29,19 @@ type R struct {
 	Camera Ax
 	// Palette is the colors used by the renderer.
 	Palette []color.NRGBA64
-	// Procs is the number of goroutines to use in iterating the system. If
-	// Procs <= 0, then Render instead uses GOMAXPROCS goroutines.
-	Procs int
 
 	// Meta contains metadata about the fractal.
 	Meta *Metadata
 }
 
-// Render renders a System onto a Hist. It returns after the context closes and
-// after all its renderer goroutines finish. It is safe to call Render multiple
-// times in succession to continue using the same histogram. It is not safe to
-// call Render multiple times concurrently, nor to modify any of r's fields
-// concurrently.
-func (r *R) Render(ctx context.Context, system System) {
+// Render renders a System onto a Hist. Calculation is performed by procs
+// goroutines, or by GOMAXPROCS goroutines if procs <= 0. Render returns after
+// the context closes and after all its renderer goroutines finish. It is safe
+// to call Render multiple times in succession to continue using the same
+// histogram.
+func (r *R) Render(ctx context.Context, system System, procs int) {
 	rng := xmath.NewRNG()
 	ctx, cancel := context.WithCancel(ctx)
-	procs := r.Procs
 	if procs <= 0 {
 		procs = runtime.GOMAXPROCS(0)
 	}
@@ -77,8 +73,8 @@ func (r *R) Render(ctx context.Context, system System) {
 //
 // Once the context closes, RenderAsync stops its workers, closes the imgs
 // channel, and returns. If needed, other goroutines may join on RenderAsync by
-// waiting for imgs to close. Until imgs closes, it is not safe to modify or
-// read any of the renderer's fields.
+// waiting for imgs to close. Until imgs closes, it is not safe to modify any
+// of the renderer's fields.
 func (r *R) RenderAsync(ctx context.Context, change <-chan ChangeRender, plot <-chan PlotOnto, imgs chan<- draw.Image) {
 	rng := xmath.NewRNG()
 	rctx, cancel := context.WithCancel(ctx)

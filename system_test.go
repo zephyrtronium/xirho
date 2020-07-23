@@ -152,7 +152,6 @@ func TestSystemIter(t *testing.T) {
 		Camera:  xirho.Eye(),
 		Hist:    xirho.NewHist(1, 1),
 		Palette: []color.NRGBA64{{R: 0xffff, A: 0xffff}, {R: 0xffff, A: 0xffff}},
-		Procs:   1,
 	}
 	r.Hist.Reset(1, 1)
 	ctx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
@@ -168,7 +167,6 @@ func TestSystemIter(t *testing.T) {
 			Camera:  xirho.Eye(),
 			Hist:    xirho.NewHist(1, 1),
 			Palette: []color.NRGBA64{{R: 0xffff, A: 0xffff}, {R: 0xffff, A: 0xffff}},
-			Procs:   1,
 		}
 		r.Hist.Reset(1, 1)
 		if err := s.Check(); err == nil {
@@ -195,7 +193,6 @@ func TestSystemIter(t *testing.T) {
 			Camera:  xirho.Eye(),
 			Hist:    xirho.NewHist(1, 1),
 			Palette: []color.NRGBA64{{R: 0xffff, A: 0xffff}, {R: 0xffff, A: 0xffff}},
-			Procs:   1,
 		}
 		r.Hist.Reset(1, 1)
 		ctx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
@@ -214,7 +211,6 @@ func TestSystemIter(t *testing.T) {
 			Camera:  xirho.Eye(),
 			Hist:    xirho.NewHist(1, 1),
 			Palette: []color.NRGBA64{{R: 0xffff, A: 0xffff}, {R: 0xffff, A: 0xffff}},
-			Procs:   1,
 		}
 		s := xirho.System{
 			Funcs: []xirho.SysFunc{

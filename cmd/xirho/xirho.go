@@ -118,7 +118,6 @@ func main() {
 	log.Println("allocating histogram, estimated", xirho.HistMem(width*osa, height*osa)>>20, "MB")
 	r.Hist.Reset(width*osa, height*osa)
 	r.Hist.SetBrightness(bright, gamma, tr)
-	r.Procs = procs
 	if echo {
 		m, err := encoding.Marshal(system, r)
 		if err != nil {
@@ -127,7 +126,7 @@ func main() {
 		log.Printf("system:\n%s\n", m)
 	}
 	log.Println("rendering for", timeout, "or until ^C")
-	r.Render(ctx, system)
+	r.Render(ctx, system, procs)
 	log.Println("finished render with", r.Iters(), "iters,", r.Hits(), "hits")
 	signal.Reset(os.Interrupt) // no rendering for ^C to interrupt
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
