@@ -113,6 +113,7 @@ func (r *R) RenderAsync(ctx context.Context, change <-chan ChangeRender, plot <-
 			}
 			if reset {
 				r.Hist.Reset(x, y)
+				r.ResetCounts()
 			}
 			procs = c.Procs
 			r.start(rctx, &wg, procs, system, &rng)
@@ -193,6 +194,12 @@ func (r *R) Iters() int64 {
 // to call this while the renderer is running.
 func (r *R) Hits() int64 {
 	return atomic.LoadInt64(&r.q)
+}
+
+// ResetCounts resets the values returned by Iters and Hits to zero. Unlike
+// those methods, it is not safe to call this while the renderer is running.
+func (r *R) ResetCounts() {
+	r.n, r.q = 0, 0
 }
 
 // drainchg pulls items from a ChangeRender channel until doing so would block,
