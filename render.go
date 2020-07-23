@@ -41,7 +41,6 @@ type R struct {
 // histogram.
 func (r *R) Render(ctx context.Context, system System, procs int) {
 	rng := xmath.NewRNG()
-	ctx, cancel := context.WithCancel(ctx)
 	if procs <= 0 {
 		procs = runtime.GOMAXPROCS(0)
 	}
@@ -55,8 +54,6 @@ func (r *R) Render(ctx context.Context, system System, procs int) {
 		}(rng)
 		rng.Jump()
 	}
-	<-ctx.Done()
-	cancel()
 	wg.Wait()
 }
 
