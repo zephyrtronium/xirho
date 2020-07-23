@@ -154,7 +154,6 @@ func (r *R) start(ctx context.Context, wg *sync.WaitGroup, procs int, system Sys
 
 // plot plots a point.
 func (r *R) plot(p P) bool {
-	atomic.AddInt64(&r.n, 1)
 	if !p.IsValid() {
 		return false
 	}
