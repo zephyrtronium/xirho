@@ -117,7 +117,7 @@ func getParam(f reflect.StructField, v reflect.Value) Param {
 
 // pname gets the name of a parameter.
 func pname(tag []string, name string) string {
-	if len(tag) > 0 {
+	if len(tag) > 0 && tag[0] != "" {
 		return tag[0]
 	}
 	return name
