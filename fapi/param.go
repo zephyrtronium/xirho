@@ -192,10 +192,10 @@ func angleFor(name string, v *xirho.Angle) Param {
 
 // Set sets the angle value wrapped into the interval (-pi, pi].
 func (p Angle) Set(v float64) error {
-	x := xmath.Angle(v)
-	if !xmath.IsFinite(x) {
+	if !xmath.IsFinite(v) {
 		return NotFinite{Param: p}
 	}
+	x := xmath.Angle(v)
 	*p.v = xirho.Angle(x)
 	return nil
 }

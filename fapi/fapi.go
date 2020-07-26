@@ -60,15 +60,18 @@ func getParam(f reflect.StructField, v reflect.Value) Param {
 	case rFlag:
 		return flagFor(name, val.(*xirho.Flag))
 	case rList:
-		opts := []string{}
-		if len(tag) >= 1 {
-			opts = tag[1:]
+		if len(tag) < 3 {
+			panic(fmt.Errorf("xirho: list must have at least 2 options (after name); have %q", tag))
 		}
-		return listFor(name, val.(*xirho.List), opts...)
+		return listFor(name, val.(*xirho.List), tag[1:]...)
 	case rInt:
-		bdd := len(tag) == 3
-		var lo, hi int64
-		if bdd {
+		switch len(tag) {
+		case 0, 1:
+			return intFor(name, val.(*xirho.Int), false, 0, 0)
+		case 2:
+			panic(fmt.Errorf("xirho: 2 tag fields in %q is probably a mistake; need 0, 1, or 3", f.Tag))
+		default:
+			var lo, hi int64
 			var err error
 			if lo, err = strconv.ParseInt(tag[1], 0, 64); err != nil {
 				panic(fmt.Errorf("xirho: error parsing Int lo: %w", err))
@@ -79,14 +82,18 @@ func getParam(f reflect.StructField, v reflect.Value) Param {
 			if lo > hi {
 				panic(fmt.Errorf("xirho: Int lo > hi"))
 			}
+			return intFor(name, val.(*xirho.Int), true, xirho.Int(lo), xirho.Int(hi))
 		}
-		return intFor(name, val.(*xirho.Int), bdd, xirho.Int(lo), xirho.Int(hi))
 	case rAngle:
 		return angleFor(name, val.(*xirho.Angle))
 	case rReal:
-		bdd := len(tag) == 3
-		var lo, hi float64
-		if bdd {
+		switch len(tag) {
+		case 0, 1:
+			return realFor(name, val.(*xirho.Real), false, 0, 0)
+		case 2:
+			panic(fmt.Errorf("xirho: 2 tag fields in %q is probably a mistake; need 0, 1, or 3", f.Tag))
+		default:
+			var lo, hi float64
 			var err error
 			if lo, err = strconv.ParseFloat(tag[1], 64); err != nil {
 				panic(fmt.Errorf("xirho: error parsing Real lo: %w", err))
@@ -97,8 +104,8 @@ func getParam(f reflect.StructField, v reflect.Value) Param {
 			if lo > hi {
 				panic(fmt.Errorf("xirho: Real lo > hi"))
 			}
+			return realFor(name, val.(*xirho.Real), true, xirho.Real(lo), xirho.Real(hi))
 		}
-		return realFor(name, val.(*xirho.Real), bdd, xirho.Real(lo), xirho.Real(hi))
 	case rComplex:
 		return complexFor(name, val.(*xirho.Complex))
 	case rVec3:
@@ -106,7 +113,13 @@ func getParam(f reflect.StructField, v reflect.Value) Param {
 	case rAffine:
 		return affineFor(name, val.(*xirho.Affine))
 	case rFunc:
-		opt := len(tag) == 2 && tag[1] == "optional"
+		opt := false
+		if len(tag) >= 2 {
+			if tag[1] != "optional" {
+				panic(fmt.Errorf(`xirho: bad value %q for func tag; did you mean "optional"?`, tag[1]))
+			}
+			opt = true
+		}
 		return funcFor(name, opt, val.(*xirho.Func))
 	case rFuncList:
 		return funcListFor(name, val.(*xirho.FuncList))
