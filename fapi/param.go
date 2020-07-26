@@ -40,14 +40,14 @@ func flagFor(name string, v *xirho.Flag) Param {
 }
 
 // Set sets the parameter value. The returned error is always nil.
-func (p Flag) Set(v xirho.Flag) error {
-	*p.v = v
+func (p Flag) Set(v bool) error {
+	*p.v = xirho.Flag(v)
 	return nil
 }
 
 // Get gets the current parameter value.
-func (p Flag) Get() xirho.Flag {
-	return *p.v
+func (p Flag) Get() bool {
+	return bool(*p.v)
 }
 
 // List is a function parameter to choose among a list of strings. After the
@@ -82,8 +82,8 @@ func listFor(name string, idx *xirho.List, opts ...string) Param {
 
 // Set sets the list value. If v is less than zero or larger than the number
 // of available options, an error of type OutOfBoundsInt is returned instead.
-func (p List) Set(v xirho.List) error {
-	if v < 0 || int64(v) >= int64(len(p.opts)) {
+func (p List) Set(v int) error {
+	if v < 0 || v >= len(p.opts) {
 		return OutOfBoundsInt{
 			Param: p,
 			Value: int64(v),
@@ -91,13 +91,13 @@ func (p List) Set(v xirho.List) error {
 			Hi:    int64(len(p.opts) - 1),
 		}
 	}
-	*p.v = v
+	*p.v = xirho.List(v)
 	return nil
 }
 
 // Get gets the list integer value.
-func (p List) Get() xirho.List {
-	return *p.v
+func (p List) Get() int {
+	return int(*p.v)
 }
 
 // String gets the list's selected string.
@@ -142,22 +142,23 @@ func intFor(name string, v *xirho.Int, bounded bool, lo, hi xirho.Int) Param {
 
 // Set sets the int value. If the Int is bounded and v is out of its bounds, an
 // error of type OutOfBoundsInt is returned instead.
-func (p Int) Set(v xirho.Int) error {
-	if p.bdd && (v < p.lo || p.hi < v) {
+func (p Int) Set(v int64) error {
+	w := xirho.Int(v)
+	if p.bdd && (w < p.lo || p.hi < w) {
 		return OutOfBoundsInt{
 			Param: p,
-			Value: int64(v),
+			Value: v,
 			Lo:    int64(p.lo),
 			Hi:    int64(p.hi),
 		}
 	}
-	*p.v = v
+	*p.v = w
 	return nil
 }
 
 // Get gets the int value.
-func (p Int) Get() xirho.Int {
-	return *p.v
+func (p Int) Get() int64 {
+	return int64(*p.v)
 }
 
 // Bounded returns whether the parameter is bounded.
@@ -167,11 +168,11 @@ func (p Int) Bounded() bool {
 
 // Bounds returns the parameter bounds. If the parameter is not bounded, the
 // returned bounds are the minimum and maximum values of int64.
-func (p Int) Bounds() (lo, hi xirho.Int) {
+func (p Int) Bounds() (lo, hi int64) {
 	if !p.bdd {
 		return -1 << 63, 1<<63 - 1
 	}
-	return p.lo, p.hi
+	return int64(p.lo), int64(p.hi)
 }
 
 // Angle is an angle function parameter. External interfaces wrap its value
@@ -190,8 +191,8 @@ func angleFor(name string, v *xirho.Angle) Param {
 }
 
 // Set sets the angle value wrapped into the interval (-pi, pi].
-func (p Angle) Set(v xirho.Angle) error {
-	x := xmath.Angle(float64(v))
+func (p Angle) Set(v float64) error {
+	x := xmath.Angle(v)
 	if !xmath.IsFinite(x) {
 		return NotFinite{Param: p}
 	}
@@ -200,8 +201,8 @@ func (p Angle) Set(v xirho.Angle) error {
 }
 
 // Get gets the angle value.
-func (p Angle) Get() xirho.Angle {
-	return *p.v
+func (p Angle) Get() float64 {
+	return float64(*p.v)
 }
 
 // Real is a floating-point function parameter. After the parameter name, a
@@ -236,25 +237,26 @@ func realFor(name string, v *xirho.Real, bounded bool, lo, hi xirho.Real) Param 
 
 // Set sets the real value. If the Real is bounded and v is out of its bounds,
 // an error of type OutOfBoundsReal is returned instead.
-func (p Real) Set(v xirho.Real) error {
-	if !xmath.IsFinite(float64(v)) {
+func (p Real) Set(v float64) error {
+	if !xmath.IsFinite(v) {
 		return NotFinite{Param: p}
 	}
-	if p.bdd && (v < p.lo || p.hi < v) {
+	w := xirho.Real(v)
+	if p.bdd && (w < p.lo || p.hi < w) {
 		return OutOfBoundsReal{
 			Param: p,
-			Value: float64(v),
+			Value: v,
 			Lo:    float64(p.lo),
 			Hi:    float64(p.hi),
 		}
 	}
-	*p.v = v
+	*p.v = w
 	return nil
 }
 
 // Get gets the real value.
-func (p Real) Get() xirho.Real {
-	return *p.v
+func (p Real) Get() float64 {
+	return float64(*p.v)
 }
 
 // Bounded returns whether the parameter is bounded.
@@ -264,11 +266,11 @@ func (p Real) Bounded() bool {
 
 // Bounds returns the parameter bounds. If the parameter is not bounded, the
 // returned bounds are -inf and +inf.
-func (p Real) Bounds() (lo, hi xirho.Real) {
+func (p Real) Bounds() (lo, hi float64) {
 	if !p.bdd {
-		return xirho.Real(math.Inf(-1)), xirho.Real(math.Inf(1))
+		return math.Inf(-1), math.Inf(1)
 	}
-	return p.lo, p.hi
+	return float64(p.lo), float64(p.hi)
 }
 
 // Complex is an unconstrained function parameter in R^2.
@@ -286,17 +288,17 @@ func complexFor(name string, v *xirho.Complex) Param {
 }
 
 // Set sets the complex value.
-func (p Complex) Set(v xirho.Complex) error {
+func (p Complex) Set(v complex128) error {
 	if !xmath.IsFinite(real(v)) || !xmath.IsFinite(imag(v)) {
 		return NotFinite{Param: p}
 	}
-	*p.v = v
+	*p.v = xirho.Complex(v)
 	return nil
 }
 
 // Get gets the complex value.
-func (p Complex) Get() xirho.Complex {
-	return *p.v
+func (p Complex) Get() complex128 {
+	return complex128(*p.v)
 }
 
 // Vec3 is an unconstrained function parameter in R^3.

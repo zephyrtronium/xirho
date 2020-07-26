@@ -103,7 +103,7 @@ func unf(f *funcm) (v xirho.F, err error) {
 			if !ok {
 				return nil, fmt.Errorf("expected bool for %s but got %#v", parm.Name(), x)
 			}
-			if err := p.Set(xirho.Flag(t)); err != nil {
+			if err := p.Set(t); err != nil {
 				return nil, err
 			}
 		case fapi.List:
@@ -111,7 +111,7 @@ func unf(f *funcm) (v xirho.F, err error) {
 			if err != nil {
 				return nil, err
 			}
-			if err := p.Set(xirho.List(t)); err != nil {
+			if err := p.Set(int(t)); err != nil {
 				return nil, err
 			}
 		case fapi.Int:
@@ -119,7 +119,7 @@ func unf(f *funcm) (v xirho.F, err error) {
 			if err != nil {
 				return nil, err
 			}
-			if err := p.Set(xirho.Int(t)); err != nil {
+			if err := p.Set(t); err != nil {
 				return nil, err
 			}
 		case fapi.Angle:
@@ -127,7 +127,7 @@ func unf(f *funcm) (v xirho.F, err error) {
 			if err != nil {
 				return nil, err
 			}
-			if err := p.Set(xirho.Angle(t)); err != nil {
+			if err := p.Set(t); err != nil {
 				return nil, err
 			}
 		case fapi.Real:
@@ -135,7 +135,7 @@ func unf(f *funcm) (v xirho.F, err error) {
 			if err != nil {
 				return nil, err
 			}
-			if err := p.Set(xirho.Real(t)); err != nil {
+			if err := p.Set(t); err != nil {
 				return nil, err
 			}
 		case fapi.Complex:
@@ -146,7 +146,7 @@ func unf(f *funcm) (v xirho.F, err error) {
 			if len(t) != 2 {
 				return nil, fmt.Errorf("expected complex for %s but got %#v", p.Name(), x)
 			}
-			if err := p.Set(xirho.Complex(complex(t[0], t[1]))); err != nil {
+			if err := p.Set(complex(t[0], t[1])); err != nil {
 				return nil, err
 			}
 		case fapi.Vec3:
