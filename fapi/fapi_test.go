@@ -1,12 +1,9 @@
 package fapi_test
 
 import (
-	"errors"
 	"reflect"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/zephyrtronium/xirho"
 	"github.com/zephyrtronium/xirho/fapi"
 )
@@ -49,6 +46,24 @@ func (ef) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 }
 
 func (ef) Prep() {}
+
+type uf struct {
+	unexported xirho.Flag `xirho:"unexported"`
+}
+
+func (*uf) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
+	return in
+}
+
+func (*uf) Prep() {}
+
+type ff xirho.Flag
+
+func (*ff) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
+	return in
+}
+
+func (*ff) Prep() {}
 
 func TestForCount(t *testing.T) {
 	cases := map[string]struct {
@@ -133,238 +148,38 @@ func TestForTypes(t *testing.T) {
 	}
 }
 
-func TestSetFlag(t *testing.T) {
-	for _, c := range typeCases {
-		if len(c.set) != 0 && c.param == reflect.TypeOf(fapi.Flag{}) {
-			t.Run(c.name, func(t *testing.T) {
-				api := fapi.For(c.v)
-				if len(api) != 1 {
-					t.Fatalf("wrong number of fields on %#v: expected 1, have %d", c.v, len(api))
-				}
-				p := api[0].(fapi.Flag)
-				for i, s := range c.set {
-					err := p.Set(s.set.(bool))
-					if (err != nil && s.err != nil && !errors.As(err, &s.err)) || (err == nil && s.err != nil) || (err != nil && s.err == nil) {
-						t.Errorf("wrong error for set case %d: expected %T, got %T", i, s.err, err)
-					}
-					if !cmp.Equal(s.get, p.Get()) {
-						t.Errorf("wrong get after set %v (with expected error %T): expected %v, got %v", s.set, s.err, s.get, p.Get())
-					}
-				}
-			})
-		}
+func TestForUnexported(t *testing.T) {
+	v := new(uf)
+	api := fapi.For(v)
+	if len(api) != 0 {
+		t.Errorf("got non-empty parameter list for %#v: %#v", v, api)
 	}
 }
 
-func TestSetList(t *testing.T) {
-	for _, c := range typeCases {
-		if len(c.set) != 0 && c.param == reflect.TypeOf(fapi.List{}) {
-			t.Run(c.name, func(t *testing.T) {
-				api := fapi.For(c.v)
-				if len(api) != 1 {
-					t.Fatalf("wrong number of fields on %#v: expected 1, have %d", c.v, len(api))
-				}
-				p := api[0].(fapi.List)
-				for i, s := range c.set {
-					err := p.Set(s.set.(int))
-					if (err != nil && s.err != nil && !errors.As(err, &s.err)) || (err == nil && s.err != nil) || (err != nil && s.err == nil) {
-						t.Errorf("wrong error for set case %d: expected %T, got %T", i, s.err, err)
-					}
-					if !cmp.Equal(s.get, p.Get()) {
-						t.Errorf("wrong get after set %v (with expected error %T): expected %v, got %v", s.set, s.err, s.get, p.Get())
-					}
-				}
-			})
-		}
+func TestForNonStruct(t *testing.T) {
+	v := new(ff)
+	api := fapi.For(v)
+	if len(api) != 0 {
+		t.Errorf("got non-empty parameter list for %#v: %#v", v, api)
 	}
 }
 
-func TestSetInt(t *testing.T) {
-	for _, c := range typeCases {
-		if len(c.set) != 0 && c.param == reflect.TypeOf(fapi.Int{}) {
-			t.Run(c.name, func(t *testing.T) {
-				api := fapi.For(c.v)
-				if len(api) != 1 {
-					t.Fatalf("wrong number of fields on %#v: expected 1, have %d", c.v, len(api))
-				}
-				p := api[0].(fapi.Int)
-				for i, s := range c.set {
-					err := p.Set(s.set.(int64))
-					if (err != nil && s.err != nil && !errors.As(err, &s.err)) || (err == nil && s.err != nil) || (err != nil && s.err == nil) {
-						t.Errorf("wrong error for set case %d: expected %T, got %T", i, s.err, err)
-					}
-					if !cmp.Equal(s.get, p.Get()) {
-						t.Errorf("wrong get after set %v (with expected error %T): expected %v, got %v", s.set, s.err, s.get, p.Get())
-					}
-				}
-			})
-		}
-	}
-}
+// putting this here rather than adding a whole new file
 
-func TestSetAngle(t *testing.T) {
-	for _, c := range typeCases {
-		if len(c.set) != 0 && c.param == reflect.TypeOf(fapi.Angle{}) {
-			t.Run(c.name, func(t *testing.T) {
-				api := fapi.For(c.v)
-				if len(api) != 1 {
-					t.Fatalf("wrong number of fields on %#v: expected 1, have %d", c.v, len(api))
-				}
-				p := api[0].(fapi.Angle)
-				for i, s := range c.set {
-					err := p.Set(s.set.(float64))
-					if (err != nil && s.err != nil && !errors.As(err, &s.err)) || (err == nil && s.err != nil) || (err != nil && s.err == nil) {
-						t.Errorf("wrong error for set case %d: expected %T, got %T", i, s.err, err)
-					}
-					if !cmp.Equal(s.get, p.Get(), cmpopts.EquateNaNs()) {
-						t.Errorf("wrong get after set %v (with expected error %T): expected %v, got %v", s.set, s.err, s.get, p.Get())
-					}
-				}
-			})
-		}
+func TestErrorsProduceANonemptyErrorMessage(t *testing.T) {
+	v := new(pf)
+	p := fapi.For(v)[0]
+	cases := map[string]error{
+		"OutOfBoundsInt":  fapi.OutOfBoundsInt{Param: p, Value: 1},
+		"OutOfBoundsReal": fapi.OutOfBoundsReal{Param: p, Value: 1},
+		"NotFinite":       fapi.NotFinite{Param: p},
+		"NotOptional":     fapi.NotOptional{Param: p},
 	}
-}
-
-func TestSetReal(t *testing.T) {
-	for _, c := range typeCases {
-		if len(c.set) != 0 && c.param == reflect.TypeOf(fapi.Real{}) {
-			t.Run(c.name, func(t *testing.T) {
-				api := fapi.For(c.v)
-				if len(api) != 1 {
-					t.Fatalf("wrong number of fields on %#v: expected 1, have %d", c.v, len(api))
-				}
-				p := api[0].(fapi.Real)
-				for i, s := range c.set {
-					err := p.Set(s.set.(float64))
-					if (err != nil && s.err != nil && !errors.As(err, &s.err)) || (err == nil && s.err != nil) || (err != nil && s.err == nil) {
-						t.Errorf("wrong error for set case %d: expected %T, got %T", i, s.err, err)
-					}
-					if !cmp.Equal(s.get, p.Get(), cmpopts.EquateNaNs()) {
-						t.Errorf("wrong get after set %v (with expected error %T): expected %v, got %v", s.set, s.err, s.get, p.Get())
-					}
-				}
-			})
-		}
-	}
-}
-
-func TestSetComplex(t *testing.T) {
-	for _, c := range typeCases {
-		if len(c.set) != 0 && c.param == reflect.TypeOf(fapi.Complex{}) {
-			t.Run(c.name, func(t *testing.T) {
-				api := fapi.For(c.v)
-				if len(api) != 1 {
-					t.Fatalf("wrong number of fields on %#v: expected 1, have %d", c.v, len(api))
-				}
-				p := api[0].(fapi.Complex)
-				for i, s := range c.set {
-					err := p.Set(s.set.(complex128))
-					if (err != nil && s.err != nil && !errors.As(err, &s.err)) || (err == nil && s.err != nil) || (err != nil && s.err == nil) {
-						t.Errorf("wrong error for set case %d: expected %T, got %T", i, s.err, err)
-					}
-					if !cmp.Equal(s.get, p.Get(), cmpopts.EquateNaNs()) {
-						t.Errorf("wrong get after set %v (with expected error %T): expected %v, got %v", s.set, s.err, s.get, p.Get())
-					}
-				}
-			})
-		}
-	}
-}
-
-func TestSetVec3(t *testing.T) {
-	for _, c := range typeCases {
-		if len(c.set) != 0 && c.param == reflect.TypeOf(fapi.Vec3{}) {
-			t.Run(c.name, func(t *testing.T) {
-				api := fapi.For(c.v)
-				if len(api) != 1 {
-					t.Fatalf("wrong number of fields on %#v: expected 1, have %d", c.v, len(api))
-				}
-				p := api[0].(fapi.Vec3)
-				for i, s := range c.set {
-					err := p.Set(s.set.(xirho.Vec3))
-					if (err != nil && s.err != nil && !errors.As(err, &s.err)) || (err == nil && s.err != nil) || (err != nil && s.err == nil) {
-						t.Errorf("wrong error for set case %d: expected %T, got %T", i, s.err, err)
-					}
-					if diff := cmp.Diff(s.get, p.Get(), cmpopts.EquateNaNs()); diff != "" {
-						t.Errorf("wrong get after set %v (with expected error %T): diff (-expected +got):\n%s", s.set, s.err, diff)
-					}
-				}
-			})
-		}
-	}
-}
-
-func TestSetAffine(t *testing.T) {
-	for _, c := range typeCases {
-		if len(c.set) != 0 && c.param == reflect.TypeOf(fapi.Affine{}) {
-			t.Run(c.name, func(t *testing.T) {
-				api := fapi.For(c.v)
-				if len(api) != 1 {
-					t.Fatalf("wrong number of fields on %#v: expected 1, have %d", c.v, len(api))
-				}
-				p := api[0].(fapi.Affine)
-				for i, s := range c.set {
-					err := p.Set(s.set.(xirho.Affine))
-					if (err != nil && s.err != nil && !errors.As(err, &s.err)) || (err == nil && s.err != nil) || (err != nil && s.err == nil) {
-						t.Errorf("wrong error for set case %d: expected %T, got %T", i, s.err, err)
-					}
-					if diff := cmp.Diff(s.get, p.Get(), cmpopts.EquateNaNs()); diff != "" {
-						t.Errorf("wrong get after set %v (with expected error %T): diff (-expected +got):\n%s", s.set, s.err, diff)
-					}
-				}
-			})
-		}
-	}
-}
-
-func TestSetFunc(t *testing.T) {
-	for _, c := range typeCases {
-		if len(c.set) != 0 && c.param == reflect.TypeOf(fapi.Func{}) {
-			t.Run(c.name, func(t *testing.T) {
-				api := fapi.For(c.v)
-				if len(api) != 1 {
-					t.Fatalf("wrong number of fields on %#v: expected 1, have %d", c.v, len(api))
-				}
-				p := api[0].(fapi.Func)
-				for i, s := range c.set {
-					var err error
-					if s.set != nil {
-						// special handling because nil does not assert
-						err = p.Set(s.set.(xirho.F))
-					} else {
-						err = p.Set(nil)
-					}
-					if (err != nil && s.err != nil && !errors.As(err, &s.err)) || (err == nil && s.err != nil) || (err != nil && s.err == nil) {
-						t.Errorf("wrong error for set case %d: expected %T, got %T", i, s.err, err)
-					}
-					if diff := cmp.Diff(s.get, p.Get()); diff != "" {
-						t.Errorf("wrong get after set %v (with expected error %T): diff (-expected +got):\n%s", s.set, s.err, diff)
-					}
-				}
-			})
-		}
-	}
-}
-
-func TestSetFuncList(t *testing.T) {
-	for _, c := range typeCases {
-		if len(c.set) != 0 && c.param == reflect.TypeOf(fapi.FuncList{}) {
-			t.Run(c.name, func(t *testing.T) {
-				api := fapi.For(c.v)
-				if len(api) != 1 {
-					t.Fatalf("wrong number of fields on %#v: expected 1, have %d", c.v, len(api))
-				}
-				p := api[0].(fapi.FuncList)
-				for i, s := range c.set {
-					err := p.Set(s.set.(xirho.FuncList))
-					if (err != nil && s.err != nil && !errors.As(err, &s.err)) || (err == nil && s.err != nil) || (err != nil && s.err == nil) {
-						t.Errorf("wrong error for set case %d: expected %T, got %T", i, s.err, err)
-					}
-					if diff := cmp.Diff(s.get, p.Get()); diff != "" {
-						t.Errorf("wrong get after set %v (with expected error %T): diff (-expected +got):\n%s", s.set, s.err, diff)
-					}
-				}
-			})
-		}
+	for name, c := range cases {
+		t.Run(name, func(t *testing.T) {
+			if m := c.Error(); m == "" {
+				t.Errorf("error of type %T produced empty error message", c)
+			}
+		})
 	}
 }

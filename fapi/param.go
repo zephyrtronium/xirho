@@ -69,9 +69,6 @@ type List struct {
 
 // listFor creates a List function parameter.
 func listFor(name string, idx *xirho.List, opts ...string) Param {
-	if len(opts) == 0 {
-		panic("xirho: list needs at least one option")
-	}
 	opts = append([]string{}, opts...) // copy
 	return List{
 		v:         idx,
