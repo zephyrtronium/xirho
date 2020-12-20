@@ -12,15 +12,15 @@ type T struct{}
 type U struct{}
 type N struct{}
 
-func (T) Calc(in xirho.P, rng *xirho.RNG) xirho.P { return in }
-func (U) Calc(in xirho.P, rng *xirho.RNG) xirho.P { return in }
-func (N) Calc(in xirho.P, rng *xirho.RNG) xirho.P { return in }
+func (T) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt { return in }
+func (U) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt { return in }
+func (N) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt { return in }
 
 func (T) Prep() {}
 func (U) Prep() {}
 func (N) Prep() {}
 
-func newt() xirho.F { return T{} }
+func newt() xirho.Func { return T{} }
 
 const name1 = "T-for-testing"
 const name2 = name1 + "-init-alt"
@@ -110,7 +110,7 @@ func TestUniqueNames(t *testing.T) {
 	if k := findname(names, nname); k >= 0 {
 		t.Errorf("testing name %q already at position %d in %q", nname, k, names)
 	}
-	if err := xi.Register(nname, func() xirho.F { return N{} }); err != nil {
+	if err := xi.Register(nname, func() xirho.Func { return N{} }); err != nil {
 		t.Errorf("couldn't register %q: %v", nname, err)
 	}
 	names = xi.Names(true)

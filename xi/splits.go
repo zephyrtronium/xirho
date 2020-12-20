@@ -9,11 +9,11 @@ type Splits struct {
 	Z xirho.Real `xirho:"z"`
 }
 
-func newSplits() xirho.F {
+func newSplits() xirho.Func {
 	return &Splits{}
 }
 
-func (v *Splits) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
+func (v *Splits) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	if in.X >= 0 {
 		in.X += float64(v.X)
 	} else {

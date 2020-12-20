@@ -36,7 +36,7 @@ type marshaler struct {
 // Marshal creates a JSON encoding of the renderer and system information
 // needed to serialize the system. If system.Check returns a non-nil error,
 // then that error is returned instead.
-func Marshal(system xirho.System, r *xirho.R) ([]byte, error) {
+func Marshal(system xirho.System, r *xirho.Render) ([]byte, error) {
 	// TODO: wrap errors
 	if err := system.Check(); err != nil {
 		return nil, err
@@ -44,13 +44,13 @@ func Marshal(system xirho.System, r *xirho.R) ([]byte, error) {
 	br, gamma, tr := r.Hist.Brightness()
 	m := marshaler{
 		Meta:   r.Meta,
-		Funcs:  make([]*funcm, len(system.Funcs)),
+		Funcs:  make([]*funcm, len(system.Nodes)),
 		Camera: r.Camera,
 		Gamma:  gamma,
 		Thresh: tr,
 		Bright: br,
 	}
-	for i, f := range system.Funcs {
+	for i, f := range system.Nodes {
 		e, err := newFuncm(f.Func)
 		e.Opacity = f.Opacity
 		e.Weight = f.Weight
@@ -98,29 +98,29 @@ func Marshal(system xirho.System, r *xirho.R) ([]byte, error) {
 // its Reset method called before use. The Procs, N, and Q fields are left 0.
 // Calling UseNumber on the decoder allows Unmarshal to guarantee full
 // precision for xirho.Int function parameters.
-func Unmarshal(d *json.Decoder) (system xirho.System, render *xirho.R, aspect float64, err error) {
+func Unmarshal(d *json.Decoder) (system xirho.System, render *xirho.Render, aspect float64, err error) {
 	// TODO: wrap errors
 	m := marshaler{}
 	if err = d.Decode(&m); err != nil {
 		return
 	}
-	render = &xirho.R{
+	render = &xirho.Render{
 		Hist:   &xirho.Hist{},
 		Camera: m.Camera,
 	}
 	system = xirho.System{
-		Funcs: make([]xirho.SysFunc, len(m.Funcs)),
+		Nodes: make([]xirho.Node, len(m.Funcs)),
 	}
 	aspect = m.Aspect
 	for i, f := range m.Funcs {
-		system.Funcs[i].Func, err = unf(f)
+		system.Nodes[i].Func, err = unf(f)
 		if err != nil {
 			return
 		}
-		system.Funcs[i].Opacity = f.Opacity
-		system.Funcs[i].Weight = f.Weight
-		system.Funcs[i].Graph = f.Graph
-		system.Funcs[i].Label = f.Label
+		system.Nodes[i].Opacity = f.Opacity
+		system.Nodes[i].Weight = f.Weight
+		system.Nodes[i].Graph = f.Graph
+		system.Nodes[i].Label = f.Label
 	}
 	if m.Final != nil {
 		system.Final, err = unf(m.Final)

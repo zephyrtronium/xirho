@@ -14,8 +14,8 @@ import (
 	"github.com/zephyrtronium/xirho/xmath"
 )
 
-// R manages the rendering of a System onto a Hist.
-type R struct {
+// Render manages the rendering of a System onto a Hist.
+type Render struct {
 	// These fields must be first on 32-bit platforms because they are updated
 	// atomically.
 	// n is the number of points calculated.
@@ -39,7 +39,7 @@ type R struct {
 // the context closes and after all its renderer goroutines finish. It is safe
 // to call Render multiple times in succession to continue using the same
 // histogram.
-func (r *R) Render(ctx context.Context, system System, procs int) {
+func (r *Render) Render(ctx context.Context, system System, procs int) {
 	rng := xmath.NewRNG()
 	if procs <= 0 {
 		procs = runtime.GOMAXPROCS(0)
@@ -72,7 +72,7 @@ func (r *R) Render(ctx context.Context, system System, procs int) {
 // channel, and returns. If needed, other goroutines may join on RenderAsync by
 // waiting for imgs to close. Until imgs closes, it is not safe to modify any
 // of the renderer's fields.
-func (r *R) RenderAsync(ctx context.Context, change <-chan ChangeRender, plot <-chan PlotOnto, imgs chan<- draw.Image) {
+func (r *Render) RenderAsync(ctx context.Context, change <-chan ChangeRender, plot <-chan PlotOnto, imgs chan<- draw.Image) {
 	rng := xmath.NewRNG()
 	rctx, cancel := context.WithCancel(ctx)
 	defer close(imgs)
@@ -138,7 +138,7 @@ func (r *R) RenderAsync(ctx context.Context, change <-chan ChangeRender, plot <-
 }
 
 // start starts worker goroutines with the given context.
-func (r *R) start(ctx context.Context, wg *sync.WaitGroup, procs int, system System, rng *xmath.RNG) {
+func (r *Render) start(ctx context.Context, wg *sync.WaitGroup, procs int, system System, rng *xmath.RNG) {
 	if system.Empty() {
 		return
 	}
@@ -153,7 +153,7 @@ func (r *R) start(ctx context.Context, wg *sync.WaitGroup, procs int, system Sys
 }
 
 // plot plots a point.
-func (r *R) plot(p P) bool {
+func (r *Render) plot(p Pt) bool {
 	if !p.IsValid() {
 		return false
 	}
@@ -185,19 +185,19 @@ func (r *R) plot(p P) bool {
 
 // Iters returns the number of iterations the renderer has performed. It is
 // safe to call this while the renderer is running.
-func (r *R) Iters() int64 {
+func (r *Render) Iters() int64 {
 	return atomic.LoadInt64(&r.n)
 }
 
 // Hits returns the number of iterations the renderer has plotted. It is safe
 // to call this while the renderer is running.
-func (r *R) Hits() int64 {
+func (r *Render) Hits() int64 {
 	return atomic.LoadInt64(&r.q)
 }
 
 // ResetCounts resets the values returned by Iters and Hits to zero. Unlike
 // those methods, it is not safe to call this while the renderer is running.
-func (r *R) ResetCounts() {
+func (r *Render) ResetCounts() {
 	r.n, r.q = 0, 0
 }
 

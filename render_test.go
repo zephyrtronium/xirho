@@ -15,13 +15,13 @@ func TestRender(t *testing.T) {
 	if testing.Short() {
 		t.SkipNow()
 	}
-	r := xirho.R{
+	r := xirho.Render{
 		Hist:    xirho.NewHist(1, 1),
 		Palette: []color.NRGBA64{{R: 0xffff, A: 0xffff}, {R: 0xffff, A: 0xffff}},
 	}
 	f := nanf{}
 	s := xirho.System{
-		Funcs: []xirho.SysFunc{
+		Nodes: []xirho.Node{
 			{Func: &f, Opacity: 1, Weight: 1},
 		},
 	}
@@ -54,13 +54,13 @@ func TestRenderAsync(t *testing.T) {
 	if testing.Short() {
 		t.SkipNow()
 	}
-	r := xirho.R{
+	r := xirho.Render{
 		Hist:    xirho.NewHist(1, 1),
 		Palette: []color.NRGBA64{{R: 0xffff, A: 0xffff}, {R: 0xffff, A: 0xffff}},
 	}
 	f := nanf{}
 	s := xirho.System{
-		Funcs: []xirho.SysFunc{
+		Nodes: []xirho.Node{
 			{Func: &f, Opacity: 1, Weight: 1},
 		},
 	}

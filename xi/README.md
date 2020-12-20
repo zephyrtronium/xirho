@@ -33,11 +33,11 @@ The following function types (variations) are implemented here:
 - Spherical
 - Splits (the 3D version)
 - Sum (roughly implements the behavior of multiple variations in Apophysis)
-- Then (turns any variation into a pre- or post- variant, and more general besides)
+- Then (turns any function into a pre- or post- variant, and more general besides)
 
-## Adding new variations
+## Adding new functions
 
-Xi is designed so that external packages may add any number of variations during initialization. For example, in a package providing function types named "madoka" and "homura", one could do:
+Xi is designed so that external packages may add any number of functions during initialization. For example, in a package providing function types named "madoka" and "homura", one could do:
 
 ```go
 func init() {
@@ -60,9 +60,9 @@ import _ "example.org/anime"
 
 Then `go build -buildmode=plugin plugin.go` will create a Go plugin that a renderer program could load dynamically and automatically have madoka and homura. Note that Go does not implement `-buildmode=plugin` on Windows.
 
-If xi is the best place for a new variation, e.g. because it is very common in Apophysis, then make sure to follow the following steps:
+If xi is the best place for a new function, e.g. because it is very common in Apophysis, then make sure to follow the following steps:
 
 - Create the function type with `Calc` and `Prep` methods.
-- Register any factories in a `func init()` using `must`. There must be at least one factory, to ensure that the type implements `xirho.F`.
+- Register any factories in a `func init()` using `must`. There must be at least one factory, to ensure that the type implements `xirho.Func`.
 - Add it to this README, in the list near the top.
 - Create Flame parsers in package `xirho/encoding/flame` and add it to the README there.

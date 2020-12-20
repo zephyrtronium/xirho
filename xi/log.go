@@ -14,7 +14,7 @@ type Log struct {
 	lb complex128
 }
 
-func (v *Log) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
+func (v *Log) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	z := cmplx.Log(complex(in.X, in.Y)) * v.lb
 	in.X = real(z)
 	in.Y = imag(z)
@@ -26,5 +26,5 @@ func (v *Log) Prep() {
 }
 
 func init() {
-	must("log", func() xirho.F { return &Log{Base: math.E} })
+	must("log", func() xirho.Func { return &Log{Base: math.E} })
 }

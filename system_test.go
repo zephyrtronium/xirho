@@ -14,7 +14,7 @@ import (
 
 type prepf bool
 
-func (v *prepf) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
+func (v *prepf) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	return in
 }
 
@@ -24,7 +24,7 @@ func (v *prepf) Prep() {
 
 func TestSystemPrep(t *testing.T) {
 	s := xirho.System{
-		Funcs: []xirho.SysFunc{
+		Nodes: []xirho.Node{
 			{Func: new(prepf), Weight: 1},
 			{Func: new(prepf), Weight: 1},
 			{Func: new(prepf), Weight: 1},
@@ -32,7 +32,7 @@ func TestSystemPrep(t *testing.T) {
 		Final: new(prepf),
 	}
 	s.Prep()
-	for i, f := range s.Funcs {
+	for i, f := range s.Nodes {
 		if !*f.Func.(*prepf) {
 			t.Error("function", i, "not prepped")
 		}
@@ -45,7 +45,7 @@ func TestSystemPrep(t *testing.T) {
 func TestSystemCheck(t *testing.T) {
 	// First, check that a well-defined system passes.
 	s := xirho.System{
-		Funcs: []xirho.SysFunc{
+		Nodes: []xirho.Node{
 			{Func: new(prepf), Weight: 1, Graph: []float64{1}},
 		},
 	}
@@ -56,47 +56,47 @@ func TestSystemCheck(t *testing.T) {
 		"empty":          {},
 		"emptyWithFinal": {Final: new(prepf)},
 		"opacityNegative": {
-			Funcs: []xirho.SysFunc{
+			Nodes: []xirho.Node{
 				{Func: new(prepf), Opacity: math.Nextafter(0, -1), Weight: 1},
 			},
 		},
 		"opacityExcess": {
-			Funcs: []xirho.SysFunc{
+			Nodes: []xirho.Node{
 				{Func: new(prepf), Opacity: math.Nextafter(1, 2), Weight: 1},
 			},
 		},
 		"opacityNan": {
-			Funcs: []xirho.SysFunc{
+			Nodes: []xirho.Node{
 				{Func: new(prepf), Opacity: math.NaN(), Weight: 1},
 			},
 		},
 		"weightNegative": {
-			Funcs: []xirho.SysFunc{
+			Nodes: []xirho.Node{
 				{Func: new(prepf), Weight: math.Nextafter(0, -1)},
 			},
 		},
 		"weightInf": {
-			Funcs: []xirho.SysFunc{
+			Nodes: []xirho.Node{
 				{Func: new(prepf), Weight: math.Inf(0)},
 			},
 		},
 		"weightNan": {
-			Funcs: []xirho.SysFunc{
+			Nodes: []xirho.Node{
 				{Func: new(prepf), Weight: math.NaN()},
 			},
 		},
 		"graphNegative": {
-			Funcs: []xirho.SysFunc{
+			Nodes: []xirho.Node{
 				{Func: new(prepf), Weight: 1, Graph: []float64{math.Nextafter(0, -1)}},
 			},
 		},
 		"graphInf": {
-			Funcs: []xirho.SysFunc{
+			Nodes: []xirho.Node{
 				{Func: new(prepf), Weight: 1, Graph: []float64{math.Inf(0)}},
 			},
 		},
 		"graphNan": {
-			Funcs: []xirho.SysFunc{
+			Nodes: []xirho.Node{
 				{Func: new(prepf), Weight: 1, Graph: []float64{math.NaN()}},
 			},
 		},
@@ -116,25 +116,25 @@ type nanf struct {
 	f bool
 }
 
-func (v *nanf) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
+func (v *nanf) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	atomic.AddInt64(&v.n, 1)
 	switch v.p {
 	case 1:
-		return xirho.P{
+		return xirho.Pt{
 			X: math.NaN(),
 			Y: in.Y,
 			Z: in.Z,
 			C: in.C,
 		}
 	case 2:
-		return xirho.P{
+		return xirho.Pt{
 			X: in.X,
 			Y: in.Y,
 			Z: in.Z,
 			C: 2,
 		}
 	}
-	return xirho.P{}
+	return xirho.Pt{}
 }
 
 func (v *nanf) Prep() {
@@ -148,11 +148,11 @@ func TestSystemIter(t *testing.T) {
 	rng := xmath.NewRNG()
 	f := nanf{}
 	s := xirho.System{
-		Funcs: []xirho.SysFunc{
+		Nodes: []xirho.Node{
 			{Func: &f, Weight: 1, Opacity: 1},
 		},
 	}
-	r := xirho.R{
+	r := xirho.Render{
 		Camera:  xirho.Eye(),
 		Hist:    xirho.NewHist(1, 1),
 		Palette: []color.NRGBA64{{R: 0xffff, A: 0xffff}, {R: 0xffff, A: 0xffff}},
@@ -167,7 +167,7 @@ func TestSystemIter(t *testing.T) {
 	}
 	t.Run("check", func(t *testing.T) {
 		s := xirho.System{}
-		r := xirho.R{
+		r := xirho.Render{
 			Camera:  xirho.Eye(),
 			Hist:    xirho.NewHist(1, 1),
 			Palette: []color.NRGBA64{{R: 0xffff, A: 0xffff}, {R: 0xffff, A: 0xffff}},
@@ -189,11 +189,11 @@ func TestSystemIter(t *testing.T) {
 	t.Run("fuseSpace", func(t *testing.T) {
 		f := nanf{p: 1}
 		s := xirho.System{
-			Funcs: []xirho.SysFunc{
+			Nodes: []xirho.Node{
 				{Func: &f, Weight: 1},
 			},
 		}
-		r := xirho.R{
+		r := xirho.Render{
 			Camera:  xirho.Eye(),
 			Hist:    xirho.NewHist(1, 1),
 			Palette: []color.NRGBA64{{R: 0xffff, A: 0xffff}, {R: 0xffff, A: 0xffff}},
@@ -211,13 +211,13 @@ func TestSystemIter(t *testing.T) {
 	})
 	t.Run("fuseColor", func(t *testing.T) {
 		f := nanf{p: 2}
-		r := xirho.R{
+		r := xirho.Render{
 			Camera:  xirho.Eye(),
 			Hist:    xirho.NewHist(1, 1),
 			Palette: []color.NRGBA64{{R: 0xffff, A: 0xffff}, {R: 0xffff, A: 0xffff}},
 		}
 		s := xirho.System{
-			Funcs: []xirho.SysFunc{
+			Nodes: []xirho.Node{
 				{Func: &f, Weight: 1},
 			},
 		}

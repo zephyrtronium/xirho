@@ -9,7 +9,7 @@ import (
 )
 
 // name2f maps names of registered functions to default factories.
-var name2f = make(map[string]func() xirho.F)
+var name2f = make(map[string]func() xirho.Func)
 
 // f2name maps registered function types to names.
 var f2name = make(map[reflect.Type]string)
@@ -18,7 +18,7 @@ var f2name = make(map[reflect.Type]string)
 // is returned if there is already a function with the given name. If the same
 // underlying type is registered multiple times, the name passed in the first
 // associated call to Register is used by NameOf.
-func Register(name string, factory func() xirho.F) error {
+func Register(name string, factory func() xirho.Func) error {
 	if f, ok := name2f[name]; ok {
 		t1 := reflect.TypeOf(factory())
 		for t1.Kind() == reflect.Ptr {
@@ -38,9 +38,9 @@ func Register(name string, factory func() xirho.F) error {
 	return nil
 }
 
-// New creates a new function using a registered function. The result is nil if
+// New creates a new function using a registered name. The result is nil if
 // there is no function registered with the given name.
-func New(name string) xirho.F {
+func New(name string) xirho.Func {
 	f := name2f[name]
 	if f == nil {
 		return nil
@@ -50,7 +50,7 @@ func New(name string) xirho.F {
 
 // NameOf returns the name of a registered function. ok is false if there is no
 // such function.
-func NameOf(f xirho.F) (name string, ok bool) {
+func NameOf(f xirho.Func) (name string, ok bool) {
 	name, ok = f2name[reflect.TypeOf(f)]
 	return
 }
@@ -76,7 +76,7 @@ func Names(unique bool) []string {
 }
 
 // must registers a function and panics if Register returns a non-nil error.
-func must(name string, factory func() xirho.F) {
+func must(name string, factory func() xirho.Func) {
 	if err := Register(name, factory); err != nil {
 		panic(err)
 	}

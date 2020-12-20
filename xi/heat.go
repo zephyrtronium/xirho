@@ -22,7 +22,7 @@ type Heat struct {
 	RA xirho.Real  `xirho:"radial wave amp"`
 }
 
-func (v *Heat) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
+func (v *Heat) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	r, theta, phi := xmath.Spherical(in.X, in.Y, in.Z)
 	r += float64(v.RA) * math.Sin((2*math.Pi*r+float64(v.RP))/float64(v.RT))
 	theta += float64(v.ThetaA) * math.Sin((2*math.Pi*r+float64(v.ThetaP))/float64(v.ThetaT))
@@ -33,7 +33,7 @@ func (v *Heat) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 
 func (v *Heat) Prep() {}
 
-func newHeat() xirho.F {
+func newHeat() xirho.Func {
 	return &Heat{
 		ThetaT: 1,
 		ThetaP: 0,

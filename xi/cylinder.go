@@ -10,7 +10,7 @@ import (
 // x/z plane.
 type Cylinder struct{}
 
-func (Cylinder) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
+func (Cylinder) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	s, c := math.Sincos(in.X)
 	in.X = s
 	in.Z = c
@@ -20,5 +20,5 @@ func (Cylinder) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 func (Cylinder) Prep() {}
 
 func init() {
-	must("cylinder", func() xirho.F { return Cylinder{} })
+	must("cylinder", func() xirho.Func { return Cylinder{} })
 }

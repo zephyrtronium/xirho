@@ -191,7 +191,7 @@ func parseMobius(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {
 		InZero: 3,
 	}
 	t := xi.Then{
-		Funcs: []xirho.F{
+		Funcs: []xirho.Func{
 			xi.Flatten{},
 			&f,
 		},
@@ -235,7 +235,7 @@ func parseScry(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {
 
 func parseSpherical(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {
 	f := xi.Then{
-		Funcs: []xirho.F{
+		Funcs: []xirho.Func{
 			xi.Flatten{},
 			xi.Spherical{},
 		},
@@ -249,7 +249,7 @@ func parseSpherical3D(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.
 
 func parsePrespherical(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {
 	f := xi.Then{
-		Funcs: []xirho.F{
+		Funcs: []xirho.Func{
 			xi.Flatten{},
 			xi.Spherical{},
 		},
@@ -263,7 +263,7 @@ func parseSplits(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {
 		Y: xirho.Real(attrs["splits_y"]),
 	}
 	t := xi.Then{
-		Funcs: []xirho.F{
+		Funcs: []xirho.Func{
 			xi.Flatten{},
 			&f,
 		},
@@ -295,7 +295,7 @@ func parseUnpolar(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) 
 }
 
 // maybeScaled returns f if v is 1 or a Then with f and Scale by v otherwise.
-func maybeScaled(f xirho.F, v float64) xirho.F {
+func maybeScaled(f xirho.Func, v float64) xirho.Func {
 	if v == 1 {
 		return f
 	}
@@ -304,7 +304,7 @@ func maybeScaled(f xirho.F, v float64) xirho.F {
 		return t
 	}
 	return &xi.Then{
-		Funcs: []xirho.F{
+		Funcs: []xirho.Func{
 			f,
 			&xi.Scale{Amount: xirho.Real(v)},
 		},

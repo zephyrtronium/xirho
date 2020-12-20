@@ -13,39 +13,39 @@ type RNG = xmath.RNG
 
 // System is a generalized iterated function system.
 type System struct {
-	// Funcs is the system's function list.
-	Funcs []SysFunc
+	// Nodes is the system's node list.
+	Nodes []Node
 	// Final is an additional function applied after each function, if it is
 	// non-nil. The result from Final is used only for plotting; the input to
 	// it is the same as the input to the next iteration's function.
-	Final F
+	Final Func
 }
 
-// SysFunc describes the properties of a single function within a system.
-type SysFunc struct {
+// Node describes the properties of a single node within a system.
+type Node struct {
 	// Func is the function which transforms points.
-	Func F
-	// Opacity scales the alpha channel of points plotted by the function. It
+	Func Func
+	// Opacity scales the alpha channel of points plotted by the node. It
 	// must be in the interval [0, 1].
 	Opacity float64
-	// Weight controls the proportion of iterations which map to this function.
+	// Weight controls the proportion of iterations which map to this node.
 	// It must be a finite, nonnegative number.
 	Weight float64
-	// Graph is the weights from this function to each other function in the
-	// system. If the graph is shorter than the number of functions in the
+	// Graph is the weights from this node to each other node in the
+	// system. If the graph is shorter than the number of nodes in the
 	// system, then the missing values are treated as being 1.
 	Graph []float64
 
-	// Label is the label for this function.
+	// Label is the label for this node.
 	Label string
 }
 
 // iterator manages the iterations of a System by a single goroutine.
 type iterator struct {
-	// funcs is the system function list.
-	funcs []F
+	// nodes is the system node list.
+	nodes []Func
 	// final is the system final.
-	final F
+	final Func
 	// rng is the iterator's source of randomness.
 	rng RNG
 	// op is the pre-multiplied opacities of each function in the system.
@@ -57,7 +57,7 @@ type iterator struct {
 // Prep calls the Prep method of each function in the system. It should be
 // called once before any call to Iter.
 func (s System) Prep() {
-	for _, f := range s.Funcs {
+	for _, f := range s.Nodes {
 		f.Func.Prep()
 	}
 	if s.Final != nil {
@@ -69,7 +69,7 @@ func (s System) Prep() {
 // iterating until the context's Done channel is closed. rng should be seeded
 // to a distinct state for each call to this method. Iter panics if Check
 // returns an error.
-func (s System) Iter(ctx context.Context, r *R, rng RNG) {
+func (s System) Iter(ctx context.Context, r *Render, rng RNG) {
 	if err := s.Check(); err != nil {
 		panic(err)
 	}
@@ -89,7 +89,7 @@ func (s System) Iter(ctx context.Context, r *R, rng RNG) {
 				p, k = it.fuse()
 				continue
 			}
-			p = it.funcs[k].Calc(p, &it.rng)
+			p = it.nodes[k].Calc(p, &it.rng)
 			// If a function has opacity α, that means we plot its points with
 			// probability α. If we don't plot a point, then there's no reason
 			// to apply the final, since that is only a nonlinear camera.
@@ -111,14 +111,14 @@ func (s System) Iter(ctx context.Context, r *R, rng RNG) {
 }
 
 // Check verifies that the system is properly configured: it contains at least
-// one function, no opacities are outside [0, 1], and no weight is negative or
+// one node, no opacities are outside [0, 1], and no weight is negative or
 // non-finite. If any of these conditions is false, then the returned error
 // describes the problem.
 func (s System) Check() error {
 	if s.Empty() {
 		return fmt.Errorf("xirho: cannot render an empty system")
 	}
-	for i, f := range s.Funcs {
+	for i, f := range s.Nodes {
 		if f.Opacity-f.Opacity != 0 {
 			return fmt.Errorf("xirho: non-finite opacity %v for func %d", f.Opacity, i)
 		}
@@ -145,11 +145,11 @@ func (s System) Check() error {
 
 // Empty returns whether the system contains no functions.
 func (s System) Empty() bool {
-	return len(s.Funcs) == 0
+	return len(s.Nodes) == 0
 }
 
 // doFinal applies the system's Final function to the point, if present.
-func (it *iterator) doFinal(p P) P {
+func (it *iterator) doFinal(p Pt) Pt {
 	if it.final != nil {
 		p = it.final.Calc(p, &it.rng)
 	}
@@ -160,16 +160,16 @@ func (it *iterator) doFinal(p P) P {
 const fuseLen = 30
 
 // fuse obtains initial conditions to plot points from the system.
-func (it *iterator) fuse() (P, int) {
-	p := P{
+func (it *iterator) fuse() (Pt, int) {
+	p := Pt{
 		X: it.rng.Uniform()*2 - 1,
 		Y: it.rng.Uniform()*2 - 1,
 		Z: it.rng.Uniform()*2 - 1,
 		C: it.rng.Uniform(),
 	}
-	k := it.next(it.rng.Intn(len(it.funcs)))
+	k := it.next(it.rng.Intn(len(it.nodes)))
 	for i := 0; i < fuseLen; i++ {
-		p = it.funcs[k].Calc(p, &it.rng)
+		p = it.nodes[k].Calc(p, &it.rng)
 		if !p.IsValid() {
 			break
 		}
@@ -181,7 +181,7 @@ func (it *iterator) fuse() (P, int) {
 // next obtains the next function to use from the current one.
 func (it *iterator) next(k int) int {
 	v := it.rng.Uint64() & (1<<53 - 1)
-	w := it.w[k*len(it.funcs) : (k+1)*len(it.funcs)]
+	w := it.w[k*len(it.nodes) : (k+1)*len(it.nodes)]
 	for i, x := range w {
 		if v < x {
 			return i
@@ -195,26 +195,26 @@ func (it *iterator) next(k int) int {
 // pre-multiplies brightnesses
 func (it *iterator) prep(s System) {
 	it.final = s.Final
-	switch l := len(s.Funcs); l {
+	switch l := len(s.Nodes); l {
 	case 0:
-		it.funcs = nil
+		it.nodes = nil
 		it.w = nil
 	case 1:
-		it.funcs = []F{s.Funcs[0].Func}
+		it.nodes = []Func{s.Nodes[0].Func}
 		it.w = []uint64{^uint64(0)} // even if the weight is 0
 	default:
-		it.funcs = make([]F, len(s.Funcs))
-		for i, f := range s.Funcs {
-			it.funcs[i] = f.Func
+		it.nodes = make([]Func, len(s.Nodes))
+		for i, f := range s.Nodes {
+			it.nodes[i] = f.Func
 		}
-		it.w = make([]uint64, len(s.Funcs)*len(s.Funcs))
-		// Let F denote the set of functions in the system. Let f denote the
-		// current function.
-		// Each function in F has its own weight, and f has a weight to each
-		// function in F (including itself). The probability of choosing g in F
-		// as the next function is then the product of g's weight and the
-		// weight from f to g, divided by the total weight of all functions.
-		// Then we have a probability distribution.
+		it.w = make([]uint64, len(s.Nodes)*len(s.Nodes))
+		// Let F denote the set of nodes in the system. Let f denote the
+		// current node.
+		// Each node in F has its own weight, and f has a weight to each node
+		// in F (including itself). The probability of choosing g in F as the
+		// next node is then the product of g's weight and the weight from f to
+		// g, divided by the total weight of all nodes. Then we have a
+		// probability distribution.
 		// Numerical stability is important here, and this is called only once
 		// per proc per render, so we can afford relatively expensive
 		// algorithms like Kahan summation. We also scale to 2^53 instead of
@@ -223,33 +223,33 @@ func (it *iterator) prep(s System) {
 		// 1.0 by 2^53 means the last element will always be greater than any
 		// variate, which simplifies the loop.
 		const scale float64 = 1 << 53
-		wb := make([]float64, len(s.Funcs))
-		for i, f := range s.Funcs {
-			for j := copy(wb, f.Graph); j < len(s.Funcs); j++ {
+		wb := make([]float64, len(s.Nodes))
+		for i, f := range s.Nodes {
+			for j := copy(wb, f.Graph); j < len(s.Nodes); j++ {
 				// Fill in missing values with 1.
 				wb[j] = 1
 			}
-			for j, g := range s.Funcs {
+			for j, g := range s.Nodes {
 				wb[j] *= g.Weight
 			}
 			sum := cumsum(wb)
 			if sum == 0 {
 				// 0 sum would give nan for every element. Avoid nan.
-				w := it.w[i*len(s.Funcs) : (i+1)*len(s.Funcs)]
+				w := it.w[i*len(s.Nodes) : (i+1)*len(s.Nodes)]
 				for j := range w {
 					w[j] = ^uint64(0)
 				}
 				continue
 			}
 			for j, x := range wb {
-				it.w[i*len(s.Funcs)+j] = uint64(x / sum * scale)
+				it.w[i*len(s.Nodes)+j] = uint64(x / sum * scale)
 			}
 		}
 	}
 	// Calculate opacity probabilities. The idea here is essentially the same
 	// as in fixed-point weights.
-	it.op = make([]uint64, len(s.Funcs))
-	for i, f := range s.Funcs {
+	it.op = make([]uint64, len(s.Nodes))
+	for i, f := range s.Nodes {
 		it.op[i] = uint64(f.Opacity * (1 << 53))
 	}
 }

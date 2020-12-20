@@ -23,25 +23,23 @@ type pf struct {
 	Func    xirho.Func     `xirho:"11"`
 	NFunc   xirho.Func     `xirho:"12,optional"`
 	Funcs   xirho.FuncList `xirho:"13"`
-	AlsoNot xirho.F        `xirho:"14"`
 }
 
-func (*pf) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
+func (*pf) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	return in
 }
 
 func (*pf) Prep() {}
 
-func newPf() xirho.F {
+func newPf() xirho.Func {
 	r := pf{}
-	r.Func.F = &r
-	r.AlsoNot = &r
+	r.Func = &r
 	return &r
 }
 
 type ef struct{}
 
-func (ef) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
+func (ef) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	return in
 }
 
@@ -51,7 +49,7 @@ type uf struct {
 	unexported xirho.Flag `xirho:"unexported"`
 }
 
-func (*uf) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
+func (*uf) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	return in
 }
 
@@ -59,7 +57,7 @@ func (*uf) Prep() {}
 
 type ff xirho.Flag
 
-func (*ff) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
+func (*ff) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	return in
 }
 
@@ -67,12 +65,12 @@ func (*ff) Prep() {}
 
 func TestForCount(t *testing.T) {
 	cases := map[string]struct {
-		v xirho.F
+		v xirho.Func
 		f int
 		n int
 	}{
 		"ef": {v: ef{}, f: 0, n: 0},
-		"pf": {v: newPf(), f: 15, n: 13},
+		"pf": {v: newPf(), f: 14, n: 13},
 	}
 	for name, c := range cases {
 		t.Run(name, func(t *testing.T) {

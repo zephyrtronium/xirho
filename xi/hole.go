@@ -11,7 +11,7 @@ type Hole struct {
 	Origin xirho.Vec3 `xirho:"origin"`
 }
 
-func (v *Hole) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
+func (v *Hole) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	ox, oy, oz := in.X-v.Origin[0], in.Y-v.Origin[1], in.Z-v.Origin[2]
 	r := xmath.R3(ox, oy, oz)
 	s := 1 + float64(v.Amount)/r
@@ -24,6 +24,6 @@ func (v *Hole) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 func (v *Hole) Prep() {}
 
 func init() {
-	must("hole", func() xirho.F { return &Hole{} })
-	must("spherivoid", func() xirho.F { return &Hole{} })
+	must("hole", func() xirho.Func { return &Hole{} })
+	must("spherivoid", func() xirho.Func { return &Hole{} })
 }

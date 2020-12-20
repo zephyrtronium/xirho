@@ -9,11 +9,11 @@ import (
 type Spherical struct{}
 
 // newSpherical is a factory for Spherical.
-func newSpherical() xirho.F {
+func newSpherical() xirho.Func {
 	return Spherical{}
 }
 
-func (Spherical) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
+func (Spherical) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	r := in.X*in.X + in.Y*in.Y + in.Z*in.Z
 	in.X /= r
 	in.Y /= r

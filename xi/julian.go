@@ -13,11 +13,11 @@ type JuliaN struct {
 }
 
 // newJuliaN is a factory for JuliaN, defaulting Power to 3 and Dist to 1.
-func newJuliaN() xirho.F {
+func newJuliaN() xirho.Func {
 	return &JuliaN{Power: 3, Dist: 1}
 }
 
-func (f *JuliaN) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
+func (f *JuliaN) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	p1 := int(f.Power)
 	if p1 < 0 {
 		p1 = -p1

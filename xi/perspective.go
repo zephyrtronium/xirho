@@ -8,11 +8,11 @@ type Perspective struct {
 }
 
 // newPerspective is a factory for Perspective, defaulting to a distance of 1.
-func newPerspective() xirho.F {
+func newPerspective() xirho.Func {
 	return &Perspective{Distance: 1}
 }
 
-func (f *Perspective) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
+func (f *Perspective) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	r := float64(f.Distance) / in.Z
 	in.X *= r
 	in.Y *= r

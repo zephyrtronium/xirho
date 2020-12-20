@@ -6,11 +6,11 @@ import "github.com/zephyrtronium/xirho"
 type Bubble struct{}
 
 // newBubble is a factory for Bubble.
-func newBubble() xirho.F {
+func newBubble() xirho.Func {
 	return Bubble{}
 }
 
-func (Bubble) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
+func (Bubble) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	r := 4 / (in.X*in.X + in.Y*in.Y + in.Z*in.Z + 4)
 	in.X *= r
 	in.Y *= r

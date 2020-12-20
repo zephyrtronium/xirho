@@ -15,7 +15,7 @@ type Farblur struct {
 	Dist   xirho.Real   `xirho:"dist"`
 }
 
-func (v *Farblur) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
+func (v *Farblur) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	ox, oy, oz := in.X-v.Origin[0], in.Y-v.Origin[1], in.Z-v.Origin[2]
 	r := ox*ox + oy*oy + oz*oz
 	s := math.Pow(r, float64(v.Dist))
@@ -28,7 +28,7 @@ func (v *Farblur) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 
 func (v *Farblur) Prep() {}
 
-func newFarblur() xirho.F {
+func newFarblur() xirho.Func {
 	return &Farblur{
 		Ax:   xirho.Eye(),
 		Dist: 0.5,

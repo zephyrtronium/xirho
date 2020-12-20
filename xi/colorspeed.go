@@ -15,11 +15,11 @@ type ColorSpeed struct {
 
 // newColorSpeed is a factory for ColorSpeed, defaulting Color to 0 and Speed
 // to 1.
-func newColorSpeed() xirho.F {
+func newColorSpeed() xirho.Func {
 	return &ColorSpeed{Speed: 1}
 }
 
-func (f *ColorSpeed) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
+func (f *ColorSpeed) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	in.C = in.C*float64(f.Speed) + float64((1-f.Speed)*f.Color)
 	return in
 }

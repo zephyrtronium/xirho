@@ -14,7 +14,7 @@ type Param interface {
 	Name() string
 
 	// isParam ensures that no external types may implement Param.
-	isParam() sealed
+	isParam()
 }
 
 // paramName is a shortcut embeddable type for param names.
@@ -110,7 +110,8 @@ func (p List) Opts() []string {
 // Int is an integer function parameter. After the parameter name, an Int field
 // may include two additional comma-separated tags to define the lowest and
 // highest permitted values. For example, to define a parameter allowing the
-// user to choose any integer in [-3, 12], do:
+// user to choose any integer greater than or equal to -3 and less than or
+// equal to 12, do:
 //
 //		type Example struct {
 //			P xirho.Int `xirho:"p,-3,12"`
@@ -205,7 +206,7 @@ func (p Angle) Get() float64 {
 // Real is a floating-point function parameter. After the parameter name, a
 // Real field may include two additional comma-separated tags to define the
 // lowest and highest permitted values. For example, to define a parameter
-// allowing the user to choose any real in [-2π, 2π], do:
+// allowing the user to choose any real in the interval [-2π, 2π], do:
 //
 //		type Example struct {
 //			P xirho.Real `xirho:"p,-6.283185307179586,6.283185307179586"`
@@ -383,19 +384,19 @@ func funcFor(name string, opt bool, v *xirho.Func) Param {
 	}
 }
 
-// Set sets the function value. If the parameter is not optional and v.F is
-// nil, an error of type NotOptional is returned instead.
-func (p Func) Set(v xirho.F) error {
+// Set sets the function value. If the parameter is not optional and v is nil,
+// an error of type NotOptional is returned instead.
+func (p Func) Set(v xirho.Func) error {
 	if !p.opt && v == nil {
 		return NotOptional{Param: p}
 	}
-	*p.v = xirho.Func{F: v}
+	*p.v = v
 	return nil
 }
 
 // Get gets the function value.
-func (p Func) Get() xirho.F {
-	return p.v.F
+func (p Func) Get() xirho.Func {
+	return *p.v
 }
 
 // IsOptional returns whether the function may be set to nil.
@@ -429,20 +430,17 @@ func (p FuncList) Get() xirho.FuncList {
 }
 
 // Append appends functions to the list.
-func (p FuncList) Append(v ...xirho.F) {
+func (p FuncList) Append(v ...xirho.Func) {
 	*p.v = append(*p.v, v...)
 }
 
-// sealed prevents external types from implementing Param.
-type sealed struct{}
-
-func (Flag) isParam() sealed     { panic(nil) }
-func (List) isParam() sealed     { panic(nil) }
-func (Int) isParam() sealed      { panic(nil) }
-func (Angle) isParam() sealed    { panic(nil) }
-func (Real) isParam() sealed     { panic(nil) }
-func (Complex) isParam() sealed  { panic(nil) }
-func (Vec3) isParam() sealed     { panic(nil) }
-func (Affine) isParam() sealed   { panic(nil) }
-func (Func) isParam() sealed     { panic(nil) }
-func (FuncList) isParam() sealed { panic(nil) }
+func (Flag) isParam()     { panic(nil) }
+func (List) isParam()     { panic(nil) }
+func (Int) isParam()      { panic(nil) }
+func (Angle) isParam()    { panic(nil) }
+func (Real) isParam()     { panic(nil) }
+func (Complex) isParam()  { panic(nil) }
+func (Vec3) isParam()     { panic(nil) }
+func (Affine) isParam()   { panic(nil) }
+func (Func) isParam()     { panic(nil) }
+func (FuncList) isParam() { panic(nil) }

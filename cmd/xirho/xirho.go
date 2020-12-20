@@ -86,7 +86,7 @@ func main() {
 	}
 
 	var system xirho.System
-	var r *xirho.R
+	var r *xirho.Render
 	var err error
 	if flamename == "" {
 		var in io.Reader = os.Stdin

@@ -23,7 +23,7 @@ type funcm struct {
 
 // newFuncm creates an encoding wrapper around f. Returns an error if the
 // underlying type of f has not been registered with package xi.
-func newFuncm(f xirho.F) (*funcm, error) {
+func newFuncm(f xirho.Func) (*funcm, error) {
 	name, ok := xi.NameOf(f)
 	if !ok {
 		return nil, fmt.Errorf("unregistered function %#v", f)
@@ -81,12 +81,13 @@ func newFuncm(f xirho.F) (*funcm, error) {
 	return &r, nil
 }
 
-// unf decodes a funcm into the corresponding xirho.F, setting the appropriate
-// parameters. The returned error is non-nil if there is no registered function
-// with the funcm's name, or if the corresponding function does not have a
-// parameter with the name of a funcm parameter, or if any function parameter
-// cannot be set to the value in the parameters (e.g. due to bounds).
-func unf(f *funcm) (v xirho.F, err error) {
+// unf decodes a funcm into the corresponding xirho.Func, setting the
+// appropriate parameters. The returned error is non-nil if there is no
+// registered function with the funcm's name, or if the corresponding function
+// does not have a parameter with the name of a funcm parameter, or if any
+// function parameter cannot be set to the value in the parameters (e.g. due to
+// bounds).
+func unf(f *funcm) (v xirho.Func, err error) {
 	v = xi.New(f.Name)
 	if v == nil {
 		return nil, fmt.Errorf("no registered function named %s", f.Name)

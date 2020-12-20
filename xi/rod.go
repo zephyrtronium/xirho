@@ -12,9 +12,9 @@ type Rod struct {
 	Radius xirho.Real `xirho:"radius"`
 }
 
-func (v *Rod) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
+func (v *Rod) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	s, c := math.Sincos(2 * math.Pi * rng.Uniform())
-	return xirho.P{
+	return xirho.Pt{
 		X: float64(v.Radius) * s,
 		Y: in.Y + rng.Normal(),
 		Z: float64(v.Radius) * c,
@@ -24,5 +24,5 @@ func (v *Rod) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 func (v *Rod) Prep() {}
 
 func init() {
-	must("rod", func() xirho.F { return &Rod{Radius: 0.1} })
+	must("rod", func() xirho.Func { return &Rod{Radius: 0.1} })
 }

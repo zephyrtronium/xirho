@@ -10,11 +10,11 @@ import (
 type Blur struct{}
 
 // newBlur is a factory for Blur.
-func newBlur() xirho.F {
+func newBlur() xirho.Func {
 	return Blur{}
 }
 
-func (Blur) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
+func (Blur) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	s, c := math.Sincos(2 * math.Pi * rng.Uniform())
 	r := rng.Uniform()
 	in.X = r * c

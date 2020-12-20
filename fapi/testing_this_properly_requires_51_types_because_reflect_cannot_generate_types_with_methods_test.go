@@ -183,7 +183,7 @@ var typeCases = []struct {
 	// name is the name of the testing type.
 	name string
 	// v is the testing type.
-	v xirho.F
+	v xirho.Func
 	// param is the expected param type from the first (and only) field. If
 	// nil, expect a panic instead.
 	param reflect.Type
@@ -680,7 +680,7 @@ var typeCases = []struct {
 		field: "V",
 		set: []setCase{
 			{set: xi.Spherical{}, get: xi.Spherical{}, err: nil},
-			{set: xirho.F(nil), get: xi.Spherical{}, err: fapi.NotOptional{}},
+			{set: xirho.Func(nil), get: xi.Spherical{}, err: fapi.NotOptional{}},
 		},
 	},
 	{
@@ -690,7 +690,7 @@ var typeCases = []struct {
 		field: "test",
 		set: []setCase{
 			{set: xi.Spherical{}, get: xi.Spherical{}, err: nil},
-			{set: xirho.F(nil), get: xirho.F(nil), err: nil},
+			{set: xirho.Func(nil), get: xirho.Func(nil), err: nil},
 		},
 	},
 	{
@@ -700,7 +700,7 @@ var typeCases = []struct {
 		field: "V",
 		set: []setCase{
 			{set: xi.Spherical{}, get: xi.Spherical{}, err: nil},
-			{set: xirho.F(nil), get: xirho.F(nil), err: nil},
+			{set: xirho.Func(nil), get: xirho.Func(nil), err: nil},
 		},
 	},
 	{
@@ -715,7 +715,7 @@ var typeCases = []struct {
 		field: "test",
 		set: []setCase{
 			{set: xi.Spherical{}, get: xi.Spherical{}, err: nil},
-			{set: xirho.F(nil), get: xirho.F(nil), err: nil},
+			{set: xirho.Func(nil), get: xirho.Func(nil), err: nil},
 		},
 	},
 	{
@@ -750,57 +750,57 @@ var typeCases = []struct {
 	},
 }
 
-func (*testFlag) Calc(in xirho.P, rng *xirho.RNG) xirho.P                 { return xirho.P{} }
-func (*testFlagUnnamed) Calc(in xirho.P, rng *xirho.RNG) xirho.P          { return xirho.P{} }
-func (*testFlagExtra) Calc(in xirho.P, rng *xirho.RNG) xirho.P            { return xirho.P{} }
-func (*testListEmpty) Calc(in xirho.P, rng *xirho.RNG) xirho.P            { return xirho.P{} }
-func (*testList1) Calc(in xirho.P, rng *xirho.RNG) xirho.P                { return xirho.P{} }
-func (*testList2) Calc(in xirho.P, rng *xirho.RNG) xirho.P                { return xirho.P{} }
-func (*testList10) Calc(in xirho.P, rng *xirho.RNG) xirho.P               { return xirho.P{} }
-func (*testListUnnamed) Calc(in xirho.P, rng *xirho.RNG) xirho.P          { return xirho.P{} }
-func (*testInt) Calc(in xirho.P, rng *xirho.RNG) xirho.P                  { return xirho.P{} }
-func (*testIntUnnamed) Calc(in xirho.P, rng *xirho.RNG) xirho.P           { return xirho.P{} }
-func (*testIntBounded) Calc(in xirho.P, rng *xirho.RNG) xirho.P           { return xirho.P{} }
-func (*testIntBoundedUnnamed) Calc(in xirho.P, rng *xirho.RNG) xirho.P    { return xirho.P{} }
-func (*testIntBoundedBadLower) Calc(in xirho.P, rng *xirho.RNG) xirho.P   { return xirho.P{} }
-func (*testIntBoundedBadUpper) Calc(in xirho.P, rng *xirho.RNG) xirho.P   { return xirho.P{} }
-func (*testIntBoundedLowerOnly) Calc(in xirho.P, rng *xirho.RNG) xirho.P  { return xirho.P{} }
-func (*testIntBoundedUpperOnly) Calc(in xirho.P, rng *xirho.RNG) xirho.P  { return xirho.P{} }
-func (*testIntBoundedEmpty) Calc(in xirho.P, rng *xirho.RNG) xirho.P      { return xirho.P{} }
-func (*testIntBoundedSingleton) Calc(in xirho.P, rng *xirho.RNG) xirho.P  { return xirho.P{} }
-func (*testInt3) Calc(in xirho.P, rng *xirho.RNG) xirho.P                 { return xirho.P{} }
-func (*testAngle) Calc(in xirho.P, rng *xirho.RNG) xirho.P                { return xirho.P{} }
-func (*testAngleUnnamed) Calc(in xirho.P, rng *xirho.RNG) xirho.P         { return xirho.P{} }
-func (*testAngleExtra) Calc(in xirho.P, rng *xirho.RNG) xirho.P           { return xirho.P{} }
-func (*testReal) Calc(in xirho.P, rng *xirho.RNG) xirho.P                 { return xirho.P{} }
-func (*testRealUnnamed) Calc(in xirho.P, rng *xirho.RNG) xirho.P          { return xirho.P{} }
-func (*testRealBounded) Calc(in xirho.P, rng *xirho.RNG) xirho.P          { return xirho.P{} }
-func (*testRealBoundedUnnamed) Calc(in xirho.P, rng *xirho.RNG) xirho.P   { return xirho.P{} }
-func (*testRealBoundedBadLower) Calc(in xirho.P, rng *xirho.RNG) xirho.P  { return xirho.P{} }
-func (*testRealBoundedBadUpper) Calc(in xirho.P, rng *xirho.RNG) xirho.P  { return xirho.P{} }
-func (*testRealBoundedLowerOnly) Calc(in xirho.P, rng *xirho.RNG) xirho.P { return xirho.P{} }
-func (*testRealBoundedUpperOnly) Calc(in xirho.P, rng *xirho.RNG) xirho.P { return xirho.P{} }
-func (*testRealBoundedEmpty) Calc(in xirho.P, rng *xirho.RNG) xirho.P     { return xirho.P{} }
-func (*testRealBoundedSingleton) Calc(in xirho.P, rng *xirho.RNG) xirho.P { return xirho.P{} }
-func (*testReal3) Calc(in xirho.P, rng *xirho.RNG) xirho.P                { return xirho.P{} }
-func (*testComplex) Calc(in xirho.P, rng *xirho.RNG) xirho.P              { return xirho.P{} }
-func (*testComplexUnnamed) Calc(in xirho.P, rng *xirho.RNG) xirho.P       { return xirho.P{} }
-func (*testComplexExtra) Calc(in xirho.P, rng *xirho.RNG) xirho.P         { return xirho.P{} }
-func (*testVec3) Calc(in xirho.P, rng *xirho.RNG) xirho.P                 { return xirho.P{} }
-func (*testVec3Unnamed) Calc(in xirho.P, rng *xirho.RNG) xirho.P          { return xirho.P{} }
-func (*testVec3Extra) Calc(in xirho.P, rng *xirho.RNG) xirho.P            { return xirho.P{} }
-func (*testAffine) Calc(in xirho.P, rng *xirho.RNG) xirho.P               { return xirho.P{} }
-func (*testAffineUnnamed) Calc(in xirho.P, rng *xirho.RNG) xirho.P        { return xirho.P{} }
-func (*testAffineExtra) Calc(in xirho.P, rng *xirho.RNG) xirho.P          { return xirho.P{} }
-func (*testFunc) Calc(in xirho.P, rng *xirho.RNG) xirho.P                 { return xirho.P{} }
-func (*testFuncUnnamed) Calc(in xirho.P, rng *xirho.RNG) xirho.P          { return xirho.P{} }
-func (*testFuncOptional) Calc(in xirho.P, rng *xirho.RNG) xirho.P         { return xirho.P{} }
-func (*testFuncOptionalUnnamed) Calc(in xirho.P, rng *xirho.RNG) xirho.P  { return xirho.P{} }
-func (*testFuncBad) Calc(in xirho.P, rng *xirho.RNG) xirho.P              { return xirho.P{} }
-func (*testFuncExtra) Calc(in xirho.P, rng *xirho.RNG) xirho.P            { return xirho.P{} }
-func (*testFuncList) Calc(in xirho.P, rng *xirho.RNG) xirho.P             { return xirho.P{} }
-func (*testFuncListUnnamed) Calc(in xirho.P, rng *xirho.RNG) xirho.P      { return xirho.P{} }
-func (*testFuncListExtra) Calc(in xirho.P, rng *xirho.RNG) xirho.P        { return xirho.P{} }
+func (*testFlag) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt                 { return xirho.Pt{} }
+func (*testFlagUnnamed) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt          { return xirho.Pt{} }
+func (*testFlagExtra) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt            { return xirho.Pt{} }
+func (*testListEmpty) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt            { return xirho.Pt{} }
+func (*testList1) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt                { return xirho.Pt{} }
+func (*testList2) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt                { return xirho.Pt{} }
+func (*testList10) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt               { return xirho.Pt{} }
+func (*testListUnnamed) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt          { return xirho.Pt{} }
+func (*testInt) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt                  { return xirho.Pt{} }
+func (*testIntUnnamed) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt           { return xirho.Pt{} }
+func (*testIntBounded) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt           { return xirho.Pt{} }
+func (*testIntBoundedUnnamed) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt    { return xirho.Pt{} }
+func (*testIntBoundedBadLower) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt   { return xirho.Pt{} }
+func (*testIntBoundedBadUpper) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt   { return xirho.Pt{} }
+func (*testIntBoundedLowerOnly) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt  { return xirho.Pt{} }
+func (*testIntBoundedUpperOnly) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt  { return xirho.Pt{} }
+func (*testIntBoundedEmpty) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt      { return xirho.Pt{} }
+func (*testIntBoundedSingleton) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt  { return xirho.Pt{} }
+func (*testInt3) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt                 { return xirho.Pt{} }
+func (*testAngle) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt                { return xirho.Pt{} }
+func (*testAngleUnnamed) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt         { return xirho.Pt{} }
+func (*testAngleExtra) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt           { return xirho.Pt{} }
+func (*testReal) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt                 { return xirho.Pt{} }
+func (*testRealUnnamed) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt          { return xirho.Pt{} }
+func (*testRealBounded) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt          { return xirho.Pt{} }
+func (*testRealBoundedUnnamed) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt   { return xirho.Pt{} }
+func (*testRealBoundedBadLower) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt  { return xirho.Pt{} }
+func (*testRealBoundedBadUpper) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt  { return xirho.Pt{} }
+func (*testRealBoundedLowerOnly) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt { return xirho.Pt{} }
+func (*testRealBoundedUpperOnly) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt { return xirho.Pt{} }
+func (*testRealBoundedEmpty) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt     { return xirho.Pt{} }
+func (*testRealBoundedSingleton) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt { return xirho.Pt{} }
+func (*testReal3) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt                { return xirho.Pt{} }
+func (*testComplex) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt              { return xirho.Pt{} }
+func (*testComplexUnnamed) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt       { return xirho.Pt{} }
+func (*testComplexExtra) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt         { return xirho.Pt{} }
+func (*testVec3) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt                 { return xirho.Pt{} }
+func (*testVec3Unnamed) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt          { return xirho.Pt{} }
+func (*testVec3Extra) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt            { return xirho.Pt{} }
+func (*testAffine) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt               { return xirho.Pt{} }
+func (*testAffineUnnamed) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt        { return xirho.Pt{} }
+func (*testAffineExtra) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt          { return xirho.Pt{} }
+func (*testFunc) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt                 { return xirho.Pt{} }
+func (*testFuncUnnamed) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt          { return xirho.Pt{} }
+func (*testFuncOptional) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt         { return xirho.Pt{} }
+func (*testFuncOptionalUnnamed) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt  { return xirho.Pt{} }
+func (*testFuncBad) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt              { return xirho.Pt{} }
+func (*testFuncExtra) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt            { return xirho.Pt{} }
+func (*testFuncList) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt             { return xirho.Pt{} }
+func (*testFuncListUnnamed) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt      { return xirho.Pt{} }
+func (*testFuncListExtra) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt        { return xirho.Pt{} }
 
 func (*testFlag) Prep()                 {}
 func (*testFlagUnnamed) Prep()          {}

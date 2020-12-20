@@ -28,7 +28,7 @@ type Flame struct {
 	System xirho.System
 	// R is the renderer for the system. Its histogram should be Reset to the
 	// appropriate size before rendering.
-	R *xirho.R
+	R *xirho.Render
 	// Aspect is the aspect ratio (number of columns per row in the image, or
 	// width divided by height) of the system as encoded in the flame file.
 	Aspect float64
@@ -111,7 +111,7 @@ func convert(flm flame) (r Flame) {
 		A: 0xffff,
 	}
 	r.System = xirho.System{
-		Funcs: make([]xirho.SysFunc, len(flm.Xforms)),
+		Nodes: make([]xirho.Node, len(flm.Xforms)),
 	}
 	var df decoded
 	for i, xf := range flm.Xforms {
@@ -119,7 +119,7 @@ func convert(flm flame) (r Flame) {
 		if err != nil {
 			return
 		}
-		r.System.Funcs[i] = xirho.SysFunc{
+		r.System.Nodes[i] = xirho.Node{
 			Func:    df.f,
 			Opacity: df.op,
 			Weight:  df.weight,
@@ -148,7 +148,7 @@ func convert(flm flame) (r Flame) {
 		}
 		r.System.Final = df.f
 	}
-	r.R = &xirho.R{
+	r.R = &xirho.Render{
 		Hist:    &xirho.Hist{},
 		Camera:  cam,
 		Palette: parsepalette(flm.Palette),
@@ -160,7 +160,7 @@ func convert(flm flame) (r Flame) {
 
 // decoded is a decoded transform.
 type decoded struct {
-	f      xirho.F
+	f      xirho.Func
 	op     float64
 	weight float64
 	graph  []float64
@@ -283,14 +283,14 @@ func decodetx(coefs, name string) (ax xirho.Ax, err error) {
 // sumdefault returns a function encapsulating the behavior of a Sum based on
 // its function list and color function. The returned value is nil if the Sum
 // contains no functions.
-func sumdefault(f xi.Sum) xirho.F {
+func sumdefault(f xi.Sum) xirho.Func {
 	switch {
-	case len(f.Funcs) == 0 && f.Color.F == nil:
+	case len(f.Funcs) == 0 && f.Color == nil:
 		return nil
-	case len(f.Funcs) == 1 && f.Color.F == nil:
+	case len(f.Funcs) == 1 && f.Color == nil:
 		return f.Funcs[0]
-	case len(f.Funcs) == 0 && f.Color.F != nil:
-		return f.Color.F
+	case len(f.Funcs) == 0 && f.Color != nil:
+		return f.Color
 	default:
 		return &f
 	}

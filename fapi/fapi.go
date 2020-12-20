@@ -1,4 +1,4 @@
-// Package fapi creates a generic public API for xirho function types.
+// Package fapi creates a generic public API for xirho functions.
 //
 // The For function uses reflection to gather a list of modifiable parameters.
 // This can be used to implement serialization formats or to provide user
@@ -16,7 +16,7 @@ import (
 	"github.com/zephyrtronium/xirho"
 )
 
-// For collects a xirho.F's exported parameters. Each returned parameter has
+// For collects a xirho.Func's exported parameters. Each returned parameter has
 // its name set according to the first comma-separated section of the field's
 // "xirho" struct tag, defaulting to the field name. E.g., the JuliaN variation
 // is defined as such:
@@ -28,7 +28,7 @@ import (
 //
 // Certain parameters provide additional options; see the documentation for
 // each for details.
-func For(f xirho.F) []Param {
+func For(f xirho.Func) []Param {
 	var r []Param
 	val := reflect.ValueOf(f)
 	if val.Kind() == reflect.Ptr {
@@ -138,28 +138,14 @@ func pname(tag []string, name string) string {
 
 // Reflected Param types.
 var (
-	rFlag     = reflect.TypeOf(zFlag)
-	rList     = reflect.TypeOf(zList)
-	rInt      = reflect.TypeOf(zInt)
-	rAngle    = reflect.TypeOf(zAngle)
-	rReal     = reflect.TypeOf(zReal)
-	rComplex  = reflect.TypeOf(zComplex)
-	rVec3     = reflect.TypeOf(zVec3)
-	rAffine   = reflect.TypeOf(zAffine)
-	rFunc     = reflect.TypeOf(zFunc)
-	rFuncList = reflect.TypeOf(zFuncList)
-)
-
-// Zero values for Param types.
-var (
-	zFlag     xirho.Flag
-	zList     xirho.List
-	zInt      xirho.Int
-	zAngle    xirho.Angle
-	zReal     xirho.Real
-	zComplex  xirho.Complex
-	zVec3     xirho.Vec3
-	zAffine   xirho.Affine
-	zFunc     xirho.Func
-	zFuncList xirho.FuncList
+	rFlag     = reflect.TypeOf(xirho.Flag(false))
+	rList     = reflect.TypeOf(xirho.List(0))
+	rInt      = reflect.TypeOf(xirho.Int(0))
+	rAngle    = reflect.TypeOf(xirho.Angle(0))
+	rReal     = reflect.TypeOf(xirho.Real(0))
+	rComplex  = reflect.TypeOf(xirho.Complex(0))
+	rVec3     = reflect.TypeOf(xirho.Vec3{})
+	rAffine   = reflect.TypeOf(xirho.Affine{})
+	rFunc     = reflect.TypeOf((*xirho.Func)(nil)).Elem()
+	rFuncList = reflect.TypeOf(xirho.FuncList(nil))
 )

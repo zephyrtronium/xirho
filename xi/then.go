@@ -9,11 +9,11 @@ type Then struct {
 }
 
 // newThen is a factory for Then, defaulting to an empty function list.
-func newThen() xirho.F {
+func newThen() xirho.Func {
 	return &Then{}
 }
 
-func (f *Then) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
+func (f *Then) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	for _, v := range f.Funcs {
 		in = v.Calc(in, rng)
 	}

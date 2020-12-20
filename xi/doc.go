@@ -9,7 +9,7 @@
 // Lastly, some users may want to use the function implementation types
 // directly, either to decode systems serialized in another format (e.g.
 // package encoding/flame) or to build a system by hand. As a general rule,
-// if a function type has any parameters, it implements xirho.F as a pointer,
-// and if it has none, then it implements it as a (size zero) value.
+// if a function type has any parameters, it implements xirho.Func as a
+// pointer, and if it has none, then it implements it as a (size zero) value.
 //
 package xi

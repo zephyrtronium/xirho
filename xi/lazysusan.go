@@ -17,7 +17,7 @@ type LazySusan struct {
 	TwistZ  xirho.Real   `xirho:"twistZ"`
 }
 
-func (v *LazySusan) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
+func (v *LazySusan) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	x, y, z := in.X-v.Center[0], in.Y-v.Center[1], in.Z-v.Center[2]
 	r := math.Sqrt(x*x + y*y + z*z)
 	var ax xirho.Ax
@@ -34,7 +34,7 @@ func (v *LazySusan) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 		}
 	}
 	x, y, z = xirho.Tx(&ax, x, y, z)
-	return xirho.P{
+	return xirho.Pt{
 		X: x + v.Center[0],
 		Y: y + v.Center[1],
 		Z: z + v.Center[2],
@@ -44,7 +44,7 @@ func (v *LazySusan) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 
 func (v *LazySusan) Prep() {}
 
-func newLazySusan() xirho.F {
+func newLazySusan() xirho.Func {
 	return &LazySusan{
 		Inside:  xirho.Eye(),
 		Outside: xirho.Eye(),

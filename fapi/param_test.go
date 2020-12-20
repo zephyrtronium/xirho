@@ -246,7 +246,7 @@ func TestSetFunc(t *testing.T) {
 					var err error
 					if s.set != nil {
 						// special handling because nil does not assert
-						err = p.Set(s.set.(xirho.F))
+						err = p.Set(s.set.(xirho.Func))
 					} else {
 						err = p.Set(nil)
 					}
@@ -291,7 +291,7 @@ func TestSetFuncList(t *testing.T) {
 
 func TestListOpts(t *testing.T) {
 	cases := map[string]struct {
-		v    xirho.F
+		v    xirho.Func
 		opts []string
 	}{
 		"two":     {v: new(testList2), opts: []string{"1", "2"}},
@@ -321,7 +321,7 @@ func TestListOpts(t *testing.T) {
 
 func TestIntBounds(t *testing.T) {
 	cases := map[string]struct {
-		v      xirho.F
+		v      xirho.Func
 		bdd    bool
 		lo, hi int64
 	}{
@@ -350,7 +350,7 @@ func TestIntBounds(t *testing.T) {
 
 func TestRealBounds(t *testing.T) {
 	cases := map[string]struct {
-		v      xirho.F
+		v      xirho.Func
 		bdd    bool
 		lo, hi float64
 	}{
@@ -379,7 +379,7 @@ func TestRealBounds(t *testing.T) {
 
 func TestFuncOptional(t *testing.T) {
 	cases := map[string]struct {
-		v xirho.F
+		v xirho.Func
 		o bool
 	}{
 		"required":         {v: new(testFunc), o: false},
@@ -402,7 +402,7 @@ func TestFuncOptional(t *testing.T) {
 }
 
 func TestFuncListAppend(t *testing.T) {
-	cases := map[string]xirho.F{
+	cases := map[string]xirho.Func{
 		"named":   new(testFuncList),
 		"unnamed": new(testFuncListUnnamed),
 	}

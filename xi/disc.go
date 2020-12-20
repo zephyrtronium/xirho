@@ -10,11 +10,11 @@ import (
 type Disc struct{}
 
 // newDisc is a factory for Disc.
-func newDisc() xirho.F {
+func newDisc() xirho.Func {
 	return Disc{}
 }
 
-func (Disc) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
+func (Disc) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	t := math.Atan2(in.X, in.Y) / math.Pi
 	s, c := math.Sincos(math.Hypot(in.X, in.Y) * math.Pi)
 	in.X = t * s

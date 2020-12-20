@@ -10,11 +10,11 @@ import (
 type Polar struct{}
 
 // newPolar is a factory for Polar.
-func newPolar() xirho.F {
+func newPolar() xirho.Func {
 	return Polar{}
 }
 
-func (Polar) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
+func (Polar) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	t := math.Atan2(in.X, in.Y) / math.Pi
 	r := math.Hypot(in.X, in.Y) - 1
 	in.X = t

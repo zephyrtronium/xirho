@@ -9,8 +9,8 @@ import (
 
 type givef struct{}
 
-func (givef) Calc(in P, rng *RNG) P {
-	return P{}
+func (givef) Calc(in Pt, rng *RNG) Pt {
+	return Pt{}
 }
 
 func (givef) Prep() {}
@@ -20,12 +20,12 @@ func TestIteratorPrep(t *testing.T) {
 		// iterator.prep has code to handle zero functions, but System.Check
 		// errs in that case, so we don't test it.
 		"one": {
-			Funcs: []SysFunc{
+			Nodes: []Node{
 				{Func: givef{}, Opacity: 1, Weight: 1},
 			},
 		},
 		"four": {
-			Funcs: []SysFunc{
+			Nodes: []Node{
 				{Func: givef{}, Opacity: 1, Weight: 1},
 				{Func: givef{}, Opacity: 1, Weight: 1},
 				{Func: givef{}, Opacity: 1, Weight: 1},
@@ -33,7 +33,7 @@ func TestIteratorPrep(t *testing.T) {
 			},
 		},
 		"zero": {
-			Funcs: []SysFunc{
+			Nodes: []Node{
 				{Func: givef{}, Opacity: 1, Weight: 0},
 				{Func: givef{}, Opacity: 1, Weight: 0},
 				{Func: givef{}, Opacity: 1, Weight: 0},
@@ -70,7 +70,7 @@ func TestIteratorNext(t *testing.T) {
 		t.SkipNow()
 	}
 	s := System{
-		Funcs: []SysFunc{
+		Nodes: []Node{
 			{Func: givef{}, Weight: 1e4},
 			{Func: givef{}, Weight: 1},
 			{Func: givef{}, Weight: 1e-4},
@@ -89,9 +89,9 @@ func TestIteratorNext(t *testing.T) {
 	if t.Failed() {
 		t.Fatalf("weight graph was %x", it.w)
 	}
-	m := make([][]bool, 0, len(s.Funcs))
-	for range s.Funcs {
-		m = append(m, make([]bool, len(s.Funcs)))
+	m := make([][]bool, 0, len(s.Nodes))
+	for range s.Nodes {
+		m = append(m, make([]bool, len(s.Nodes)))
 	}
 	n := 0
 	k := 0
@@ -114,13 +114,13 @@ func TestIteratorNext(t *testing.T) {
 
 func TestIteratorFinal(t *testing.T) {
 	s := System{
-		Funcs: []SysFunc{
+		Nodes: []Node{
 			{Func: givef{}, Weight: 1},
 		},
 	}
 	it := iterator{rng: xmath.NewRNG()}
 	it.prep(s)
-	p := P{1, 1, 1, 1}
+	p := Pt{1, 1, 1, 1}
 	fp := it.doFinal(p)
 	if fp != p {
 		t.Error("point modified by missing final: want", p, "have", fp)
@@ -128,7 +128,7 @@ func TestIteratorFinal(t *testing.T) {
 	s.Final = givef{}
 	it.prep(s)
 	fp = it.doFinal(p)
-	if fp != (P{}) {
-		t.Error("point not modified by missing final: want", P{}, "have", fp, "with input", p)
+	if fp != (Pt{}) {
+		t.Error("point not modified by missing final: want", Pt{}, "have", fp, "with input", p)
 	}
 }

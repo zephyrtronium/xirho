@@ -8,7 +8,7 @@ type Curl struct {
 	C2 xirho.Real `xirho:"c2"`
 }
 
-func (v *Curl) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
+func (v *Curl) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	t1 := 1 + float64(v.C1)*in.X + float64(v.C2)*(in.X*in.X-in.Y*in.Y)
 	t2 := float64(v.C1)*in.Y + 2*float64(v.C2)*in.X*in.Y
 	r := t1*t1 + t2*t2
@@ -20,5 +20,5 @@ func (v *Curl) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 func (v *Curl) Prep() {}
 
 func init() {
-	must("curl", func() xirho.F { return &Curl{} })
+	must("curl", func() xirho.Func { return &Curl{} })
 }

@@ -7,8 +7,8 @@ import (
 	"github.com/zephyrtronium/xirho"
 )
 
-func TestPIsValid(t *testing.T) {
-	succeed := []xirho.P{
+func TestPtIsValid(t *testing.T) {
+	succeed := []xirho.Pt{
 		{X: math.Nextafter(math.Inf(0), 0)},
 		{Y: math.Nextafter(math.Inf(0), 0)},
 		{Z: math.Nextafter(math.Inf(0), 0)},
@@ -18,7 +18,7 @@ func TestPIsValid(t *testing.T) {
 		{C: math.Nextafter(1, 0)},
 		{X: math.Nextafter(math.Inf(0), 0), Y: math.Nextafter(math.Inf(-1), 0)},
 	}
-	fail := []xirho.P{
+	fail := []xirho.Pt{
 		{C: math.Nextafter(0, -1)},
 		{C: math.Nextafter(1, 2)},
 	}
@@ -29,7 +29,7 @@ func TestPIsValid(t *testing.T) {
 			for _, z := range vs {
 				for _, c := range vs {
 					if x != 0 || y != 0 || z != 0 || c != 0 {
-						fail = append(fail, xirho.P{X: x, Y: y, Z: z, C: c})
+						fail = append(fail, xirho.Pt{X: x, Y: y, Z: z, C: c})
 					}
 				}
 			}

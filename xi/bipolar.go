@@ -11,7 +11,7 @@ type Bipolar struct {
 	Shift xirho.Angle `xirho:"shift"`
 }
 
-func (v *Bipolar) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
+func (v *Bipolar) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	r := in.X*in.X + in.Y*in.Y
 	y := math.Atan2(2*in.Y, r-1) - float64(v.Shift)
 	// y is in (-2pi, 2pi]. Wrap to an angle.
@@ -28,5 +28,5 @@ func (v *Bipolar) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 func (v *Bipolar) Prep() {}
 
 func init() {
-	must("bipolar", func() xirho.F { return &Bipolar{} })
+	must("bipolar", func() xirho.Func { return &Bipolar{} })
 }

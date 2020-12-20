@@ -8,15 +8,15 @@ type Affine struct {
 }
 
 // newAffine is a factory for Affine, defaulting to an identity transform.
-func newAffine() xirho.F {
+func newAffine() xirho.Func {
 	tx := &Affine{}
 	tx.Ax.Eye()
 	return tx
 }
 
-func (v *Affine) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
+func (v *Affine) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	x, y, z := xirho.Tx(&v.Ax, in.X, in.Y, in.Z)
-	return xirho.P{
+	return xirho.Pt{
 		X: x,
 		Y: y,
 		Z: z,

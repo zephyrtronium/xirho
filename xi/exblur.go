@@ -15,7 +15,7 @@ type Exblur struct {
 	Origin xirho.Vec3 `xirho:"origin"`
 }
 
-func (v *Exblur) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
+func (v *Exblur) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	ox, oy, oz := in.X-v.Origin[0], in.Y-v.Origin[1], in.Z-v.Origin[2]
 	r := xmath.R3(ox, oy, oz)
 	s := math.Pow(r*r, float64(v.Dist))*rng.Normal()*float64(v.Str) + r
@@ -28,5 +28,5 @@ func (v *Exblur) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
 func (v *Exblur) Prep() {}
 
 func init() {
-	must("exblur", func() xirho.F { return &Exblur{Dist: 0.5} })
+	must("exblur", func() xirho.Func { return &Exblur{Dist: 0.5} })
 }

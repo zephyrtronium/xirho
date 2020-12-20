@@ -16,7 +16,7 @@ type Mobius struct {
 	InZero xirho.List `xirho:"input blank,r,i,j,k"`
 }
 
-func newMobius() xirho.F {
+func newMobius() xirho.Func {
 	return &Mobius{
 		Ar:     1,
 		Dr:     1,
@@ -24,7 +24,7 @@ func newMobius() xirho.F {
 	}
 }
 
-func (v *Mobius) Calc(in xirho.P, rng *xirho.RNG) xirho.P {
+func (v *Mobius) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	// May the compiler bless me with optimized quaternion operations.
 	var nr, ni, nj, nk, dr, di, dj, dk float64
 	switch v.InZero {
