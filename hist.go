@@ -16,7 +16,7 @@ type Hist struct {
 	counts []histBin
 	// rows and cols are the histogram size.
 	rows, cols int
-	// lb is the logarithm of the maximum bin count.
+	// lb is the logarithm of the average bin count.
 	lb float64
 	// mn is the minimum bin count to which gamma is applied.
 	mn uint64
@@ -25,7 +25,7 @@ type Hist struct {
 	// tr is the gamma threshold. The gamma factor is not applied to bins
 	// with less than this fraction of the max counts.
 	tr float64
-	// br is brightness, a multiplier for color channels relative to alpha.
+	// br is brightness, a multiplier for alpha relative to color channels.
 	br float64
 	// stat is 1 if Stat has been called since the last use of Add.
 	stat int32
@@ -112,12 +112,11 @@ const clscale = 4.8164733037652496
 func (h *Hist) prep() {
 	// Find the maximum and compute lb.
 	var m uint64
-	for _, b := range h.counts {
-		if n := atomic.LoadUint64(&b.n); n > m {
-			m = n
-		}
+	for i := range h.counts {
+		b := &h.counts[i]
+		m += atomic.LoadUint64(&b.n)
 	}
-	h.lb = math.Log10(float64(m)) - clscale
+	h.lb = math.Log10(float64(m)/float64(h.rows*h.cols)) - clscale
 	h.mn = uint64(float64(m) * h.tr)
 	atomic.StoreInt32(&h.stat, 1)
 }
@@ -127,15 +126,15 @@ func (h *Hist) prep() {
 // nonlinear brightness to the alpha channel to balance low-count bins, but
 // only applies to bins exceeding a relative count of tr.
 func (h *Hist) SetBrightness(br, gamma, tr float64) {
-	h.br = math.Exp(br)
-	h.exp = 1 / gamma
+	h.br = br / 65536
+	h.exp = 1/gamma - 1
 	h.tr = tr
 }
 
 // Brightness returns the last brightness parameters passed to SetBrightness.
 func (h *Hist) Brightness() (br, gamma, tr float64) {
-	br = math.Log(h.br)
-	gamma = 1 / h.exp
+	br = h.br * 65536
+	gamma = 1 / (h.exp + 1)
 	tr = h.tr
 	return br, gamma, tr
 }
@@ -168,7 +167,7 @@ func (h *Hist) At(x, y int) color.Color {
 		h.prep()
 	}
 	if x < 0 || x > h.cols || y < 0 || y > h.rows {
-		return color.RGBA64{}
+		return color.NRGBA64{}
 	}
 	bin := &h.counts[h.index(x, y)]
 	r := atomic.LoadUint64(&bin.r)
@@ -176,24 +175,24 @@ func (h *Hist) At(x, y int) color.Color {
 	b := atomic.LoadUint64(&bin.b)
 	n := atomic.LoadUint64(&bin.n)
 	if n == 0 {
-		return color.RGBA64{}
+		return color.NRGBA64{}
 	}
-	return color.RGBA64{
-		R: cscaleg(r, h.mn, h.br, h.lb, h.exp),
-		G: cscaleg(g, h.mn, h.br, h.lb, h.exp),
-		B: cscaleg(b, h.mn, h.br, h.lb, h.exp),
-		A: cscaleg(n, h.mn, 1, h.lb, h.exp),
+	return color.NRGBA64{
+		R: cscaleg(r, n, h.mn, 1, h.lb, h.exp),
+		G: cscaleg(g, n, h.mn, 1, h.lb, h.exp),
+		B: cscaleg(b, n, h.mn, 1, h.lb, h.exp),
+		A: cscaleg(65535, n, h.mn, h.br, h.lb, h.exp+1),
 	}
 }
 
 // cscaleg scales a bin count to a color component with gamma.
-func cscaleg(n, mn uint64, br, lb, exp float64) uint16 {
-	a := float64(n) * br               // brightness
-	a = (math.Log10(a) - clscale) / lb // logarithmic tone mapping
-	if n > mn {
+func cscaleg(n, ct, mn uint64, br, lb, exp float64) uint16 {
+	a := float64(ct)
+	a = br * (math.Log10(a) - clscale) / lb // logarithmic tone mapping
+	if ct > mn {
 		a = math.Pow(a, exp) // gamma
 	}
-	a *= 65536 // scale to uint16
+	a *= float64(n)
 	if a < 0 { // clip to uint16
 		a = 0
 	} else if a > 65535 {
