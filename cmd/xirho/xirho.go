@@ -11,6 +11,7 @@ import (
 	"image/png"
 	"io"
 	"log"
+	"math"
 	"os"
 	"os/signal"
 	"runtime"
@@ -117,7 +118,7 @@ func main() {
 	}
 	log.Println("allocating histogram, estimated", xirho.HistMem(width*osa, height*osa)>>20, "MB")
 	r.Hist.Reset(width*osa, height*osa)
-	r.Hist.SetBrightness(bright, gamma, tr)
+	r.Hist.SetBrightness(bright*math.Exp(float64(osa*osa)*math.Ln10), gamma, tr)
 	if echo {
 		m, err := encoding.Marshal(system, r)
 		if err != nil {
