@@ -18,8 +18,6 @@ type Hist struct {
 	rows, cols int
 	// lb is the logarithm of the average bin count.
 	lb float64
-	// mn is the minimum bin count to which gamma is applied.
-	mn uint64
 	// exp is the reciprocal of the gamma factor applied to output pixels.
 	exp float64
 	// tr is the gamma threshold. The gamma factor is not applied to bins
@@ -110,14 +108,12 @@ const clscale = 4.8164733037652496
 
 // prep computes information needed to convert bins to colors.
 func (h *Hist) prep() {
-	// Find the maximum and compute lb.
 	var m uint64
 	for i := range h.counts {
 		b := &h.counts[i]
 		m += atomic.LoadUint64(&b.n)
 	}
-	h.lb = math.Log10(float64(m)/float64(h.rows*h.cols)) - clscale
-	h.mn = uint64(float64(m) * h.tr)
+	h.lb = math.Log10(float64(m) / float64(h.rows*h.cols*65536))
 	atomic.StoreInt32(&h.stat, 1)
 }
 
@@ -126,15 +122,15 @@ func (h *Hist) prep() {
 // nonlinear brightness to the alpha channel to balance low-count bins, but
 // only applies to bins exceeding a relative count of tr.
 func (h *Hist) SetBrightness(br, gamma, tr float64) {
-	h.br = br / 65536
-	h.exp = 1/gamma - 1
+	h.br = br * 200 / 65536
+	h.exp = 1 / gamma
 	h.tr = tr
 }
 
 // Brightness returns the last brightness parameters passed to SetBrightness.
 func (h *Hist) Brightness() (br, gamma, tr float64) {
-	br = h.br * 65536
-	gamma = 1 / (h.exp + 1)
+	br = h.br * 65536 / 200
+	gamma = 1 / h.exp
 	tr = h.tr
 	return br, gamma, tr
 }
@@ -177,26 +173,42 @@ func (h *Hist) At(x, y int) color.Color {
 	if n == 0 {
 		return color.NRGBA64{}
 	}
-	return color.NRGBA64{
-		R: cscaleg(r, n, h.mn, 1, h.lb, h.exp),
-		G: cscaleg(g, n, h.mn, 1, h.lb, h.exp),
-		B: cscaleg(b, n, h.mn, 1, h.lb, h.exp),
-		A: cscaleg(65535, n, h.mn, h.br, h.lb, h.exp+1),
+	a := ascale(n, h.br, h.lb)
+	ag := gamma(a, h.exp, h.tr)
+	as := cscale(ag)
+	if as <= 0 {
+		return color.NRGBA64{}
+	}
+	p := color.NRGBA64{
+		R: cscale(ag / a / float64(as) * float64(r)),
+		G: cscale(ag / a / float64(as) * float64(g)),
+		B: cscale(ag / a / float64(as) * float64(b)),
+		A: as,
+	}
+	return p
+}
+
+func ascale(n uint64, br, lb float64) float64 {
+	a := br * (math.Log10(float64(n+1)) - lb)
+	return a
+}
+
+func cscale(c float64) uint16 {
+	c *= 65536
+	switch {
+	case c < 0:
+		return 0
+	case c >= 65535:
+		return 65535
+	default:
+		return uint16(c)
 	}
 }
 
-// cscaleg scales a bin count to a color component with gamma.
-func cscaleg(n, ct, mn uint64, br, lb, exp float64) uint16 {
-	a := float64(ct)
-	a = br * (math.Log10(a) - clscale) / lb // logarithmic tone mapping
-	if ct > mn {
-		a = math.Pow(a, exp) // gamma
+func gamma(a, exp, tr float64) float64 {
+	if a >= tr {
+		return math.Pow(a, exp)
 	}
-	a *= float64(n)
-	if a < 0 { // clip to uint16
-		a = 0
-	} else if a > 65535 {
-		a = 65535
-	}
-	return uint16(a)
+	p := a / tr
+	return p*math.Pow(a, exp) + (1-p)*a*math.Pow(tr, exp-1)
 }
