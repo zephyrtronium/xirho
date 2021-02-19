@@ -11,6 +11,7 @@ import (
 	"image/png"
 	"io"
 	"log"
+	"math"
 	"os"
 	"os/signal"
 	"runtime"
@@ -162,4 +163,19 @@ var resamplers = map[string]draw.Scaler{
 	"bilinear":        draw.BiLinear,
 	"approx-bilinear": draw.ApproxBiLinear,
 	"nearest":         draw.NearestNeighbor,
+	"lanczos1":        lanczos(1),
+	"lanczos3":        lanczos(3),
+	"lanczos5":        lanczos(5),
+}
+
+func lanczos(a float64) *draw.Kernel {
+	return &draw.Kernel{
+		Support: a,
+		At: func(x float64) float64 {
+			if x == 0 {
+				return 1
+			}
+			return a * math.Sin(math.Pi*x) * math.Sin(math.Pi*x/a) / (math.Pi * math.Pi * x * x)
+		},
+	}
 }
