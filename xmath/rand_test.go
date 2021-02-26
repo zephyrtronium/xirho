@@ -2,6 +2,7 @@ package xmath_test
 
 import (
 	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/zephyrtronium/xirho/xmath"
@@ -14,21 +15,34 @@ import (
 // IFS "xaos" graph. Failure is indicated only by the test timing out. This is
 // a randomized test; failures may be (but should not be) sporadic.
 func TestGraphFill(t *testing.T) {
-	top := 512
-	if testing.Short() {
-		top = 128
-	}
 	rng := xmath.NewRNG()
-	for i := 2; i <= top; i++ {
-		p := graphFill(&rng, i)
-		// t.Log("completed graph fill with", i, "nodes, p-value", p)
-		if p < 0.001 {
-			t.Logf("graph fill on %d nodes is not uniform at p=0.001 level (%f)", i, p)
+	const alpha = 0.001
+	for i := 2; i <= 128; i++ {
+		p := graphFill(rng, i)
+		if p < alpha {
+			t.Logf("graph fill on %d nodes is not uniform at p=%f level (%f)", i, alpha, p)
 		}
 	}
+	if testing.Short() {
+		return
+	}
+	// graphFill is O(n²), assuming a uniform generator. Do these
+	// longer tests concurrently.
+	var wg sync.WaitGroup
+	for i := 129; i <= 512; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			p := graphFill(rng, i)
+			if p < alpha {
+				t.Logf("graph fill on %d nodes is not uniform at p=%f level (%f)", i, alpha, p)
+			}
+		}(i)
+	}
+	wg.Wait()
 }
 
-func graphFill(rng *xmath.RNG, degree int) float64 {
+func graphFill(rng xmath.RNG, degree int) float64 {
 	edges := make([]int64, degree*degree)
 	// Important that the edge choice algorithm mirror that used in xirho.
 	const scale float64 = 1 << 53
