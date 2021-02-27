@@ -9,6 +9,7 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"math"
 	"os"
 	"sort"
 	"strconv"
@@ -207,37 +208,42 @@ var commands = []*command{
 	{
 		name: []string{"dx"},
 		desc: `translate camera horizontally`,
-		// TODO
+		exec: camdx,
 	},
 	{
 		name: []string{"dy"},
 		desc: `translate camera vertically`,
-		// TODO
+		exec: camdy,
 	},
 	{
 		name: []string{"dz"},
 		desc: `translate camera forward/backward`,
-		// TODO
+		exec: camdz,
 	},
 	{
 		name: []string{"roll"},
 		desc: `rotate camera about z axis`,
-		// TODO
+		exec: camroll,
 	},
 	{
 		name: []string{"pitch"},
 		desc: `rotate camera about x axis`,
-		// TODO
+		exec: campitch,
 	},
 	{
 		name: []string{"yaw"},
 		desc: `rotate camera about y axis`,
-		// TODO
+		exec: camyaw,
 	},
 	{
 		name: []string{"zoom", "z"},
 		desc: `zoom camera in or out`,
-		// TODO
+		exec: camzoom,
+	},
+	{
+		name: []string{"eye"},
+		desc: `reset camera to a reasonable default`,
+		exec: cameye,
 	},
 	{
 		name: []string{"render", "r"},
@@ -816,6 +822,189 @@ func procs(ctx context.Context, status *status, line string) {
 	}
 	status.procs = n
 	c := xirho.ChangeRender{Procs: n}
+	select {
+	case <-ctx.Done():
+		return
+	case status.change <- c:
+		// do nothing
+	}
+}
+
+func camdx(ctx context.Context, status *status, line string) {
+	const usage = `dx <d>
+	Translate the camera along the horizontal axis. Positive moves right.`
+	if line == "" || line == "?" {
+		fmt.Println(usage)
+		return
+	}
+	d, err := strconv.ParseFloat(line, 64)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	cam := status.r.Camera
+	cam.Translate(d, 0, 0)
+	c := xirho.ChangeRender{Camera: &cam, Procs: status.procs}
+	select {
+	case <-ctx.Done():
+		return
+	case status.change <- c:
+		// do nothing
+	}
+}
+
+func camdy(ctx context.Context, status *status, line string) {
+	const usage = `dy <d>
+	Translate the camera along the vertical axis. Positive moves down.`
+	if line == "" || line == "?" {
+		fmt.Println(usage)
+		return
+	}
+	d, err := strconv.ParseFloat(line, 64)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	cam := status.r.Camera
+	cam.Translate(0, d, 0)
+	c := xirho.ChangeRender{Camera: &cam, Procs: status.procs}
+	select {
+	case <-ctx.Done():
+		return
+	case status.change <- c:
+		// do nothing
+	}
+}
+
+func camdz(ctx context.Context, status *status, line string) {
+	const usage = `dz <d>
+	Translate the camera along the depth axis. Positive moves forward.`
+	if line == "" || line == "?" {
+		fmt.Println(usage)
+		return
+	}
+	d, err := strconv.ParseFloat(line, 64)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	cam := status.r.Camera
+	cam.Translate(0, 0, d)
+	c := xirho.ChangeRender{Camera: &cam, Procs: status.procs}
+	select {
+	case <-ctx.Done():
+		return
+	case status.change <- c:
+		// do nothing
+	}
+}
+
+func camroll(ctx context.Context, status *status, line string) {
+	const usage = `roll <d>
+	Rotate the camera about the depth axis by an angle in clockwise
+	degrees.`
+	if line == "" || line == "?" {
+		fmt.Println(usage)
+		return
+	}
+	d, err := strconv.ParseFloat(line, 64)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	cam := status.r.Camera
+	cam.Roll(d * -math.Pi / 180)
+	c := xirho.ChangeRender{Camera: &cam, Procs: status.procs}
+	select {
+	case <-ctx.Done():
+		return
+	case status.change <- c:
+		// do nothing
+	}
+}
+
+func campitch(ctx context.Context, status *status, line string) {
+	const usage = `pitch <d>
+	Rotate the camera about the horizontal axis by an angle in clockwise
+	degrees.`
+	if line == "" || line == "?" {
+		fmt.Println(usage)
+		return
+	}
+	d, err := strconv.ParseFloat(line, 64)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	cam := status.r.Camera
+	cam.Pitch(d * -math.Pi / 180)
+	c := xirho.ChangeRender{Camera: &cam, Procs: status.procs}
+	select {
+	case <-ctx.Done():
+		return
+	case status.change <- c:
+		// do nothing
+	}
+}
+
+func camyaw(ctx context.Context, status *status, line string) {
+	const usage = `yaw <d>
+	Rotate the camera about the vertical axis by an angle in clockwise
+	degrees.`
+	if line == "" || line == "?" {
+		fmt.Println(usage)
+		return
+	}
+	d, err := strconv.ParseFloat(line, 64)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	cam := status.r.Camera
+	cam.Yaw(d * -math.Pi / 180)
+	c := xirho.ChangeRender{Camera: &cam, Procs: status.procs}
+	select {
+	case <-ctx.Done():
+		return
+	case status.change <- c:
+		// do nothing
+	}
+}
+
+func camzoom(ctx context.Context, status *status, line string) {
+	const usage = `zoom <d>
+	Zoom the camera in or out by a multiplicative factor. Values greater
+	than 1 zoom in and between 0 and 1 zoom out.`
+	if line == "" || line == "?" {
+		fmt.Println(usage)
+		return
+	}
+	d, err := strconv.ParseFloat(line, 64)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	cam := status.r.Camera
+	cam.Scale(d, d, d)
+	c := xirho.ChangeRender{Camera: &cam, Procs: status.procs}
+	select {
+	case <-ctx.Done():
+		return
+	case status.change <- c:
+		// do nothing
+	}
+}
+
+func cameye(ctx context.Context, status *status, line string) {
+	const usage = `eye
+	Set the camera to the identity transform.`
+	if line == "?" {
+		fmt.Println(usage)
+		return
+	}
+	cam := status.r.Camera
+	cam.Eye()
+	c := xirho.ChangeRender{Camera: &cam, Procs: status.procs}
 	select {
 	case <-ctx.Done():
 		return
