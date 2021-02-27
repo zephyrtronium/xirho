@@ -26,6 +26,7 @@ import (
 )
 
 func main() {
+	var intr bool
 	var outname, profname, inname, flamename string
 	var sigint bool
 	var timeout time.Duration
@@ -36,12 +37,13 @@ func main() {
 	var procs int
 	var echo bool
 	var bgr, bgg, bgb, bga int
+	flag.BoolVar(&intr, "i", false, "interactive mode")
 	flag.StringVar(&outname, "png", "", "output filename (default stdout)")
 	flag.StringVar(&profname, "prof", "", "CPU profile output (default no profiling)")
 	flag.StringVar(&inname, "in", "", "input json filename (default stdin)")
 	flag.StringVar(&flamename, "flame", "", "input flame filename")
-	flag.BoolVar(&sigint, "C", true, "save image on interrupt instead of exiting")
-	flag.DurationVar(&timeout, "dur", 0, "max duration to render (default ignored)")
+	flag.BoolVar(&sigint, "C", true, "save image on interrupt instead of exiting (ignored when interactive)")
+	flag.DurationVar(&timeout, "dur", 0, "max duration to render (default ignored; always ignored when interactive)")
 	flag.IntVar(&width, "width", 1024, "output image width")
 	flag.IntVar(&height, "height", 1024, "output image height")
 	flag.IntVar(&osa, "osa", 1, "oversampling; histogram bins per pixel per axis")
@@ -72,10 +74,10 @@ func main() {
 	}
 	ctx := context.Background()
 	var cancel context.CancelFunc
-	if timeout > 0 {
+	if timeout > 0 && !intr {
 		ctx, cancel = context.WithTimeout(ctx, timeout)
 	}
-	if sigint {
+	if sigint && !intr {
 		ctx, cancel = context.WithCancel(ctx)
 		ch := make(chan os.Signal)
 		signal.Notify(ch, os.Interrupt)
@@ -89,6 +91,40 @@ func main() {
 	var system xirho.System
 	var r *xirho.Render
 	var err error
+	u := color.NRGBA{
+		R: uint8(bgr),
+		G: uint8(bgg),
+		B: uint8(bgb),
+		A: uint8(bga),
+	}
+	if intr {
+		switch {
+		case inname != "":
+			f, err := os.Open(inname)
+			if err != nil {
+				log.Fatalln("error opening input:", err)
+			}
+			d := json.NewDecoder(f)
+			system, r, _, err = encoding.Unmarshal(d)
+			if err != nil {
+				log.Fatalln("error unmarshaling system:", err)
+			}
+		case flamename != "":
+			f, err := os.Open(flamename)
+			if err != nil {
+				log.Fatalln("error opening input:", err)
+			}
+			d := xml.NewDecoder(f)
+			flm, err := flame.Unmarshal(d)
+			if err != nil {
+				log.Fatalln("error unmarshaling system:", err)
+			}
+			system = flm.System
+			r = flm.R
+		}
+		interactive(ctx, r, system, width, height, resampler, bright, gamma, tr, u, osa, procs)
+		return
+	}
 	if flamename == "" {
 		var in io.Reader = os.Stdin
 		if inname != "" {
@@ -131,12 +167,6 @@ func main() {
 	log.Println("finished render with", r.Iters(), "iters,", r.Hits(), "hits")
 	signal.Reset(os.Interrupt) // no rendering for ^C to interrupt
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
-	u := color.NRGBA{
-		R: uint8(bgr),
-		G: uint8(bgg),
-		B: uint8(bgb),
-		A: uint8(bga),
-	}
 	draw.Draw(img, img.Bounds(), image.NewUniform(u), image.Point{}, draw.Src)
 	log.Printf("drawing onto image of size %dx%d", width, height)
 	resampler.Scale(img, img.Bounds(), r.Hist, r.Hist.Bounds(), draw.Over, nil)
