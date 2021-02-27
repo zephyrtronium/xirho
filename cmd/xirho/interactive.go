@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"image"
 	"image/color"
@@ -19,6 +20,7 @@ import (
 
 	"github.com/zephyrtronium/xirho"
 	"github.com/zephyrtronium/xirho/encoding"
+	"github.com/zephyrtronium/xirho/encoding/flame"
 	"github.com/zephyrtronium/xirho/xmath"
 )
 
@@ -108,6 +110,7 @@ type status struct {
 	sz     image.Point
 	osa    int
 	procs  int
+	tick   *time.Ticker
 }
 
 type command struct {
@@ -139,7 +142,7 @@ var commands = []*command{
 	{
 		name: []string{"flame", "flam3"},
 		desc: `open flame xml file & begin render`,
-		// TODO
+		exec: flam3,
 	},
 	{
 		name: []string{"width", "w"},
@@ -319,10 +322,10 @@ func open(ctx context.Context, status *status, line string) {
 	}
 	var w, h int
 	if a >= 1 {
-		w = status.r.Hist.Bounds().Dx()
+		w = status.sz.X
 		h = int(float64(w)/a + 0.5)
 	} else {
-		h = status.r.Hist.Bounds().Dy()
+		h = status.sz.Y
 		w = int(float64(h)*a + 0.5)
 	}
 	status.onto.Bright, status.onto.Gamma, status.onto.Thresh = r.Hist.Brightness()
@@ -334,6 +337,64 @@ func open(ctx context.Context, status *status, line string) {
 		Size:    image.Pt(w*status.osa, h*status.osa),
 		Camera:  &cam,
 		Palette: r.Palette,
+		Procs:   status.procs,
+	}
+	select {
+	case <-ctx.Done():
+		return
+	case status.change <- c:
+		// do nothing
+	}
+}
+
+func flam3(ctx context.Context, status *status, line string) {
+	const usage = `flame <file.xml>
+	Decode a flam3 system from the given file path and begin rendering it.
+	The width or height of the current render is preserved depending on
+	the aspect ratio of the new system, width if landscape or height if
+	portrait. If an error occurs, the current render remains but is
+	paused.`
+	if line == "" || line == "?" {
+		fmt.Println(usage)
+		return
+	}
+	select {
+	case <-ctx.Done():
+		return
+	case status.change <- xirho.ChangeRender{}:
+		// pause render since we're going to discard it
+	}
+	f, err := os.Open(line)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	d := xml.NewDecoder(f)
+	flm, err := flame.Unmarshal(d)
+	f.Close()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(flm.Name)
+	var w, h int
+	if flm.Aspect >= 1 {
+		w = status.sz.X
+		h = int(float64(w)/flm.Aspect + 0.5)
+	} else {
+		h = status.sz.Y
+		w = int(float64(h)*flm.Aspect + 0.5)
+	}
+	status.onto.Bright, status.onto.Gamma, status.onto.Thresh = flm.R.Hist.Brightness()
+	status.onto.Bright *= float64(status.osa * status.osa)
+	status.bg = image.Uniform{C: flm.BG}
+	status.sz = image.Pt(w, h)
+	cam := flm.R.Camera
+	c := xirho.ChangeRender{
+		System:  flm.System,
+		Size:    image.Pt(w*status.osa, h*status.osa),
+		Camera:  &cam,
+		Palette: flm.R.Palette,
 		Procs:   status.procs,
 	}
 	select {
