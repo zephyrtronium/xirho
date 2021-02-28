@@ -34,6 +34,7 @@ var Funcs = map[string]Parser{
 	"log":           parseLog,
 	"mobius":        parseMobius,
 	"mobiq":         parseMobiq,
+	"noise":         parseNoise,
 	"polar":         parsePolar,
 	"rod":           parseRod,
 	"scry":          parseScry,
@@ -212,6 +213,10 @@ func parseMobiq(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {
 		InZero: 3,
 	}
 	in.Funcs = append(in.Funcs, maybeScaled(&f, attrs["mobiq"]))
+}
+
+func parseNoise(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {
+	in.Funcs = append(in.Funcs, maybeScaled(xi.Noise{}, attrs["noise"]))
 }
 
 func parsePolar(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {

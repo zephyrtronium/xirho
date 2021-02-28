@@ -25,6 +25,7 @@ The following function types (variations) are implemented here:
 - LazySusan
 - Log
 - Mobius (a 3D version, like the mobiq plugin)
+- Noise
 - Perspective (like in the Apophysis render settings)
 - Polar
 - Rod
