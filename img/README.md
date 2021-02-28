@@ -1,6 +1,12 @@
 # xirho/img
 
-This directory contains example xirho systems and their rendered outputs. The disc julian, grand julian, and spherical gasket were adapted by hand from templates in Apophysis 7X. The Sierpinski gasket is a well-known IFS. Splits-elliptic was adapted from [Fiery-Fire and SaTaNiA's Apophysis tutorial](https://www.deviantart.com/satania/art/Tutorial-Splits-elliptic-150422119).
+This directory contains example xirho systems and their rendered outputs. The disc julian, grand julian, and spherical gasket were adapted by hand from templates in Apophysis 7X. The Sierpinski gasket is a well-known IFS. Splits-elliptic was adapted from [Fiery-Fire and SaTaNiA's Apophysis tutorial](https://www.deviantart.com/satania/art/Tutorial-Splits-elliptic-150422119). Calamity is my (zephyrtronium's) own work.
+
+## Calamity
+
+![Calamity](calamity.png)
+
+Calamity is an IFS containing only one function. It is presented here primarily to demonstrate xirho's capability to load Flame XML files. But also, it looks cool.
 
 ## Disc Julian
 
