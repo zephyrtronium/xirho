@@ -20,6 +20,7 @@ The following function types (variations) are implemented here:
 - Foci
 - Gaussblur
 - Heat
+- Hemisphere
 - Hole
 - JuliaN
 - LazySusan

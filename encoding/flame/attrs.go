@@ -28,6 +28,7 @@ var Funcs = map[string]Parser{
 	"foci":          parseFoci,
 	"gaussian_blur": parseGaussblur,
 	"post_heat":     parsePostHeat,
+	"hemisphere":    parseHemisphere,
 	"julia":         parseJulia,
 	"julian":        parseJulian,
 	"lazysusan":     parseLazySusan,
@@ -139,6 +140,10 @@ func parsePostHeat(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax)
 		RA:     xirho.Real(attrs["post_heat"] * attrs["post_heat_r_amp"]),
 	}
 	post.Funcs = append(post.Funcs, &f)
+}
+
+func parseHemisphere(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {
+	in.Funcs = append(in.Funcs, maybeScaled(xi.Hemisphere{}, attrs["hemisphere"]))
 }
 
 func parseJulia(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Ax) {

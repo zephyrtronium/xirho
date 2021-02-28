@@ -20,12 +20,14 @@ By default, the parser recognizes the following variations and their parameters:
 - foci
 - gaussian_blur
 - post_heat
+- hemisphere
 - julia (not tested and probably wrong)
 - julian
 - lazysusan
 - log
 - mobius
 - mobiq
+- noise
 - polar
 - rod (rod_blur parameter is ignored)
 - scry
