@@ -103,8 +103,14 @@ func (s System) Iter(ctx context.Context, r *Render, rng RNG) {
 			n++
 			if n == 25000 {
 				atomic.AddInt64(&r.n, int64(n))
-				atomic.AddInt64(&r.q, int64(q))
+				t := atomic.AddInt64(&r.q, int64(q))
 				n, q = 0, 0
+				// Some random-ish condition that's fast to check to decide
+				// whether to re-fuse. 0x8 is the lowest bit set in 25000, so
+				// this will be every other group if the hit ratio is 1.0.
+				if t&0x8 == 0 {
+					p, k = it.fuse()
+				}
 			}
 		}
 	}
