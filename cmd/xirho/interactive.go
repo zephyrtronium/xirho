@@ -287,7 +287,7 @@ func help(ctx context.Context, status *status, line string) {
 	fmt.Printf("Output image size %dx%d\n", status.sz.X, status.sz.Y)
 	h := status.r.Hist.Bounds().Size()
 	fmt.Printf("Histogram oversampled %dx, size %dx%d (%d MB)\n", status.osa, h.X, h.Y, xirho.HistMem(h.X, h.Y)>>20)
-	fmt.Printf("Plotting brightness %f, gamma %f, gamma threshold %f\n", status.onto.Bright, status.onto.Gamma, status.onto.Thresh)
+	fmt.Printf("Plotting brightness %f, gamma %f, gamma threshold %f\n", status.onto.Bright/float64(status.osa*status.osa), status.onto.Gamma, status.onto.Thresh)
 	r, g, b, a := status.bg.C.RGBA()
 	fmt.Printf("Plot background RGBA: #%02x%02x%02x%02x\n", r>>8, g>>8, b>>8, a>>8)
 }
