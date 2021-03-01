@@ -142,6 +142,7 @@ func (r *Render) start(ctx context.Context, wg *sync.WaitGroup, procs int, syste
 	if system.Empty() {
 		return
 	}
+	system.Prep()
 	wg.Add(procs)
 	for i := 0; i < procs; i++ {
 		go func(rng xmath.RNG) {
