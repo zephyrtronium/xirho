@@ -197,3 +197,11 @@ func TxVec(ax *Ax, v [3]float64) [3]float64 {
 	x, y, z := Tx(ax, v[0], v[1], v[2])
 	return [3]float64{x, y, z}
 }
+
+// ProjArea finds the area of the orthogonal projection into two dimensions of
+// the affine space described by ax.
+func (ax *Ax) ProjArea() float64 {
+	// Because we're taking the orthogonal projection onto 2-space, this is
+	// just the determinant of the 2x2 upper-left submatrix.
+	return math.Abs(ax[0]*ax[5] - ax[1]*ax[4])
+}

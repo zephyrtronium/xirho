@@ -44,7 +44,8 @@ func TestRender(t *testing.T) {
 	if r.Iters() != r.Hits() {
 		t.Error("iters and hits should be equal, but got", r.Iters(), "iters and", r.Hits(), "hits")
 	}
-	red, _, _, alpha := r.Hist.At(0, 0).RGBA()
+	tm := xirho.ToneMap{1, 1, 0}
+	red, _, _, alpha := r.Hist.Image(tm, 1, r.Iters(), 1).At(0, 0).RGBA()
 	if red == 0 || alpha == 0 {
 		t.Error("expected solid red pixel, got red", red, "alpha", alpha)
 	}
@@ -78,10 +79,9 @@ func TestRenderAsync(t *testing.T) {
 	img := image.NewNRGBA64(image.Rect(0, 0, 1, 1))
 	img.SetNRGBA64(0, 0, color.NRGBA64{A: 0xffff})
 	plot <- xirho.PlotOnto{
-		Image:  img,
-		Scale:  draw.NearestNeighbor,
-		Bright: 1,
-		Gamma:  1,
+		Image:   img,
+		Scale:   draw.NearestNeighbor,
+		ToneMap: xirho.ToneMap{Brightness: 1, Gamma: 1},
 	}
 	p, ok := <-imgs
 	if !ok {

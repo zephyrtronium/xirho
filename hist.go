@@ -16,17 +16,6 @@ type Hist struct {
 	counts []histBin
 	// rows and cols are the histogram size.
 	rows, cols int
-	// lb is the logarithm of the average bin count.
-	lb float64
-	// exp is the reciprocal of the gamma factor applied to output pixels.
-	exp float64
-	// tr is the gamma threshold. The gamma factor is not applied to bins
-	// with less than this fraction of the max counts.
-	tr float64
-	// br is brightness, a multiplier for alpha relative to color channels.
-	br float64
-	// stat is 1 if Stat has been called since the last use of Add.
-	stat int32
 }
 
 type histBin struct {
@@ -48,8 +37,6 @@ func NewHist(width, height int) *Hist {
 		counts: make([]histBin, width*height),
 		rows:   height,
 		cols:   width,
-		exp:    1,
-		br:     1,
 	}
 }
 
@@ -80,7 +67,6 @@ func (h *Hist) Empty() bool {
 // Add increments a histogram bucket by the given color. It is safe for
 // multiple goroutines to call this concurrently.
 func (h *Hist) Add(x, y int, c color.NRGBA64) {
-	atomic.StoreInt32(&h.stat, 0)
 	k := h.index(x, y)
 	bin := &h.counts[k]
 	atomic.AddUint64(&bin.r, uint64(c.R))
@@ -106,33 +92,14 @@ func (h *Hist) index(x, y int) int {
 // range noticeably improves the brightness and coloration of images.
 const clscale = 4.8164733037652496
 
-// prep computes information needed to convert bins to colors.
-func (h *Hist) prep() {
-	var m uint64
-	for i := range h.counts {
-		b := &h.counts[i]
-		m += atomic.LoadUint64(&b.n)
-	}
-	h.lb = math.Log10(float64(m) / float64(h.rows*h.cols*65536))
-	atomic.StoreInt32(&h.stat, 1)
+// Cols returns the horizontal size of the histogram in bins.
+func (h *Hist) Cols() int {
+	return h.cols
 }
 
-// SetBrightness sets the brightness parameters for the rendered image. br
-// controls the brightness of color channels relative to alpha. gamma applies
-// nonlinear brightness to the alpha channel to balance low-count bins, but
-// only applies to bins exceeding a relative count of tr.
-func (h *Hist) SetBrightness(br, gamma, tr float64) {
-	h.br = br * 200 / 65536
-	h.exp = 1 / gamma
-	h.tr = tr
-}
-
-// Brightness returns the last brightness parameters passed to SetBrightness.
-func (h *Hist) Brightness() (br, gamma, tr float64) {
-	br = h.br * 65536 / 200
-	gamma = 1 / h.exp
-	tr = h.tr
-	return br, gamma, tr
+// Rows returns the vertical size of the histogram in bins.
+func (h *Hist) Rows() int {
+	return h.rows
 }
 
 // Aspect returns the histogram's aspect ratio. If the histogram is empty, the
@@ -144,24 +111,69 @@ func (h *Hist) Aspect() float64 {
 	return float64(h.cols) / float64(h.rows)
 }
 
-// --- image.Image implementation for easy resizing ---
+// ToneMap holds the parameters describing conversion from histogram bin counts
+// to color and alpha channels.
+type ToneMap struct {
+	// Brightness is a multiplier for the log-alpha channel.
+	Brightness float64
+	// Gamma is a nonlinear scaler that boosts low- and high-count
+	// bins differently.
+	Gamma float64
+	// GammaMin is the minimum log-alpha value to which to apply gamma scaling
+	// as a ratio versus the number of iterations per output pixel. Should
+	// generally be between 0 and 1, inclusive.
+	GammaMin float64
+}
 
-// ColorModel returns the histogram's internal color model.
-func (h *Hist) ColorModel() color.Model {
+// Image creates a wrapper around the histogram that converts bins to pixels.
+//
+// The parameters are as follows. br is a multiplier for the alpha channel.
+// gamma applies nonlinear brightness to brighten low-count bins. thresh
+// specifies the minimum bin count to which to apply gamma as the ratio versus
+// the number of iters per pixel. area is the area of the camera's visible
+// plane in spatial units. iters is the total number of iterations run for the
+// render. osa is the oversampling, the expected number of histogram bins per
+// pixel per axis (although the image may be rescaled to any size).
+//
+// The histogram should not be modified while the wrapper is in use.
+// Note that the wrapper holds a reference to the histogram's bins, so it
+// should not be stored in any long-lived locations.
+func (h *Hist) Image(tm ToneMap, area float64, iters int64, osa int) image.Image {
+	if area <= 0 {
+		area = 1
+	}
+	if osa <= 0 {
+		osa = 1
+	}
+	// Convert to log early to avoid overflow and mitigate loss of precision.
+	q := math.Log10(float64(iters)) + math.Log10(float64(len(h.counts)))
+	return &histImage{
+		Hist: *h,
+		b:    tm.Brightness,
+		g:    1 / tm.Gamma,
+		t:    tm.GammaMin,
+		lqa:  4*math.Log10(float64(osa)) - math.Log10(area) - q + clscale,
+	}
+}
+
+// histImage wraps a histogram with brightness parameters for rendering.
+type histImage struct {
+	Hist
+	b, g, t float64
+	lqa     float64
+}
+
+func (h *histImage) ColorModel() color.Model {
 	return color.NRGBA64Model
 }
 
-// Bounds returns the bounds of the histogram.
-func (h *Hist) Bounds() image.Rectangle {
+func (h *histImage) Bounds() image.Rectangle {
 	return image.Rect(0, 0, h.cols, h.rows)
 }
 
 // At returns the color of a pixel in the histogram. Note that this is a fairly
 // expensive operation.
-func (h *Hist) At(x, y int) color.Color {
-	if atomic.LoadInt32(&h.stat) == 0 {
-		h.prep()
-	}
+func (h *histImage) At(x, y int) color.Color {
 	if x < 0 || x > h.cols || y < 0 || y > h.rows {
 		return color.NRGBA64{}
 	}
@@ -173,9 +185,12 @@ func (h *Hist) At(x, y int) color.Color {
 	if n == 0 {
 		return color.NRGBA64{}
 	}
-	a := ascale(n, h.br, h.lb)
-	ag := gamma(a, h.exp, h.tr)
+	a := ascale(n, h.b, h.lqa)
+	ag := gamma(a, h.g, h.t)
 	as := cscale(ag)
+	if itdoesntworkatall {
+		fmt.Printf("  at(%d,%d) h.b=%f h.g=%f h.t=%f h.lqa=%f rgbn=%d/%d/%d/%d a=%f ag=%f as=%d\n", x, y, h.b, h.g, h.t, h.lqa, r, g, b, n, a, ag, as)
+	}
 	if as <= 0 {
 		return color.NRGBA64{}
 	}
@@ -185,11 +200,16 @@ func (h *Hist) At(x, y int) color.Color {
 		B: cscale(ag / a / float64(as) * float64(b)),
 		A: as,
 	}
+	if itdoesntworkatall {
+		fmt.Printf("at(%d,%d) p=%v scaler=%f\n", x, y, p, ag/a/float64(as))
+	}
 	return p
 }
 
+const itdoesntworkatall = false
+
 func ascale(n uint64, br, lb float64) float64 {
-	a := br * (math.Log10(float64(n+1)) - lb)
+	a := br * (math.Log10(float64(n)) - lb)
 	return a
 }
 

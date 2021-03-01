@@ -30,6 +30,8 @@ type Flame struct {
 	// R is the renderer for the system. Its histogram should be Reset to the
 	// appropriate size before rendering.
 	R *xirho.Render
+	// ToneMap is the tone mapping parameters derived from the flame.
+	ToneMap xirho.ToneMap
 	// Aspect is the aspect ratio (number of columns per row in the image, or
 	// width divided by height) of the system as encoded in the flame file.
 	Aspect float64
@@ -159,7 +161,7 @@ func convert(flm flame) (r Flame) {
 		Camera:  cam,
 		Palette: parsepalette(flm.Palette),
 	}
-	r.R.Hist.SetBrightness(flm.Brightness, flm.Gamma, flm.Thresh)
+	r.ToneMap = xirho.ToneMap{Brightness: flm.Brightness, Gamma: flm.Gamma, GammaMin: flm.Thresh}
 	// TODO: perspective
 	sort.Strings(r.Unrecognized)
 	return

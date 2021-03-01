@@ -161,7 +161,8 @@ func TestSystemIter(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
 	s.Iter(ctx, &r, rng)
 	cancel()
-	red, _, _, alpha := r.Hist.At(0, 0).RGBA()
+	tm := xirho.ToneMap{1, 1, 0}
+	red, _, _, alpha := r.Hist.Image(tm, 1, r.Iters(), 1).At(0, 0).RGBA()
 	if red == 0 || alpha == 0 {
 		t.Error("expected red pixel, got red", red, "alpha", alpha, "with hist", r.Hist, "after", r.Iters(), "iters")
 	}

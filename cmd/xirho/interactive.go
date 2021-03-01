@@ -25,7 +25,7 @@ import (
 	"github.com/zephyrtronium/xirho/xmath"
 )
 
-func interactive(ctx context.Context, r *xirho.Render, s xirho.System, w, h int, res draw.Scaler, bright, gamma, thresh float64, bg color.Color, osa, procs int) {
+func interactive(ctx context.Context, r *xirho.Render, s xirho.System, w, h int, res draw.Scaler, tm xirho.ToneMap, bg color.Color, osa, procs int) {
 	if r == nil {
 		r = &xirho.Render{
 			Hist:    xirho.NewHist(w*osa, h*osa),
@@ -39,10 +39,8 @@ func interactive(ctx context.Context, r *xirho.Render, s xirho.System, w, h int,
 		plot:   make(chan xirho.PlotOnto),
 		imgs:   make(chan draw.Image),
 		onto: xirho.PlotOnto{
-			Scale:  res,
-			Bright: bright,
-			Gamma:  gamma,
-			Thresh: thresh,
+			Scale:   res,
+			ToneMap: tm,
 		},
 		bg:    image.Uniform{C: bg},
 		sz:    image.Pt(w, h),
@@ -285,9 +283,9 @@ func help(ctx context.Context, status *status, line string) {
 	n, q := status.r.Iters(), status.r.Hits()
 	fmt.Printf("Ran %d iters, plotted %d points, hit ratio %f\n", n, q, float64(q)/float64(n))
 	fmt.Printf("Output image size %dx%d\n", status.sz.X, status.sz.Y)
-	h := status.r.Hist.Bounds().Size()
-	fmt.Printf("Histogram oversampled %dx, size %dx%d (%d MB)\n", status.osa, h.X, h.Y, xirho.HistMem(h.X, h.Y)>>20)
-	fmt.Printf("Plotting brightness %f, gamma %f, gamma threshold %f\n", status.onto.Bright/float64(status.osa*status.osa), status.onto.Gamma, status.onto.Thresh)
+	cols, rows := status.r.Hist.Cols(), status.r.Hist.Rows()
+	fmt.Printf("Histogram oversampled %dx, size %dx%d (%d MB)\n", status.osa, cols, rows, xirho.HistMem(cols, rows)>>20)
+	fmt.Printf("Plotting brightness %f, gamma %f, gamma threshold %f\n", status.onto.ToneMap.Brightness, status.onto.ToneMap.Gamma, status.onto.ToneMap.GammaMin)
 	r, g, b, a := status.bg.C.RGBA()
 	fmt.Printf("Plot background RGBA: #%02x%02x%02x%02x\n", r>>8, g>>8, b>>8, a>>8)
 }
@@ -315,7 +313,7 @@ func open(ctx context.Context, status *status, line string) {
 		return
 	}
 	d := json.NewDecoder(f)
-	s, r, a, err := encoding.Unmarshal(d)
+	s, r, tm, a, err := encoding.Unmarshal(d)
 	f.Close()
 	if err != nil {
 		fmt.Println(err)
@@ -334,8 +332,7 @@ func open(ctx context.Context, status *status, line string) {
 		h = status.sz.Y
 		w = int(float64(h)*a + 0.5)
 	}
-	status.onto.Bright, status.onto.Gamma, status.onto.Thresh = r.Hist.Brightness()
-	status.onto.Bright *= float64(status.osa * status.osa)
+	status.onto.ToneMap = tm
 	status.sz = image.Pt(w, h)
 	cam := r.Camera
 	c := xirho.ChangeRender{
@@ -394,8 +391,7 @@ func flam3(ctx context.Context, status *status, line string) {
 		h = status.sz.Y
 		w = int(float64(h)*flm.Aspect + 0.5)
 	}
-	status.onto.Bright, status.onto.Gamma, status.onto.Thresh = flm.R.Hist.Brightness()
-	status.onto.Bright *= float64(status.osa * status.osa)
+	status.onto.ToneMap = flm.ToneMap
 	status.bg = image.Uniform{C: flm.BG}
 	status.sz = image.Pt(w, h)
 	cam := flm.R.Camera
@@ -734,7 +730,7 @@ func brightness(ctx context.Context, status *status, line string) {
 		fmt.Println("can't set brightness to", x)
 		return
 	}
-	status.onto.Bright = x * float64(status.osa*status.osa)
+	status.onto.ToneMap.Brightness = x
 }
 
 func gamma(ctx context.Context, status *status, line string) {
@@ -754,7 +750,7 @@ func gamma(ctx context.Context, status *status, line string) {
 		fmt.Println("can't set gamma to", x)
 		return
 	}
-	status.onto.Gamma = x
+	status.onto.ToneMap.Gamma = x
 }
 
 func threshold(ctx context.Context, status *status, line string) {
@@ -775,7 +771,7 @@ func threshold(ctx context.Context, status *status, line string) {
 		fmt.Println("can't set gamma threshold to", x)
 		return
 	}
-	status.onto.Thresh = x
+	status.onto.ToneMap.GammaMin = x
 }
 
 func scaler(ctx context.Context, status *status, line string) {

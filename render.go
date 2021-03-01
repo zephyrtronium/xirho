@@ -122,8 +122,9 @@ func (r *Render) RenderAsync(ctx context.Context, change <-chan ChangeRender, pl
 			work = drainplot(work, plot)
 			rctx, cancel = context.WithCancel(ctx)
 			wg.Wait() // TODO: select with ctx.Done
-			r.Hist.SetBrightness(work.Bright, work.Gamma, work.Thresh)
-			work.Scale.Scale(work.Image, work.Image.Bounds(), r.Hist, r.Hist.Bounds(), draw.Over, nil)
+			osa := r.Hist.cols / work.Image.Bounds().Dx()
+			src := r.Hist.Image(work.ToneMap, r.Area(), r.Iters(), osa)
+			work.Scale.Scale(work.Image, work.Image.Bounds(), src, src.Bounds(), draw.Over, nil)
 			img = work.Image
 			out = imgs
 			r.start(rctx, &wg, procs, system, &rng)
@@ -162,18 +163,15 @@ func (r *Render) plot(p Pt) bool {
 	var col, row int
 	aspect := r.Hist.Aspect()
 	if aspect >= 1 {
-		if x < -1 || x >= 1 || y < -1/aspect || y >= 1/aspect {
-			return false
-		}
-		col = int((x + 1) * 0.5 * float64(r.Hist.cols))
-		row = int((y*aspect + 1) * 0.5 * float64(r.Hist.rows))
+		y *= aspect
 	} else {
-		if x < -aspect || x >= aspect || y < -1 || y >= 1 {
-			return false
-		}
-		col = int((x/aspect + 1) * 0.5 * float64(r.Hist.cols))
-		row = int((y + 1) * 0.5 * float64(r.Hist.rows))
+		x /= aspect
 	}
+	if x < -1 || x >= 1 || y < -1 || y >= 1 {
+		return false
+	}
+	col = int((x + 1) * 0.5 * float64(r.Hist.cols))
+	row = int((y + 1) * 0.5 * float64(r.Hist.rows))
 	c := int(p.C * float64(len(r.Palette)))
 	if c >= len(r.Palette) {
 		// Since p.C can be 1.0, c can be out of bounds.
@@ -182,6 +180,17 @@ func (r *Render) plot(p Pt) bool {
 	color := r.Palette[c]
 	r.Hist.Add(col, row, color)
 	return true
+}
+
+// Area calculates the size in Cartesian units of the area viewed through the
+// camera.
+func (r *Render) Area() float64 {
+	d := r.Camera.ProjArea()
+	a := r.Hist.Aspect()
+	if a > 1 {
+		a = 1 / a
+	}
+	return a / d
 }
 
 // Iters returns the number of iterations the renderer has performed. It is
@@ -236,9 +245,8 @@ type PlotOnto struct {
 	// Scale is the resampling method to use to resample the histogram to the
 	// size of Image.
 	Scale draw.Scaler
-	// Bright, Gamma, and Thresh correspond to the same parameters to
-	// Hist.SetBrightness.
-	Bright, Gamma, Thresh float64
+	// ToneMap is the tone mapping parameters for this render.
+	ToneMap ToneMap
 }
 
 // ChangeRender signals to RenderAsync to modify its system, histogram, or

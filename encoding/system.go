@@ -25,9 +25,10 @@ type marshaler struct {
 	// renderer params
 	Aspect float64  `json:"aspect"`
 	Camera xirho.Ax `json:"camera"`
-	Gamma  float64  `json:"gamma"`
-	Thresh float64  `json:"thresh"`
-	Bright float64  `json:"bright"`
+	// brightness params
+	Bright float64 `json:"bright"`
+	Gamma  float64 `json:"gamma"`
+	Thresh float64 `json:"thresh"`
 	// Palette is formed by concatenating each channel of the NRGBA64 palette
 	// in ARGB order as big-endian, then LZW-encoding the result.
 	Palette []byte `json:"palette"`
@@ -36,19 +37,18 @@ type marshaler struct {
 // Marshal creates a JSON encoding of the renderer and system information
 // needed to serialize the system. If system.Check returns a non-nil error,
 // then that error is returned instead.
-func Marshal(system xirho.System, r *xirho.Render) ([]byte, error) {
+func Marshal(system xirho.System, r *xirho.Render, tm xirho.ToneMap) ([]byte, error) {
 	// TODO: wrap errors
 	if err := system.Check(); err != nil {
 		return nil, err
 	}
-	br, gamma, tr := r.Hist.Brightness()
 	m := marshaler{
 		Meta:   r.Meta,
 		Funcs:  make([]*funcm, len(system.Nodes)),
 		Camera: r.Camera,
-		Gamma:  gamma,
-		Thresh: tr,
-		Bright: br,
+		Bright: tm.Brightness,
+		Gamma:  tm.Gamma,
+		Thresh: tm.GammaMin,
 	}
 	for i, f := range system.Nodes {
 		e, err := newFuncm(f.Func)
@@ -68,8 +68,7 @@ func Marshal(system xirho.System, r *xirho.Render) ([]byte, error) {
 		}
 		m.Final = e
 	}
-	bounds := r.Hist.Bounds().Size()
-	m.Aspect = float64(bounds.X) / float64(bounds.Y)
+	m.Aspect = float64(r.Hist.Cols()) / float64(r.Hist.Rows())
 	palette := make([]byte, 0, 2*4*len(r.Palette))
 	for _, c := range r.Palette {
 		palette = append(palette, byte(c.A>>8), byte(c.A))
@@ -98,7 +97,7 @@ func Marshal(system xirho.System, r *xirho.Render) ([]byte, error) {
 // its Reset method called before use. The Procs, N, and Q fields are left 0.
 // Calling UseNumber on the decoder allows Unmarshal to guarantee full
 // precision for xirho.Int function parameters.
-func Unmarshal(d *json.Decoder) (system xirho.System, render *xirho.Render, aspect float64, err error) {
+func Unmarshal(d *json.Decoder) (system xirho.System, render *xirho.Render, tm xirho.ToneMap, aspect float64, err error) {
 	// TODO: wrap errors
 	m := marshaler{}
 	if err = d.Decode(&m); err != nil {
@@ -128,7 +127,7 @@ func Unmarshal(d *json.Decoder) (system xirho.System, render *xirho.Render, aspe
 			return
 		}
 	}
-	render.Hist.SetBrightness(m.Bright, m.Gamma, m.Thresh)
+	tm = xirho.ToneMap{Brightness: m.Bright, Gamma: m.Gamma, GammaMin: m.Thresh}
 	z := lzw.NewReader(bytes.NewReader(m.Palette), lzw.LSB, 8)
 	var buf bytes.Buffer
 	if _, err = io.Copy(&buf, z); err != nil {

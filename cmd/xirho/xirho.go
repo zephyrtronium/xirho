@@ -32,7 +32,7 @@ func main() {
 	var timeout time.Duration
 	var width, height int
 	var osa int
-	var gamma, tr, bright float64
+	var tm xirho.ToneMap
 	var resample string
 	var procs int
 	var echo bool
@@ -47,9 +47,9 @@ func main() {
 	flag.IntVar(&width, "width", 1024, "output image width")
 	flag.IntVar(&height, "height", 1024, "output image height")
 	flag.IntVar(&osa, "osa", 1, "oversampling; histogram bins per pixel per axis")
-	flag.Float64Var(&gamma, "gamma", 1, "gamma factor")
-	flag.Float64Var(&tr, "thresh", 0, "gamma threshold")
-	flag.Float64Var(&bright, "bright", 1, "brightness")
+	flag.Float64Var(&tm.Gamma, "gamma", 1, "gamma factor")
+	flag.Float64Var(&tm.GammaMin, "thresh", 0, "gamma threshold")
+	flag.Float64Var(&tm.Brightness, "bright", 1, "brightness")
 	flag.StringVar(&resample, "resample", "catmull-rom", "resampling method (catmull-rom, bilinear, approx-bilinear, or nearest)")
 	flag.IntVar(&procs, "procs", runtime.GOMAXPROCS(0), "concurrent render routines")
 	flag.BoolVar(&echo, "echo", false, "print system encoding before rendering")
@@ -105,7 +105,7 @@ func main() {
 				log.Fatalln("error opening input:", err)
 			}
 			d := json.NewDecoder(f)
-			system, r, _, err = encoding.Unmarshal(d)
+			system, r, _, _, err = encoding.Unmarshal(d)
 			if err != nil {
 				log.Fatalln("error unmarshaling system:", err)
 			}
@@ -122,7 +122,7 @@ func main() {
 			system = flm.System
 			r = flm.R
 		}
-		interactive(ctx, r, system, width, height, resampler, bright, gamma, tr, u, osa, procs)
+		interactive(ctx, r, system, width, height, resampler, tm, u, osa, procs)
 		return
 	}
 	if flamename == "" {
@@ -135,7 +135,7 @@ func main() {
 			in = f
 		}
 		d := json.NewDecoder(in)
-		system, r, _, err = encoding.Unmarshal(d)
+		system, r, _, _, err = encoding.Unmarshal(d)
 		if err != nil {
 			log.Fatalln("error unmarshaling system:", err)
 		}
@@ -154,9 +154,8 @@ func main() {
 	}
 	log.Println("allocating histogram, estimated", xirho.HistMem(width*osa, height*osa)>>20, "MB")
 	r.Hist.Reset(width*osa, height*osa)
-	r.Hist.SetBrightness(bright*float64(osa*osa), gamma, tr)
 	if echo {
-		m, err := encoding.Marshal(system, r)
+		m, err := encoding.Marshal(system, r, tm)
 		if err != nil {
 			log.Fatalln("error reading system from input:", err)
 		}
@@ -169,7 +168,8 @@ func main() {
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 	draw.Draw(img, img.Bounds(), image.NewUniform(u), image.Point{}, draw.Src)
 	log.Printf("drawing onto image of size %dx%d", width, height)
-	resampler.Scale(img, img.Bounds(), r.Hist, r.Hist.Bounds(), draw.Over, nil)
+	src := r.Hist.Image(tm, r.Area(), r.Iters(), osa)
+	resampler.Scale(img, img.Bounds(), src, src.Bounds(), draw.Over, nil)
 	out := os.Stdout
 	if outname != "" {
 		log.Println("encoding to", outname)
