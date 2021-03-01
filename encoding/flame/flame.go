@@ -13,6 +13,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"image/color"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -35,6 +36,9 @@ type Flame struct {
 	// BG is the background color for the system. The alpha component is always
 	// maximized.
 	BG color.NRGBA64
+	// Unrecognized is the unrecognized xform attributes encountered while
+	// decoding this flame.
+	Unrecognized []string
 	// Err holds any error that occurred while decoding this flame.
 	Err error
 }
@@ -129,6 +133,7 @@ func convert(flm flame) (r Flame) {
 			Graph: df.graph,
 			// TODO: label
 		}
+		r.Unrecognized = append(r.Unrecognized, df.unk...)
 	}
 	if flm.Final.XMLName.Local != "" {
 		// A finalxform is an xform with a different name and some missing fields,
@@ -147,6 +152,7 @@ func convert(flm flame) (r Flame) {
 			return
 		}
 		r.System.Final = df.f
+		r.Unrecognized = append(r.Unrecognized, df.unk...)
 	}
 	r.R = &xirho.Render{
 		Hist:    &xirho.Hist{},
@@ -155,6 +161,7 @@ func convert(flm flame) (r Flame) {
 	}
 	r.R.Hist.SetBrightness(flm.Brightness, flm.Gamma, flm.Thresh)
 	// TODO: perspective
+	sort.Strings(r.Unrecognized)
 	return
 }
 
@@ -164,6 +171,7 @@ type decoded struct {
 	op     float64
 	weight float64
 	graph  []float64
+	unk    []string
 }
 
 // decodexf decodes an xform.
@@ -223,6 +231,8 @@ func decodexf(xf xform, final bool) (d decoded, err error) {
 	for name := range vars {
 		if parse, ok := Funcs[name]; ok {
 			parse(vars, &pre, &in, &post, ax)
+		} else if !KnownAttrs[name] {
+			d.unk = append(d.unk, name)
 		}
 	}
 	// Then everything together. Only save the parts that do something.

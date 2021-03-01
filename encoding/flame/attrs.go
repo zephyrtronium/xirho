@@ -9,8 +9,8 @@ import (
 
 // Funcs maps Flame xform attribute names to functions which parse attributes
 // into function instances. Parameters of functions should not included here,
-// e.g. julian is an entry but julian_power is not, as the parser should handle
-// the parameters.
+// e.g. julian is an entry but julian_power is not; the latter is in
+// KnownAttrs.
 var Funcs = map[string]Parser{
 	"linear":        parseLinear,
 	"linear3D":      parseLinear,
@@ -45,6 +45,74 @@ var Funcs = map[string]Parser{
 	"splits":        parseSplits,
 	"splits3D":      parseSplits3D,
 	"unpolar":       parseUnpolar,
+}
+
+// KnownAttrs lists xform attributes which are not function names but should
+// not be reported as unrecognized by the unmarshaler.
+var KnownAttrs = map[string]bool{
+	"weight":         true,
+	"color":          true,
+	"coefs":          true,
+	"opacity":        true,
+	"plotmode":       true,
+	"pre_zscale":     true,
+	"pre_ztranslate": true,
+	"pre_rotate_x":   true,
+	"pre_rotate_y":   true,
+
+	"bipolar_shift":          true,
+	"curl_c1":                true,
+	"curl_c2":                true,
+	"expo_real":              true,
+	"expo_imaginary":         true,
+	"julian_power":           true,
+	"julian_dist":            true,
+	"lazysusan_space":        true,
+	"lazysusan_spin":         true,
+	"lazysusan_twist":        true,
+	"lazysusan_x":            true,
+	"lazysusan_y":            true,
+	"log_base":               true,
+	"mobiq_at":               true,
+	"mobiq_ax":               true,
+	"mobiq_ay":               true,
+	"mobiq_az":               true,
+	"mobiq_bt":               true,
+	"mobiq_bx":               true,
+	"mobiq_by":               true,
+	"mobiq_bz":               true,
+	"mobiq_ct":               true,
+	"mobiq_cx":               true,
+	"mobiq_cy":               true,
+	"mobiq_cz":               true,
+	"mobiq_dt":               true,
+	"mobiq_dx":               true,
+	"mobiq_dy":               true,
+	"mobiq_dz":               true,
+	"post_heat_phi_amp":      true,
+	"post_heat_phi_period":   true,
+	"post_heat_phi_phase":    true,
+	"post_heat_r_amp":        true,
+	"post_heat_r_period":     true,
+	"post_heat_r_phase":      true,
+	"post_heat_theta_amp":    true,
+	"post_heat_theta_period": true,
+	"post_heat_theta_phase":  true,
+	"splits_x":               true,
+	"splits_y":               true,
+	"splits3D_x":             true,
+	"splits3D_y":             true,
+	"splits3D_z":             true,
+
+	// mobius variables
+	"Re_A": true,
+	"Im_A": true,
+	"Re_B": true,
+	"Im_B": true,
+	"Re_C": true,
+	"Im_C": true,
+	"Re_D": true,
+	"Im_D": true,
 }
 
 // Parser is a function which parses a xirho function from XML attributes.

@@ -40,4 +40,4 @@ By default, the parser recognizes the following variations and their parameters:
 
 ## Adding variations
 
-The decoder ignores any xform attributes it doesn't recognize. To teach it to understand more variation types, create a Parser function and add it to the Funcs map.
+The decoder ignores any xform attributes it doesn't recognize. To teach it to understand more variation types, create a Parser function and add it to the Funcs map. If it has variables, add them to the KnownAttrs map.

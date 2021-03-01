@@ -383,6 +383,9 @@ func flam3(ctx context.Context, status *status, line string) {
 		return
 	}
 	fmt.Println(flm.Name)
+	if len(flm.Unrecognized) != 0 {
+		fmt.Printf("Unrecognized attributes: %q\n", flm.Unrecognized)
+	}
 	var w, h int
 	if flm.Aspect >= 1 {
 		w = status.sz.X
