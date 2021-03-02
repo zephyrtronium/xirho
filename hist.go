@@ -66,7 +66,7 @@ func (h *Hist) Empty() bool {
 
 // Add increments a histogram bucket by the given color. It is safe for
 // multiple goroutines to call this concurrently.
-func (h *Hist) Add(x, y int, c color.NRGBA64) {
+func (h *Hist) Add(x, y int, c color.RGBA64) {
 	k := h.index(x, y)
 	bin := &h.counts[k]
 	atomic.AddUint64(&bin.r, uint64(c.R))
@@ -194,14 +194,15 @@ func (h *histImage) At(x, y int) color.Color {
 	if as <= 0 {
 		return color.NRGBA64{}
 	}
+	s := ag / a / float64(as)
 	p := color.NRGBA64{
-		R: cscale(ag / a / float64(as) * float64(r)),
-		G: cscale(ag / a / float64(as) * float64(g)),
-		B: cscale(ag / a / float64(as) * float64(b)),
+		R: cscale(s * float64(r)),
+		G: cscale(s * float64(g)),
+		B: cscale(s * float64(b)),
 		A: as,
 	}
 	if itdoesntworkatall {
-		fmt.Printf("at(%d,%d) p=%v scaler=%f\n", x, y, p, ag/a/float64(as))
+		fmt.Printf("at(%d,%d) p=%v s=%g rgb=%g/%g/%g\n", x, y, p, s, s*float64(r), s*float64(g), s*float64(b))
 	}
 	return p
 }

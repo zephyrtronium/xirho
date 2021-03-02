@@ -155,7 +155,7 @@ func TestSystemIter(t *testing.T) {
 	r := xirho.Render{
 		Camera:  xirho.Eye(),
 		Hist:    xirho.NewHist(1, 1),
-		Palette: []color.NRGBA64{{R: 0xffff, A: 0xffff}, {R: 0xffff, A: 0xffff}},
+		Palette: color.Palette{color.RGBA64{R: 0xffff, A: 0xffff}, color.RGBA64{R: 0xffff, A: 0xffff}},
 	}
 	r.Hist.Reset(1, 1)
 	ctx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
@@ -171,7 +171,7 @@ func TestSystemIter(t *testing.T) {
 		r := xirho.Render{
 			Camera:  xirho.Eye(),
 			Hist:    xirho.NewHist(1, 1),
-			Palette: []color.NRGBA64{{R: 0xffff, A: 0xffff}, {R: 0xffff, A: 0xffff}},
+			Palette: color.Palette{color.RGBA64{R: 0xffff, A: 0xffff}, color.RGBA64{R: 0xffff, A: 0xffff}},
 		}
 		r.Hist.Reset(1, 1)
 		if err := s.Check(); err == nil {
@@ -197,7 +197,7 @@ func TestSystemIter(t *testing.T) {
 		r := xirho.Render{
 			Camera:  xirho.Eye(),
 			Hist:    xirho.NewHist(1, 1),
-			Palette: []color.NRGBA64{{R: 0xffff, A: 0xffff}, {R: 0xffff, A: 0xffff}},
+			Palette: color.Palette{color.RGBA64{R: 0xffff, A: 0xffff}, color.RGBA64{R: 0xffff, A: 0xffff}},
 		}
 		r.Hist.Reset(1, 1)
 		ctx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
@@ -215,7 +215,7 @@ func TestSystemIter(t *testing.T) {
 		r := xirho.Render{
 			Camera:  xirho.Eye(),
 			Hist:    xirho.NewHist(1, 1),
-			Palette: []color.NRGBA64{{R: 0xffff, A: 0xffff}, {R: 0xffff, A: 0xffff}},
+			Palette: color.Palette{color.RGBA64{R: 0xffff, A: 0xffff}, color.RGBA64{R: 0xffff, A: 0xffff}},
 		}
 		s := xirho.System{
 			Nodes: []xirho.Node{

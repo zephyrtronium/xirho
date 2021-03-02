@@ -3,6 +3,7 @@ package xirho
 import (
 	"context"
 	"fmt"
+	"image/color"
 	"sync/atomic"
 
 	"github.com/zephyrtronium/xirho/xmath"
@@ -46,6 +47,8 @@ type iterator struct {
 	nodes []Func
 	// final is the system final.
 	final Func
+	// palette is the renderer's palette converted to RGBA.
+	palette []color.RGBA64
 	// rng is the iterator's source of randomness.
 	rng RNG
 	// op is the pre-multiplied opacities of each function in the system.
@@ -74,7 +77,8 @@ func (s System) Iter(ctx context.Context, r *Render, rng RNG) {
 		panic(err)
 	}
 	it := iterator{rng: rng}
-	it.prep(s)
+	it.prep(s, r.Palette)
+	aspect := r.Hist.Aspect()
 	p, k := it.fuse() // p may not be valid!
 	done := ctx.Done()
 	var n, q int
@@ -85,22 +89,27 @@ func (s System) Iter(ctx context.Context, r *Render, rng RNG) {
 			atomic.AddInt64(&r.q, int64(q))
 			return
 		default:
-			if !p.IsValid() {
-				p, k = it.fuse()
-				continue
-			}
 			p = it.nodes[k].Calc(p, &it.rng)
+			n++
 			// If a function has opacity α, that means we plot its points with
 			// probability α. If we don't plot a point, then there's no reason
 			// to apply the final, since that is only a nonlinear camera.
 			if it.op[k] >= 1<<53 || (it.op[k] > 0 && it.rng.Uint64()%(1<<53) < it.op[k]) {
 				fp := it.doFinal(p)
-				if r.plot(fp) {
+				if !fp.IsValid() {
+					p, k = it.fuse()
+					continue
+				}
+				i := int(fp.C * float64(len(it.palette)))
+				if i >= len(it.palette) {
+					// Since fp.C can be 1.0, i can be out of bounds.
+					i = len(it.palette) - 1
+				}
+				if r.plot(fp.X, fp.Y, fp.Z, it.palette[i], aspect) {
 					q++
 				}
 			}
 			k = it.next(k)
-			n++
 			if n == 25000 {
 				atomic.AddInt64(&r.n, int64(n))
 				t := atomic.AddInt64(&r.q, int64(q))
@@ -199,7 +208,7 @@ func (it *iterator) next(k int) int {
 // prep sets up the iterator's weighted directed graph, which controls the
 // probability of each function being chosen based on the current one, and
 // pre-multiplies brightnesses
-func (it *iterator) prep(s System) {
+func (it *iterator) prep(s System, p color.Palette) {
 	it.final = s.Final
 	switch l := len(s.Nodes); l {
 	case 0:
@@ -257,6 +266,12 @@ func (it *iterator) prep(s System) {
 	it.op = make([]uint64, len(s.Nodes))
 	for i, f := range s.Nodes {
 		it.op[i] = uint64(f.Opacity * (1 << 53))
+	}
+	// Pre-multiply palette.
+	it.palette = make([]color.RGBA64, len(p))
+	for i, c := range p {
+		r, g, b, a := c.RGBA()
+		it.palette[i] = color.RGBA64{R: uint16(r), G: uint16(g), B: uint16(b), A: uint16(a)}
 	}
 }
 

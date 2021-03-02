@@ -49,7 +49,7 @@ func TestHistReset(t *testing.T) {
 
 func TestHistAdd(t *testing.T) {
 	h := NewHist(1, 1)
-	c := color.NRGBA64{R: 1, G: 10, B: 100, A: 1000}
+	c := color.RGBA64{R: 1, G: 10, B: 100, A: 1000}
 	h.Add(0, 0, c)
 	bin := h.counts[0]
 	if bin.r != uint64(c.R) {

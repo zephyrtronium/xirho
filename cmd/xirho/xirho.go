@@ -105,10 +105,12 @@ func main() {
 				log.Fatalln("error opening input:", err)
 			}
 			d := json.NewDecoder(f)
-			system, r, _, _, err = encoding.Unmarshal(d)
+			d.UseNumber()
+			s, err := encoding.Unmarshal(d)
 			if err != nil {
 				log.Fatalln("error unmarshaling system:", err)
 			}
+			system = s.System
 		case flamename != "":
 			f, err := os.Open(flamename)
 			if err != nil {
@@ -135,10 +137,12 @@ func main() {
 			in = f
 		}
 		d := json.NewDecoder(in)
-		system, r, _, _, err = encoding.Unmarshal(d)
+		d.UseNumber()
+		s, err := encoding.Unmarshal(d)
 		if err != nil {
 			log.Fatalln("error unmarshaling system:", err)
 		}
+		system = s.System
 	} else {
 		in, err := os.Open(flamename)
 		if err != nil {
@@ -155,7 +159,7 @@ func main() {
 	log.Println("allocating histogram, estimated", xirho.HistMem(width*osa, height*osa)>>20, "MB")
 	r.Hist.Reset(width*osa, height*osa)
 	if echo {
-		m, err := encoding.Marshal(system, r, tm)
+		m, err := encoding.Marshal(system, r, tm, nil, nil)
 		if err != nil {
 			log.Fatalln("error reading system from input:", err)
 		}

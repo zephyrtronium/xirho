@@ -20,3 +20,15 @@ func IsFinite(x float64) bool {
 	// If x is ±inf or nan, then x-x is nan; otherwise, x-x is 0.
 	return x-x == 0
 }
+
+// Fit returns the width and height of an integer rectangle having an aspect
+// ratio closest to aspect and with width or height equal to w or h,
+// respectively.
+func Fit(w, h int, aspect float64) (int, int) {
+	if aspect >= 1 {
+		h = int(float64(w)/aspect + 0.5)
+	} else {
+		w = int(float64(h)*aspect + 0.5)
+	}
+	return w, h
+}

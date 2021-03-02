@@ -17,7 +17,7 @@ func TestRender(t *testing.T) {
 	}
 	r := xirho.Render{
 		Hist:    xirho.NewHist(1, 1),
-		Palette: []color.NRGBA64{{R: 0xffff, A: 0xffff}, {R: 0xffff, A: 0xffff}},
+		Palette: color.Palette{color.RGBA64{R: 0xffff, A: 0xffff}, color.RGBA64{R: 0xffff, A: 0xffff}},
 	}
 	f := nanf{}
 	s := xirho.System{
@@ -57,7 +57,7 @@ func TestRenderAsync(t *testing.T) {
 	}
 	r := xirho.Render{
 		Hist:    xirho.NewHist(1, 1),
-		Palette: []color.NRGBA64{{R: 0xffff, A: 0xffff}, {R: 0xffff, A: 0xffff}},
+		Palette: color.Palette{color.RGBA64{R: 0xffff, A: 0xffff}, color.RGBA64{R: 0xffff, A: 0xffff}},
 	}
 	f := nanf{}
 	s := xirho.System{

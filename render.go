@@ -28,10 +28,7 @@ type Render struct {
 	// Camera is the camera transform.
 	Camera Ax
 	// Palette is the colors used by the renderer.
-	Palette []color.NRGBA64
-
-	// Meta contains metadata about the fractal.
-	Meta *Metadata
+	Palette color.Palette
 }
 
 // Render renders a System onto a Hist. Calculation is performed by procs
@@ -108,7 +105,7 @@ func (r *Render) RenderAsync(ctx context.Context, change <-chan ChangeRender, pl
 				reset = true
 			}
 			if len(c.Palette) != 0 {
-				r.Palette = append([]color.NRGBA64{}, c.Palette...)
+				r.Palette = append(color.Palette{}, c.Palette...)
 				reset = true
 			}
 			if reset {
@@ -155,30 +152,21 @@ func (r *Render) start(ctx context.Context, wg *sync.WaitGroup, procs int, syste
 }
 
 // plot plots a point.
-func (r *Render) plot(p Pt) bool {
-	if !p.IsValid() {
-		return false
-	}
-	x, y, _ := Tx(&r.Camera, p.X, p.Y, p.Z) // ignore z
+func (r *Render) plot(x, y, z float64, c color.RGBA64, aspect float64) bool {
+	x, y, _ = Tx(&r.Camera, x, y, z) // ignore z
 	var col, row int
-	aspect := r.Hist.Aspect()
 	if aspect >= 1 {
 		y *= aspect
 	} else {
 		x /= aspect
 	}
-	if x < -1 || x >= 1 || y < -1 || y >= 1 {
+	// negated condition to catch nans
+	if !(x >= -1 && x < 1 && y >= -1 && y < 1) {
 		return false
 	}
 	col = int((x + 1) * 0.5 * float64(r.Hist.cols))
 	row = int((y + 1) * 0.5 * float64(r.Hist.rows))
-	c := int(p.C * float64(len(r.Palette)))
-	if c >= len(r.Palette) {
-		// Since p.C can be 1.0, c can be out of bounds.
-		c = len(r.Palette) - 1
-	}
-	color := r.Palette[c]
-	r.Hist.Add(col, row, color)
+	r.Hist.Add(col, row, c)
 	return true
 }
 
@@ -264,7 +252,7 @@ type ChangeRender struct {
 	Camera *Ax
 	// Palette is the new palette to use, if it has nonzero length. The palette
 	// is copied into the renderer.
-	Palette []color.NRGBA64
+	Palette color.Palette
 	// Procs is the new number of worker goroutines to use. If this is zero,
 	// then the renderer does no work until receiving a nonzero Procs.
 	Procs int

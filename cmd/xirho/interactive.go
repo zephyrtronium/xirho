@@ -30,7 +30,7 @@ func interactive(ctx context.Context, r *xirho.Render, s xirho.System, w, h int,
 		r = &xirho.Render{
 			Hist:    xirho.NewHist(w*osa, h*osa),
 			Camera:  xirho.Eye(),
-			Palette: []color.NRGBA64{{}},
+			Palette: color.Palette{color.NRGBA64{}},
 		}
 	}
 	status := status{
@@ -313,33 +313,33 @@ func open(ctx context.Context, status *status, line string) {
 		return
 	}
 	d := json.NewDecoder(f)
-	s, r, tm, a, err := encoding.Unmarshal(d)
+	s, err := encoding.Unmarshal(d)
 	f.Close()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	if r.Meta != nil {
-		fmt.Printf("%s (%s)\n", r.Meta.Title, r.Meta.Date.Format(time.Stamp))
-		fmt.Println("Author(s):", strings.Join(r.Meta.Authors, ", "))
-		fmt.Println("Licensed under", r.Meta.License)
+	if s.Meta != nil {
+		fmt.Printf("%s (%s)\n", s.Meta.Title, s.Meta.Date.Format(time.Stamp))
+		fmt.Println("Author(s):", strings.Join(s.Meta.Authors, ", "))
+		fmt.Println("Licensed under", s.Meta.License)
 	}
 	var w, h int
-	if a >= 1 {
+	if s.Aspect >= 1 {
 		w = status.sz.X
-		h = int(float64(w)/a + 0.5)
+		h = int(float64(w)/s.Aspect + 0.5)
 	} else {
 		h = status.sz.Y
-		w = int(float64(h)*a + 0.5)
+		w = int(float64(h)*s.Aspect + 0.5)
 	}
-	status.onto.ToneMap = tm
+	status.onto.ToneMap = s.ToneMap
 	status.sz = image.Pt(w, h)
-	cam := r.Camera
+	cam := s.Camera
 	c := xirho.ChangeRender{
-		System:  s,
+		System:  s.System,
 		Size:    image.Pt(w*status.osa, h*status.osa),
 		Camera:  &cam,
-		Palette: r.Palette,
+		Palette: s.Palette,
 		Procs:   status.procs,
 	}
 	select {

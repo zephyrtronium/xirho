@@ -44,7 +44,7 @@ func TestIteratorPrep(t *testing.T) {
 	for name, s := range cases {
 		t.Run(name, func(t *testing.T) {
 			it := iterator{rng: xmath.NewRNG()}
-			it.prep(s)
+			it.prep(s, nil) // TODO: test palettes
 			for i, v := range it.op {
 				if v > 1<<53 {
 					t.Error("opacity", i, "too large:", v, ">", 1<<53)
@@ -80,7 +80,7 @@ func TestIteratorNext(t *testing.T) {
 		},
 	}
 	it := iterator{rng: xmath.NewRNG()}
-	it.prep(s)
+	it.prep(s, nil)
 	for i := 1; i < len(it.w); i++ {
 		if it.w[i] == it.w[i-1] {
 			t.Error("weight", i, "equals its predecessor")
@@ -119,16 +119,16 @@ func TestIteratorFinal(t *testing.T) {
 		},
 	}
 	it := iterator{rng: xmath.NewRNG()}
-	it.prep(s)
+	it.prep(s, nil)
 	p := Pt{1, 1, 1, 1}
 	fp := it.doFinal(p)
 	if fp != p {
 		t.Error("point modified by missing final: want", p, "have", fp)
 	}
 	s.Final = givef{}
-	it.prep(s)
+	it.prep(s, nil)
 	fp = it.doFinal(p)
 	if fp != (Pt{}) {
-		t.Error("point not modified by missing final: want", Pt{}, "have", fp, "with input", p)
+		t.Error("point not modified by final: want", Pt{}, "have", fp, "with input", p)
 	}
 }

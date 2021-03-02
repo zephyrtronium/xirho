@@ -338,8 +338,8 @@ func nums(s string) ([]float64, error) {
 }
 
 // parsepalette parses a flame palette.
-func parsepalette(p palette) []color.NRGBA64 {
-	r := make([]color.NRGBA64, 0, p.Count)
+func parsepalette(p palette) []color.Color {
+	r := make([]color.Color, 0, p.Count)
 	for _, line := range strings.Fields(p.Data) {
 		// The error from DecodeString is not checked because DecodeString
 		// returns the decoded bytes before the error and we have no resolution
