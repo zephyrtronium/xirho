@@ -99,6 +99,24 @@ func (ax *Ax) RotZ(tz float64) *Ax {
 	return ax
 }
 
+// Zoom scales the transform, including its translation vector, by a single
+// factor.
+func (ax *Ax) Zoom(s float64) *Ax {
+	ax[0] *= s
+	ax[1] *= s
+	ax[2] *= s
+	ax[3] *= s
+	ax[4] *= s
+	ax[5] *= s
+	ax[6] *= s
+	ax[7] *= s
+	ax[8] *= s
+	ax[9] *= s
+	ax[10] *= s
+	ax[11] *= s
+	return ax
+}
+
 // Pitch rotates the transform about the x axis centered on the transform's
 // translation point and returns it.
 func (ax *Ax) Pitch(tx float64) *Ax {

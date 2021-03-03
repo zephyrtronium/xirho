@@ -959,7 +959,7 @@ func camzoom(ctx context.Context, status *status, line string) {
 		return
 	}
 	cam := status.r.Camera
-	cam.Scale(d, d, d)
+	cam.Zoom(d)
 	c := xirho.ChangeRender{Camera: &cam, Procs: status.procs}
 	select {
 	case <-ctx.Done():
