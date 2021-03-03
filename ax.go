@@ -6,12 +6,12 @@ import (
 	"golang.org/x/image/math/f64"
 )
 
-// Ax is an affine transform.
-type Ax f64.Aff4
+// Affine is an affine transform.
+type Affine f64.Aff4
 
 // Eye returns an identity transform.
-func Eye() Ax {
-	return Ax{
+func Eye() Affine {
+	return Affine{
 		1, 0, 0, 0,
 		0, 1, 0, 0,
 		0, 0, 1, 0,
@@ -19,8 +19,8 @@ func Eye() Ax {
 }
 
 // Eye sets the transform to the identity transform and returns it.
-func (ax *Ax) Eye() *Ax {
-	*ax = Ax{
+func (ax *Affine) Eye() *Affine {
+	*ax = Affine{
 		1, 0, 0, 0,
 		0, 1, 0, 0,
 		0, 0, 1, 0,
@@ -29,7 +29,7 @@ func (ax *Ax) Eye() *Ax {
 }
 
 // Translate translates the transform and returns it.
-func (ax *Ax) Translate(dx, dy, dz float64) *Ax {
+func (ax *Affine) Translate(dx, dy, dz float64) *Affine {
 	ax[3] += dx
 	ax[7] += dy
 	ax[11] += dz
@@ -37,7 +37,7 @@ func (ax *Ax) Translate(dx, dy, dz float64) *Ax {
 }
 
 // Scale scales the transform along each axis and returns it.
-func (ax *Ax) Scale(sx, sy, sz float64) *Ax {
+func (ax *Affine) Scale(sx, sy, sz float64) *Affine {
 	ax[0] *= sx
 	ax[1] *= sy
 	ax[2] *= sz
@@ -53,7 +53,7 @@ func (ax *Ax) Scale(sx, sy, sz float64) *Ax {
 // RotX rotates the transform about the x axis and returns it. Specifically, tx
 // is the counter-clockwise rotation in the y/z plane in radians. The
 // translation vector is also rotated appropriately.
-func (ax *Ax) RotX(tx float64) *Ax {
+func (ax *Affine) RotX(tx float64) *Affine {
 	// Rotation matrix:
 	//	[1	0	0	0]
 	//	[0	cx	sx	0]
@@ -69,7 +69,7 @@ func (ax *Ax) RotX(tx float64) *Ax {
 
 // RotY rotates the transform about the y axis and returns it. Specifically, ty
 // is the rotation in the x/z plane in radians.
-func (ax *Ax) RotY(ty float64) *Ax {
+func (ax *Affine) RotY(ty float64) *Affine {
 	// Rotation matrix:
 	//	[cy	0	-sy	0]
 	//	[0	1	0	0]
@@ -85,7 +85,7 @@ func (ax *Ax) RotY(ty float64) *Ax {
 
 // RotZ rotates the transform about the z axis and returns it. Specifically, tz
 // is the rotation in the x/y plane in radians.
-func (ax *Ax) RotZ(tz float64) *Ax {
+func (ax *Affine) RotZ(tz float64) *Affine {
 	// Rotation matrix:
 	//	[	cz	sz	0	0]
 	//	[	-sz	cz	0	0]
@@ -101,7 +101,7 @@ func (ax *Ax) RotZ(tz float64) *Ax {
 
 // Zoom scales the transform, including its translation vector, by a single
 // factor.
-func (ax *Ax) Zoom(s float64) *Ax {
+func (ax *Affine) Zoom(s float64) *Affine {
 	ax[0] *= s
 	ax[1] *= s
 	ax[2] *= s
@@ -119,7 +119,7 @@ func (ax *Ax) Zoom(s float64) *Ax {
 
 // Pitch rotates the transform about the x axis centered on the transform's
 // translation point and returns it.
-func (ax *Ax) Pitch(tx float64) *Ax {
+func (ax *Affine) Pitch(tx float64) *Affine {
 	sx, cx := math.Sincos(tx)
 	ax[1], ax[2] = ax[1]*cx-ax[2]*sx, ax[1]*sx+ax[2]*cx
 	ax[5], ax[6] = ax[5]*cx-ax[6]*sx, ax[5]*sx+ax[6]*cx
@@ -129,7 +129,7 @@ func (ax *Ax) Pitch(tx float64) *Ax {
 
 // Roll rotates the transform about the y axis centered on the transform's
 // translation point and returns it.
-func (ax *Ax) Roll(ty float64) *Ax {
+func (ax *Affine) Roll(ty float64) *Affine {
 	sy, cy := math.Sincos(ty)
 	ax[0], ax[2] = ax[0]*cy+ax[2]*sy, ax[2]*cy-ax[0]*sy
 	ax[4], ax[6] = ax[4]*cy+ax[6]*sy, ax[6]*cy-ax[4]*sy
@@ -139,7 +139,7 @@ func (ax *Ax) Roll(ty float64) *Ax {
 
 // Yaw rotates the transform about the z axis centered on the transform's
 // translation point and returns it.
-func (ax *Ax) Yaw(tz float64) *Ax {
+func (ax *Affine) Yaw(tz float64) *Affine {
 	sz, cz := math.Sincos(tz)
 	ax[0], ax[1] = ax[0]*cz-ax[1]*sz, ax[0]*sz+ax[1]*cz
 	ax[4], ax[5] = ax[4]*cz-ax[5]*sz, ax[4]*sz+ax[5]*cz
@@ -150,60 +150,60 @@ func (ax *Ax) Yaw(tz float64) *Ax {
 // TODO: shear
 
 // VX returns the X vector of the transform, which is the first column.
-func (ax *Ax) VX() Vec3 {
+func (ax *Affine) VX() Vec3 {
 	return Vec3{ax[0], ax[4], ax[8]}
 }
 
 // VY returns the Y vector of the transform, which is the second column.
-func (ax *Ax) VY() Vec3 {
+func (ax *Affine) VY() Vec3 {
 	return Vec3{ax[1], ax[5], ax[9]}
 }
 
 // VZ returns the Z vector of the transform, which is the third column.
-func (ax *Ax) VZ() Vec3 {
+func (ax *Affine) VZ() Vec3 {
 	return Vec3{ax[2], ax[6], ax[10]}
 }
 
 // VO returns the O vector of the transform, which is the translation vector.
-func (ax *Ax) VO() Vec3 {
+func (ax *Affine) VO() Vec3 {
 	return Vec3{ax[3], ax[7], ax[11]}
 }
 
 // SetVX sets the X vector of the transform, which is the first column, and
 // returns the transform.
-func (ax *Ax) SetVX(v Vec3) *Ax {
+func (ax *Affine) SetVX(v Vec3) *Affine {
 	ax[0], ax[4], ax[8] = v[0], v[1], v[2]
 	return ax
 }
 
 // SetVY sets the Y vector of the transform, which is the second column, and
 // returns the transform.
-func (ax *Ax) SetVY(v Vec3) *Ax {
+func (ax *Affine) SetVY(v Vec3) *Affine {
 	ax[1], ax[5], ax[9] = v[0], v[1], v[2]
 	return ax
 }
 
 // SetVZ sets the Z vector of the transform, which is the third column, and
 // returns the transform.
-func (ax *Ax) SetVZ(v Vec3) *Ax {
+func (ax *Affine) SetVZ(v Vec3) *Affine {
 	ax[2], ax[6], ax[10] = v[0], v[1], v[2]
 	return ax
 }
 
 // SetVO sets the O vector of the transform, which is the translation vector,
 // and returns the transform.
-func (ax *Ax) SetVO(v Vec3) *Ax {
+func (ax *Affine) SetVO(v Vec3) *Affine {
 	ax[3], ax[7], ax[11] = v[0], v[1], v[2]
 	return ax
 }
 
 // Tx transforms a coordinate.
-func (ax *Ax) Tx(x, y, z float64) (tx, ty, tz float64) {
+func (ax *Affine) Tx(x, y, z float64) (tx, ty, tz float64) {
 	return Tx(ax, x, y, z)
 }
 
 // Tx transforms a coordinate with an affine transform.
-func Tx(ax *Ax, x, y, z float64) (tx, ty, tz float64) {
+func Tx(ax *Affine, x, y, z float64) (tx, ty, tz float64) {
 	tx = ax[0]*x + ax[1]*y + ax[2]*z + ax[3]
 	ty = ax[4]*x + ax[5]*y + ax[6]*z + ax[7]
 	tz = ax[8]*x + ax[9]*y + ax[10]*z + ax[11]
@@ -211,14 +211,14 @@ func Tx(ax *Ax, x, y, z float64) (tx, ty, tz float64) {
 }
 
 // TxVec transforms a 3-vector with an affine transform.
-func TxVec(ax *Ax, v [3]float64) [3]float64 {
+func TxVec(ax *Affine, v [3]float64) [3]float64 {
 	x, y, z := Tx(ax, v[0], v[1], v[2])
 	return [3]float64{x, y, z}
 }
 
 // ProjArea finds the area of the orthogonal projection into two dimensions of
 // the affine space described by ax.
-func (ax *Ax) ProjArea() float64 {
+func (ax *Affine) ProjArea() float64 {
 	// Because we're taking the orthogonal projection onto 2-space, this is
 	// just the determinant of the 2x2 upper-left submatrix.
 	return math.Abs(ax[0]*ax[5] - ax[1]*ax[4])

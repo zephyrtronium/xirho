@@ -183,8 +183,8 @@ type marshaler struct {
 	Funcs []*funcm `json:"funcs"`
 	Final *funcm   `json:"final,omitempty"`
 	// renderer params
-	Aspect float64  `json:"aspect"`
-	Camera xirho.Ax `json:"camera"`
+	Aspect float64      `json:"aspect"`
+	Camera xirho.Affine `json:"camera"`
 	// brightness params
 	Bright float64 `json:"bright"`
 	Gamma  float64 `json:"gamma"`

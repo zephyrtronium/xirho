@@ -51,8 +51,7 @@ type Complex complex128
 // Vec3 is an unconstrained function parameter in R^3.
 type Vec3 [3]float64
 
-// Affine is an affine transform function parameter.
-type Affine = Ax
+// Affine
 
 // FuncList is a function parameter holding a list of functions.
 type FuncList []Func

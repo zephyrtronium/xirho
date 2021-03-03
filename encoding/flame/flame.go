@@ -178,7 +178,7 @@ func decodexf(xf xform, final bool) (d decoded, err error) {
 		vars[attr.Name.Local] = v
 	}
 	// Decode affine transform.
-	var ax xirho.Ax
+	var ax xirho.Affine
 	if ax, err = decodetx(xf.Coefs, "transform"); err != nil {
 		return
 	}
@@ -254,7 +254,7 @@ func decodexf(xf xform, final bool) (d decoded, err error) {
 }
 
 // decodetx decodes an affine transform.
-func decodetx(coefs, name string) (ax xirho.Ax, err error) {
+func decodetx(coefs, name string) (ax xirho.Affine, err error) {
 	var a []float64
 	a, err = nums(coefs)
 	if err != nil {
@@ -285,7 +285,7 @@ func sumdefault(f xi.Sum) xirho.Func {
 }
 
 // aff2to3 converts a Flame 2D affine matrix to a xirho.Ax transform.
-func aff2to3(a []float64) (ax xirho.Ax) {
+func aff2to3(a []float64) (ax xirho.Affine) {
 	ax.Eye()
 	ax[0] = a[0]
 	ax[1] = a[2]

@@ -20,7 +20,7 @@ type LazySusan struct {
 func (v *LazySusan) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	x, y, z := in.X-v.Center[0], in.Y-v.Center[1], in.Z-v.Center[2]
 	r := math.Sqrt(x*x + y*y + z*z)
-	var ax xirho.Ax
+	var ax xirho.Affine
 	if r < float64(v.Radius) {
 		ax = v.Inside
 		if v.TwistZ != 0 {

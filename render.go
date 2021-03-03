@@ -26,7 +26,7 @@ type Render struct {
 	// Hist is the target histogram.
 	Hist *Hist
 	// Camera is the camera transform.
-	Camera Ax
+	Camera Affine
 	// Palette is the colors used by the renderer.
 	Palette color.Palette
 }
@@ -249,7 +249,7 @@ type ChangeRender struct {
 	// histogram's current size, then all plotting progress is cleared.
 	Size image.Point
 	// Camera is the new camera transform to use, if non-nil.
-	Camera *Ax
+	Camera *Affine
 	// Palette is the new palette to use, if it has nonzero length. The palette
 	// is copied into the renderer.
 	Palette color.Palette
