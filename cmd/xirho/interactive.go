@@ -25,17 +25,11 @@ import (
 	"github.com/zephyrtronium/xirho/xmath"
 )
 
-func interactive(ctx context.Context, r *xirho.Render, s xirho.System, w, h int, res draw.Scaler, tm xirho.ToneMap, bg color.Color, osa, procs int) {
-	if r == nil {
-		r = &xirho.Render{
-			Hist:    xirho.NewHist(w*osa, h*osa),
-			Camera:  xirho.Eye(),
-			Palette: color.Palette{color.NRGBA64{}},
-		}
-	}
+func interactive(ctx context.Context, s *encoding.System, w, h int, res draw.Scaler, tm xirho.ToneMap, bg color.Color, osa, procs int) {
+	r := &xirho.Render{Hist: xirho.NewHist(w*osa, h*osa)}
 	status := status{
 		r:      r,
-		change: make(chan xirho.ChangeRender),
+		change: make(chan xirho.ChangeRender, 1),
 		plot:   make(chan xirho.PlotOnto),
 		imgs:   make(chan draw.Image),
 		onto: xirho.PlotOnto{
@@ -47,26 +41,21 @@ func interactive(ctx context.Context, r *xirho.Render, s xirho.System, w, h int,
 		osa:   osa,
 		procs: procs,
 	}
+	if s != nil {
+		cam := s.Camera
+		c := xirho.ChangeRender{
+			System:  s.System,
+			Size:    image.Pt(w*status.osa, h*status.osa),
+			Camera:  &cam,
+			Palette: s.Palette,
+			Procs:   status.procs,
+		}
+		status.change <- c
+	}
 	ctx, status.cancel = context.WithCancel(ctx)
 	defer status.cancel()
 	in := bufio.NewScanner(os.Stdin)
 	go r.RenderAsync(ctx, status.change, status.plot, status.imgs)
-	if !s.Empty() {
-		cam := r.Camera
-		c := xirho.ChangeRender{
-			System:  s,
-			Size:    image.Pt(w*status.osa, h*status.osa),
-			Camera:  &cam,
-			Palette: r.Palette,
-			Procs:   status.procs,
-		}
-		select {
-		case <-ctx.Done():
-			return
-		case status.change <- c:
-			// do nothing
-		}
-	}
 	for ctx.Err() == nil {
 		loop(ctx, &status, in)
 	}
@@ -324,14 +313,7 @@ func open(ctx context.Context, status *status, line string) {
 		fmt.Println("Author(s):", strings.Join(s.Meta.Authors, ", "))
 		fmt.Println("Licensed under", s.Meta.License)
 	}
-	var w, h int
-	if s.Aspect >= 1 {
-		w = status.sz.X
-		h = int(float64(w)/s.Aspect + 0.5)
-	} else {
-		h = status.sz.Y
-		w = int(float64(h)*s.Aspect + 0.5)
-	}
+	w, h := xmath.Fit(status.sz.X, status.sz.Y, s.Aspect)
 	status.onto.ToneMap = s.ToneMap
 	status.sz = image.Pt(w, h)
 	cam := s.Camera
@@ -373,33 +355,26 @@ func flam3(ctx context.Context, status *status, line string) {
 		return
 	}
 	d := xml.NewDecoder(f)
-	flm, err := flame.Unmarshal(d)
+	s, err := flame.Unmarshal(d)
 	f.Close()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println(flm.Name)
-	if len(flm.Unrecognized) != 0 {
-		fmt.Printf("Unrecognized attributes: %q\n", flm.Unrecognized)
+	fmt.Println(s.Meta.Title) // always present
+	if len(s.Unrecognized) != 0 {
+		fmt.Printf("Unrecognized attributes: %q\n", s.Unrecognized)
 	}
-	var w, h int
-	if flm.Aspect >= 1 {
-		w = status.sz.X
-		h = int(float64(w)/flm.Aspect + 0.5)
-	} else {
-		h = status.sz.Y
-		w = int(float64(h)*flm.Aspect + 0.5)
-	}
-	status.onto.ToneMap = flm.ToneMap
-	status.bg = image.Uniform{C: flm.BG}
+	w, h := xmath.Fit(status.sz.X, status.sz.Y, s.Aspect)
+	status.onto.ToneMap = s.ToneMap
+	status.bg = image.Uniform{C: s.BG}
 	status.sz = image.Pt(w, h)
-	cam := flm.R.Camera
+	cam := s.Camera
 	c := xirho.ChangeRender{
-		System:  flm.System,
+		System:  s.System,
 		Size:    image.Pt(w*status.osa, h*status.osa),
 		Camera:  &cam,
-		Palette: flm.R.Palette,
+		Palette: s.Palette,
 		Procs:   status.procs,
 	}
 	select {
@@ -426,7 +401,7 @@ func width(ctx context.Context, status *status, line string) {
 	}
 	h := int(float64(w)/status.r.Hist.Aspect() + 0.5)
 	status.sz = image.Pt(w, h)
-	c := xirho.ChangeRender{Size: status.sz, Procs: status.procs}
+	c := xirho.ChangeRender{Size: image.Pt(w*status.osa, h*status.osa), Procs: status.procs}
 	select {
 	case <-ctx.Done():
 		return

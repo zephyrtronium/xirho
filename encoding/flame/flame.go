@@ -18,43 +18,20 @@ import (
 	"strings"
 
 	"github.com/zephyrtronium/xirho"
+	"github.com/zephyrtronium/xirho/encoding"
 	"github.com/zephyrtronium/xirho/xi"
 )
 
-// Flame holds a decoded renderer and extra information about it.
-type Flame struct {
-	// Name is the name of the flame.
-	Name string
-	// System is the encoded function system.
-	System xirho.System
-	// R is the renderer for the system. Its histogram should be Reset to the
-	// appropriate size before rendering.
-	R *xirho.Render
-	// ToneMap is the tone mapping parameters derived from the flame.
-	ToneMap xirho.ToneMap
-	// Aspect is the aspect ratio (number of columns per row in the image, or
-	// width divided by height) of the system as encoded in the flame file.
-	Aspect float64
-	// BG is the background color for the system. The alpha component is always
-	// maximized.
-	BG color.NRGBA64
-	// Unrecognized is the unrecognized xform attributes encountered while
-	// decoding this flame.
-	Unrecognized []string
-	// Err holds any error that occurred while decoding this flame.
-	Err error
-}
-
 // UnmarshalAll decodes all systems in an Apophysis flame file. The decoder
 // must be positioned at a flames element. The returned error is independent of
-// errors in the decoded flames, and it may be nil even if no flames were
+// errors in the decoded systems, and it may be nil even if no systems were
 // successfully decoded.
-func UnmarshalAll(d *xml.Decoder) ([]Flame, error) {
+func UnmarshalAll(d *xml.Decoder) ([]encoding.System, error) {
 	var flms flames
 	if err := d.Decode(&flms); err != nil {
 		return nil, err
 	}
-	r := make([]Flame, len(flms.Flames))
+	r := make([]encoding.System, len(flms.Flames))
 	for i, flm := range flms.Flames {
 		r[i] = convert(flm)
 	}
@@ -64,59 +41,63 @@ func UnmarshalAll(d *xml.Decoder) ([]Flame, error) {
 // Unmarshal decodes a renderer from Flame XML. The decoder must be positioned
 // at a flame element, rather than at the flames element at the start of a
 // typical file; one may use d.Token() or d.RawToken() to advance the decoder
-// to the correct position. The returned error is the same as the Flame's Err
+// to the correct position. The returned error is the same as the system's Err
 // field.
-func Unmarshal(d *xml.Decoder) (Flame, error) {
+func Unmarshal(d *xml.Decoder) (*encoding.System, error) {
 	var flm flame
 	if err := d.Decode(&flm); err != nil {
-		return Flame{}, err
+		return nil, err
 	}
-	r := convert(flm)
-	return r, r.Err
+	s := convert(flm)
+	return &s, s.Err
 }
 
 // convert converts a decoded flame into a xirho renderer. The Err field of the
 // result contains any error that occurs.
-func convert(flm flame) (r Flame) {
-	r.Name = flm.Name
+func convert(flm flame) (s encoding.System) {
+	s = encoding.System{
+		Meta: &xirho.Metadata{
+			Title: flm.Name,
+		},
+		ToneMap: xirho.ToneMap{Brightness: flm.Brightness, Gamma: flm.Gamma, GammaMin: flm.Thresh},
+	}
 	sz, err := nums(flm.Size)
 	defer func() {
 		// Ensure the error is relayed upward.
 		if err != nil {
-			r.Err = err
+			s.Err = err
 		}
 	}()
 	if err != nil {
 		return
 	}
-	r.Aspect = sz[0] / sz[1]
+	s.Aspect = sz[0] / sz[1]
 	tr, err := nums(flm.Center)
 	if err != nil {
 		return
 	}
-	var cam xirho.Ax
-	cam.Eye()
+	s.Camera.Eye()
 	msz := sz[0]
 	if sz[1] > msz {
 		msz = sz[1]
 	}
 	scale := 2 * flm.Scale / msz
-	cam.Scale(scale, scale, scale)
-	cam.Translate(-tr[0]*scale, -tr[1]*scale, flm.Zpos*scale)
-	cam.RotX(flm.Yaw)
-	cam.RotY(flm.Pitch)
-	cam.RotZ(flm.Angle)
+	s.Camera.Scale(scale, scale, scale)
+	s.Camera.Translate(-tr[0]*scale, -tr[1]*scale, flm.Zpos*scale)
+	s.Camera.RotX(flm.Yaw)
+	s.Camera.RotY(flm.Pitch)
+	s.Camera.RotZ(flm.Angle)
 	bgc, err := nums(flm.Background)
 	if err != nil {
 		return
 	}
-	r.BG = color.NRGBA64{
+	s.BG = color.NRGBA64{
 		R: uint16(bgc[0] * 0xffff),
 		G: uint16(bgc[1] * 0xffff),
 		B: uint16(bgc[2] * 0xffff),
 		A: 0xffff,
 	}
-	r.System = xirho.System{
+	s.System = xirho.System{
 		Nodes: make([]xirho.Node, len(flm.Xforms)),
 	}
 	var df decoded
@@ -125,7 +106,7 @@ func convert(flm flame) (r Flame) {
 		if err != nil {
 			return
 		}
-		r.System.Nodes[i] = xirho.Node{
+		s.System.Nodes[i] = xirho.Node{
 			Func:    df.f,
 			Opacity: df.op,
 			Weight:  df.weight,
@@ -135,7 +116,7 @@ func convert(flm flame) (r Flame) {
 			Graph: df.graph,
 			// TODO: label
 		}
-		r.Unrecognized = append(r.Unrecognized, df.unk...)
+		s.Unrecognized = append(s.Unrecognized, df.unk...)
 	}
 	if flm.Final.XMLName.Local != "" {
 		// A finalxform is an xform with a different name and some missing fields,
@@ -153,17 +134,12 @@ func convert(flm flame) (r Flame) {
 		if err != nil {
 			return
 		}
-		r.System.Final = df.f
-		r.Unrecognized = append(r.Unrecognized, df.unk...)
+		s.System.Final = df.f
+		s.Unrecognized = append(s.Unrecognized, df.unk...)
 	}
-	r.R = &xirho.Render{
-		Hist:    &xirho.Hist{},
-		Camera:  cam,
-		Palette: parsepalette(flm.Palette),
-	}
-	r.ToneMap = xirho.ToneMap{Brightness: flm.Brightness, Gamma: flm.Gamma, GammaMin: flm.Thresh}
+	s.Palette = parsepalette(flm.Palette)
 	// TODO: perspective
-	sort.Strings(r.Unrecognized)
+	sort.Strings(s.Unrecognized)
 	return
 }
 
@@ -338,8 +314,8 @@ func nums(s string) ([]float64, error) {
 }
 
 // parsepalette parses a flame palette.
-func parsepalette(p palette) []color.Color {
-	r := make([]color.Color, 0, p.Count)
+func parsepalette(p palette) color.Palette {
+	r := make(color.Palette, 0, p.Count)
 	for _, line := range strings.Fields(p.Data) {
 		// The error from DecodeString is not checked because DecodeString
 		// returns the decoded bytes before the error and we have no resolution

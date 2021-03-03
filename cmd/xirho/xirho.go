@@ -9,7 +9,6 @@ import (
 	"image"
 	"image/color"
 	"image/png"
-	"io"
 	"log"
 	"math"
 	"os"
@@ -47,9 +46,9 @@ func main() {
 	flag.IntVar(&width, "width", 1024, "output image width")
 	flag.IntVar(&height, "height", 1024, "output image height")
 	flag.IntVar(&osa, "osa", 1, "oversampling; histogram bins per pixel per axis")
-	flag.Float64Var(&tm.Gamma, "gamma", 1, "gamma factor")
+	flag.Float64Var(&tm.Gamma, "gamma", 0, "gamma factor")
 	flag.Float64Var(&tm.GammaMin, "thresh", 0, "gamma threshold")
-	flag.Float64Var(&tm.Brightness, "bright", 1, "brightness")
+	flag.Float64Var(&tm.Brightness, "bright", 0, "brightness")
 	flag.StringVar(&resample, "resample", "catmull-rom", "resampling method (catmull-rom, bilinear, approx-bilinear, or nearest)")
 	flag.IntVar(&procs, "procs", runtime.GOMAXPROCS(0), "concurrent render routines")
 	flag.BoolVar(&echo, "echo", false, "print system encoding before rendering")
@@ -88,85 +87,62 @@ func main() {
 		}()
 	}
 
-	var system xirho.System
-	var r *xirho.Render
+	var s *encoding.System
 	var err error
-	u := color.NRGBA{
-		R: uint8(bgr),
-		G: uint8(bgg),
-		B: uint8(bgb),
-		A: uint8(bga),
+	u := color.NRGBA64{
+		R: uint16(bgr * 0x0101),
+		G: uint16(bgg * 0x0101),
+		B: uint16(bgb * 0x0101),
+		A: uint16(bga * 0x0101),
 	}
-	if intr {
-		switch {
-		case inname != "":
-			f, err := os.Open(inname)
-			if err != nil {
-				log.Fatalln("error opening input:", err)
-			}
-			d := json.NewDecoder(f)
-			d.UseNumber()
-			s, err := encoding.Unmarshal(d)
-			if err != nil {
-				log.Fatalln("error unmarshaling system:", err)
-			}
-			system = s.System
-		case flamename != "":
-			f, err := os.Open(flamename)
-			if err != nil {
-				log.Fatalln("error opening input:", err)
-			}
-			d := xml.NewDecoder(f)
-			flm, err := flame.Unmarshal(d)
-			if err != nil {
-				log.Fatalln("error unmarshaling system:", err)
-			}
-			system = flm.System
-			r = flm.R
-		}
-		interactive(ctx, r, system, width, height, resampler, tm, u, osa, procs)
-		return
-	}
-	if flamename == "" {
-		var in io.Reader = os.Stdin
-		if inname != "" {
-			f, err := os.Open(inname)
-			if err != nil {
-				log.Fatalln("error opening input:", err)
-			}
-			in = f
-		}
-		d := json.NewDecoder(in)
-		d.UseNumber()
-		s, err := encoding.Unmarshal(d)
-		if err != nil {
-			log.Fatalln("error unmarshaling system:", err)
-		}
-		system = s.System
-	} else {
-		in, err := os.Open(flamename)
+	switch {
+	case inname != "":
+		f, err := os.Open(inname)
 		if err != nil {
 			log.Fatalln("error opening input:", err)
 		}
-		d := xml.NewDecoder(in)
-		flm, err := flame.Unmarshal(d)
+		d := json.NewDecoder(f)
+		d.UseNumber()
+		s, err = encoding.Unmarshal(d)
 		if err != nil {
 			log.Fatalln("error unmarshaling system:", err)
 		}
-		system = flm.System
-		r = flm.R
+	case flamename != "":
+		f, err := os.Open(flamename)
+		if err != nil {
+			log.Fatalln("error opening input:", err)
+		}
+		d := xml.NewDecoder(f)
+		s, err = flame.Unmarshal(d)
+		if err != nil {
+			log.Fatalln("error unmarshaling system:", err)
+		}
+	}
+	if tm != (xirho.ToneMap{}) {
+		s.ToneMap = tm
+	}
+	if intr {
+		interactive(ctx, s, width, height, resampler, tm, u, osa, procs)
+		return
+	}
+	if s == nil {
+		log.Fatal("no system to render")
 	}
 	log.Println("allocating histogram, estimated", xirho.HistMem(width*osa, height*osa)>>20, "MB")
-	r.Hist.Reset(width*osa, height*osa)
+	r := &xirho.Render{
+		Hist:    xirho.NewHist(width*osa, height*osa),
+		Camera:  s.Camera,
+		Palette: s.Palette,
+	}
 	if echo {
-		m, err := encoding.Marshal(system, r, tm, nil, nil)
+		m, err := encoding.Marshal(s.System, r, s.ToneMap, nil, s.Meta)
 		if err != nil {
 			log.Fatalln("error reading system from input:", err)
 		}
 		log.Printf("system:\n%s\n", m)
 	}
 	log.Println("rendering for", timeout, "or until ^C")
-	r.Render(ctx, system, procs)
+	r.Render(ctx, s.System, procs)
 	log.Println("finished render with", r.Iters(), "iters,", r.Hits(), "hits")
 	signal.Reset(os.Interrupt) // no rendering for ^C to interrupt
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
