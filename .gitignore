@@ -1,4 +1,5 @@
 .vscode/
 *.png
 *.xml
+*.hist
 !img/*

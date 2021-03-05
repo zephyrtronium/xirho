@@ -1,9 +1,11 @@
 package xirho
 
 import (
+	"encoding/binary"
 	"fmt"
 	"image"
 	"image/color"
+	"io"
 	"math"
 	"runtime"
 	"sync/atomic"
@@ -146,13 +148,13 @@ func (h *Hist) Image(tm ToneMap, area float64, iters int64, osa int) image.Image
 		osa = 1
 	}
 	// Convert to log early to avoid overflow and mitigate loss of precision.
-	q := math.Log10(float64(iters)) + math.Log10(float64(len(h.counts)))
+	q := math.Log10(float64(len(h.counts))) - math.Log10(float64(iters))
 	return &histImage{
 		Hist: *h,
-		b:    tm.Brightness,
+		b:    tm.Brightness * 0xffff,
 		g:    1 / tm.Gamma,
 		t:    tm.GammaMin,
-		lqa:  4*math.Log10(float64(osa)) - math.Log10(area) - q + clscale,
+		lqa:  4*math.Log10(float64(osa)) - math.Log10(area) + q - 2*clscale,
 	}
 }
 
@@ -194,15 +196,18 @@ func (h *histImage) At(x, y int) color.Color {
 	if as <= 0 {
 		return color.NRGBA64{}
 	}
-	s := ag / a / float64(as)
+	s := a / float64(n)
+	rs := s * float64(r)
+	gs := s * float64(g)
+	bs := s * float64(b)
 	p := color.NRGBA64{
-		R: cscale(s * float64(r)),
-		G: cscale(s * float64(g)),
-		B: cscale(s * float64(b)),
+		R: cscale(rs),
+		G: cscale(gs),
+		B: cscale(bs),
 		A: as,
 	}
 	if itdoesntworkatall {
-		fmt.Printf("at(%d,%d) p=%v s=%g rgb=%g/%g/%g\n", x, y, p, s, s*float64(r), s*float64(g), s*float64(b))
+		fmt.Printf("at(%d,%d) p=%v s=%g rgb=%g/%g/%g\n", x, y, p, s, rs, gs, bs)
 	}
 	return p
 }
@@ -211,7 +216,7 @@ const itdoesntworkatall = false
 
 func ascale(n uint64, br, lb float64) float64 {
 	a := br * (math.Log10(float64(n)) - lb)
-	return a
+	return a / float64(n)
 }
 
 func cscale(c float64) uint16 {
@@ -232,4 +237,55 @@ func gamma(a, exp, tr float64) float64 {
 	}
 	p := a / tr
 	return p*math.Pow(a, exp) + (1-p)*a*math.Pow(tr, exp-1)
+}
+
+// WriteTo dumps the histogram contents. The first two 8-byte words are the
+// size in columns and rows, respectively. Then, each bin's red count is
+// written in row-major order, then each blue, green, and alpha count. Each
+// value written is an 8-byte little-endian integer.
+//
+// It is not safe to call WriteTo while the histogram may be plotted onto.
+func (h *Hist) WriteTo(w io.Writer) (n int64, err error) {
+	b := make([]byte, 16)
+	binary.LittleEndian.PutUint64(b[0:8], uint64(h.cols))
+	binary.LittleEndian.PutUint64(b[8:16], uint64(h.rows))
+	k, err := w.Write(b[:16])
+	n += int64(k)
+	if err != nil {
+		return n, err
+	}
+	b = b[:8]
+	for _, bin := range h.counts {
+		binary.LittleEndian.PutUint64(b, bin.r)
+		k, err = w.Write(b)
+		n += int64(k)
+		if err != nil {
+			return n, err
+		}
+	}
+	for _, bin := range h.counts {
+		binary.LittleEndian.PutUint64(b, bin.g)
+		k, err = w.Write(b)
+		n += int64(k)
+		if err != nil {
+			return n, err
+		}
+	}
+	for _, bin := range h.counts {
+		binary.LittleEndian.PutUint64(b, bin.b)
+		k, err = w.Write(b)
+		n += int64(k)
+		if err != nil {
+			return n, err
+		}
+	}
+	for _, bin := range h.counts {
+		binary.LittleEndian.PutUint64(b, bin.n)
+		k, err = w.Write(b)
+		n += int64(k)
+		if err != nil {
+			return n, err
+		}
+	}
+	return n, nil
 }

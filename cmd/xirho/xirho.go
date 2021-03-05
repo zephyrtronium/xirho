@@ -2,6 +2,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"encoding/xml"
@@ -26,7 +27,7 @@ import (
 
 func main() {
 	var intr bool
-	var outname, profname, inname, flamename string
+	var outname, profname, inname, flamename, dumpname string
 	var sigint bool
 	var timeout time.Duration
 	var width, height int
@@ -56,6 +57,7 @@ func main() {
 	flag.IntVar(&bgg, "bg.g", 0, "background green (0-255)")
 	flag.IntVar(&bgb, "bg.b", 0, "background blue (0-255)")
 	flag.IntVar(&bga, "bg.a", 255, "background alpha (0-255)")
+	flag.StringVar(&dumpname, "raw-histogram-dump", "", "dump raw histogram data to file")
 	flag.Parse()
 	resampler := resamplers[resample]
 	if resampler == nil {
@@ -145,6 +147,11 @@ func main() {
 	r.Render(ctx, s.System, procs)
 	log.Println("finished render with", r.Iters(), "iters,", r.Hits(), "hits")
 	signal.Reset(os.Interrupt) // no rendering for ^C to interrupt
+
+	if dumpname != "" {
+		dumpto(dumpname, r.Hist)
+	}
+
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 	draw.Draw(img, img.Bounds(), image.NewUniform(u), image.Point{}, draw.Src)
 	log.Printf("drawing onto image of size %dx%d", width, height)
@@ -188,4 +195,27 @@ func lanczos(a float64) *draw.Kernel {
 			return a * math.Sin(math.Pi*x) * math.Sin(math.Pi*x/a) / (math.Pi * math.Pi * x * x)
 		},
 	}
+}
+
+func dumpto(fn string, h *xirho.Hist) {
+	f, err := os.Create(fn)
+	if err != nil {
+		log.Println("couldn't dump histogram:", err)
+		return
+	}
+	w := bufio.NewWriter(f)
+	log.Println("dumping histogram to", fn)
+	n, err := h.WriteTo(w)
+	if err != nil {
+		log.Println("error after writing", n, "bytes:", err)
+		return
+	}
+	if err := w.Flush(); err != nil {
+		log.Println("error flushing buffer after writing", n, "bytes:", err)
+		return
+	}
+	if err := f.Close(); err != nil {
+		log.Println("error closing dump after writing", n, "bytes:", err)
+	}
+	log.Println("dumped", n, "bytes")
 }
