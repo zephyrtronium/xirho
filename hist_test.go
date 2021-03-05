@@ -2,10 +2,13 @@ package xirho
 
 import (
 	"fmt"
+	"image"
 	"image/color"
 	"sync"
 	"testing"
 	"unsafe"
+
+	"golang.org/x/image/draw"
 )
 
 func TestHistMem(t *testing.T) {
@@ -110,4 +113,16 @@ func TestHistAdd(t *testing.T) {
 			t.Error("wrong alpha: want", procs*iters*uint64(c.A), "have", bin.n)
 		}
 	})
+}
+
+func BenchmarkScale(b *testing.B) {
+	const sz = 128
+	const osa = 10
+	h := NewHist(sz*osa, sz*osa)
+	img := h.Image(ToneMap{Brightness: 1, Gamma: 1}, 1, 1, osa)
+	onto := image.NewNRGBA(image.Rect(0, 0, sz, sz))
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		draw.BiLinear.Scale(onto, onto.Bounds(), img, img.Bounds(), draw.Over, nil)
+	}
 }

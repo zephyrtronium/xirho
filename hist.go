@@ -166,18 +166,18 @@ type histImage struct {
 }
 
 func (h *histImage) ColorModel() color.Model {
-	return color.NRGBA64Model
+	return color.RGBA64Model
 }
 
 func (h *histImage) Bounds() image.Rectangle {
 	return image.Rect(0, 0, h.cols, h.rows)
 }
 
-// At returns the color of a pixel in the histogram. Note that this is a fairly
-// expensive operation.
-func (h *histImage) At(x, y int) color.Color {
+// RGBA64At returns the color of a pixel in the histogram. This method has
+// identical behavior to At but avoids allocations due to interface boxing.
+func (h *histImage) RGBA64At(x, y int) color.RGBA64 {
 	if x < 0 || x > h.cols || y < 0 || y > h.rows {
-		return color.NRGBA64{}
+		return color.RGBA64{}
 	}
 	bin := &h.counts[h.index(x, y)]
 	r := atomic.LoadUint64(&bin.r)
@@ -185,7 +185,7 @@ func (h *histImage) At(x, y int) color.Color {
 	b := atomic.LoadUint64(&bin.b)
 	n := atomic.LoadUint64(&bin.n)
 	if n == 0 {
-		return color.NRGBA64{}
+		return color.RGBA64{}
 	}
 	a := ascale(n, h.b, h.lqa)
 	ag := gamma(a, h.g, h.t)
@@ -194,13 +194,13 @@ func (h *histImage) At(x, y int) color.Color {
 		fmt.Printf("  at(%d,%d) h.b=%f h.g=%f h.t=%f h.lqa=%f rgbn=%d/%d/%d/%d a=%f ag=%f as=%d\n", x, y, h.b, h.g, h.t, h.lqa, r, g, b, n, a, ag, as)
 	}
 	if as <= 0 {
-		return color.NRGBA64{}
+		return color.RGBA64{}
 	}
 	s := a / float64(n)
 	rs := s * float64(r)
 	gs := s * float64(g)
 	bs := s * float64(b)
-	p := color.NRGBA64{
+	p := color.RGBA64{
 		R: cscale(rs),
 		G: cscale(gs),
 		B: cscale(bs),
@@ -210,6 +210,12 @@ func (h *histImage) At(x, y int) color.Color {
 		fmt.Printf("at(%d,%d) p=%v s=%g rgb=%g/%g/%g\n", x, y, p, s, rs, gs, bs)
 	}
 	return p
+}
+
+// At returns the color of a pixel in the histogram. Note that this is a fairly
+// expensive operation.
+func (h *histImage) At(x, y int) color.Color {
+	return h.RGBA64At(x, y)
 }
 
 const itdoesntworkatall = false
