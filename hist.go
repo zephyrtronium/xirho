@@ -80,11 +80,8 @@ func (h *Hist) Add(x, y int, c color.RGBA64) {
 // index converts a coordinate to an index into the histogram counts. Panics if
 // out of bounds in either dimension.
 func (h *Hist) index(x, y int) int {
-	if x < 0 || x >= h.cols {
-		panic(fmt.Errorf("xirho: x=%d out of bounds (hist has %d cols)", x, h.cols))
-	}
-	if y < 0 || y >= h.rows {
-		panic(fmt.Errorf("xirho: y=%d out of bounds (hist has %d rows)", y, h.rows))
+	if x < 0 || x >= h.cols || y < 0 || y >= h.rows {
+		panic("xirho: index out of bounds")
 	}
 	return y*h.cols + x
 }
