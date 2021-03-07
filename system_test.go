@@ -161,8 +161,8 @@ func TestSystemIter(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
 	s.Iter(ctx, &r, rng)
 	cancel()
-	tm := xirho.ToneMap{1, 1, 0}
-	red, _, _, alpha := r.Hist.Image(tm, 1, r.Iters(), 1).At(0, 0).RGBA()
+	tm := xirho.ToneMap{1e6, 1, 0}
+	red, _, _, alpha := r.Hist.Image(tm, 1, 1, 1).At(0, 0).RGBA()
 	if red == 0 || alpha == 0 {
 		t.Error("expected red pixel, got red", red, "alpha", alpha, "with hist", r.Hist, "after", r.Iters(), "iters")
 	}
@@ -199,15 +199,14 @@ func TestSystemIter(t *testing.T) {
 			Hist:    xirho.NewHist(1, 1),
 			Palette: color.Palette{color.RGBA64{R: 0xffff, A: 0xffff}, color.RGBA64{R: 0xffff, A: 0xffff}},
 		}
-		r.Hist.Reset(1, 1)
 		ctx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
 		s.Iter(ctx, &r, rng)
 		cancel()
 		if f.n == 0 {
 			t.Log("vacuous condition: no points were calculated")
 		}
-		if r.Iters() != 0 {
-			t.Error("always-invalid function was plotted", r.Iters(), "times of", f.n, "calcs")
+		if r.Hits() != 0 {
+			t.Error("always-invalid function was plotted", r.Hits(), "times of", f.n, "calcs")
 		}
 	})
 	t.Run("fuseColor", func(t *testing.T) {
@@ -222,15 +221,14 @@ func TestSystemIter(t *testing.T) {
 				{Func: &f, Weight: 1},
 			},
 		}
-		r.Hist.Reset(1, 1)
 		ctx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
 		s.Iter(ctx, &r, rng)
 		cancel()
 		if f.n == 0 {
 			t.Log("vacuous condition: no points were calculated")
 		}
-		if r.Iters() != 0 {
-			t.Error("always-invalid function was plotted", r.Iters(), "times of", f.n, "calcs")
+		if r.Hits() != 0 {
+			t.Error("always-invalid function was plotted", r.Hits(), "times of", f.n, "calcs")
 		}
 	})
 }

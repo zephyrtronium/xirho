@@ -35,7 +35,7 @@ func TestRender(t *testing.T) {
 	if f.n == 0 {
 		t.Error("no points were calculated")
 	}
-	if r.Iters() == 0 {
+	if r.Hits() == 0 {
 		// This could happen if the context closes during the fuse. It would be
 		// nice not to call this a failure in that case, but there isn't a
 		// consistent way to check.
@@ -44,8 +44,8 @@ func TestRender(t *testing.T) {
 	if r.Iters() != r.Hits() {
 		t.Error("iters and hits should be equal, but got", r.Iters(), "iters and", r.Hits(), "hits")
 	}
-	tm := xirho.ToneMap{1, 1, 0}
-	red, _, _, alpha := r.Hist.Image(tm, 1, r.Iters(), 1).At(0, 0).RGBA()
+	tm := xirho.ToneMap{1e6, 1, 0}
+	red, _, _, alpha := r.Hist.Image(tm, 1, 1, 1).At(0, 0).RGBA()
 	if red == 0 || alpha == 0 {
 		t.Error("expected solid red pixel, got red", red, "alpha", alpha)
 	}
