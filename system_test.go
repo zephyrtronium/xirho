@@ -158,7 +158,15 @@ func TestSystemIter(t *testing.T) {
 		Palette: color.Palette{color.RGBA64{R: 0xffff, A: 0xffff}, color.RGBA64{R: 0xffff, A: 0xffff}},
 	}
 	r.Hist.Reset(1, 1)
-	ctx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	go func() {
+		for ctx.Err() == nil {
+			if r.Hits() >= 10000 {
+				cancel()
+				return
+			}
+		}
+	}()
 	s.Iter(ctx, &r, rng)
 	cancel()
 	tm := xirho.ToneMap{1e6, 1, 0}
@@ -199,7 +207,15 @@ func TestSystemIter(t *testing.T) {
 			Hist:    xirho.NewHist(1, 1),
 			Palette: color.Palette{color.RGBA64{R: 0xffff, A: 0xffff}, color.RGBA64{R: 0xffff, A: 0xffff}},
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		go func() {
+			for ctx.Err() == nil {
+				if r.Iters() >= 10000 {
+					cancel()
+					return
+				}
+			}
+		}()
 		s.Iter(ctx, &r, rng)
 		cancel()
 		if f.n == 0 {
@@ -221,7 +237,15 @@ func TestSystemIter(t *testing.T) {
 				{Func: &f, Weight: 1},
 			},
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		go func() {
+			for ctx.Err() == nil {
+				if r.Iters() >= 10000 {
+					cancel()
+					return
+				}
+			}
+		}()
 		s.Iter(ctx, &r, rng)
 		cancel()
 		if f.n == 0 {

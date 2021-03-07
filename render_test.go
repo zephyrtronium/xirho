@@ -25,7 +25,15 @@ func TestRender(t *testing.T) {
 			{Func: &f, Opacity: 1, Weight: 1},
 		},
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	go func() {
+		for ctx.Err() == nil {
+			if r.Hits() >= 10000 {
+				cancel()
+				return
+			}
+		}
+	}()
 	r.Render(ctx, s, 0)
 	cancel()
 
