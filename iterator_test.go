@@ -45,15 +45,25 @@ func TestIteratorPrep(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			it := iterator{rng: xmath.NewRNG()}
 			it.prep(s, nil) // TODO: test palettes
-			for i, v := range it.op {
+			for i := 0; i < it.n; i++ {
+				v := it.opat(i)
 				if v > 1<<53 {
 					t.Error("opacity", i, "too large:", v, ">", 1<<53)
 				}
 			}
 			ng := 0
-			for _, v := range it.w {
-				if v >= 1<<53 {
-					ng++
+			for i := 0; i < it.n; i++ {
+				w := it.wrow(i)
+				for j := 0; j < it.n; j++ {
+					v := *w
+					if v >= 1<<53 {
+						ng++
+					}
+					// It is invalid in Go to hold a pointer outside an
+					// allocated region, even when using one like this.
+					if j < it.n-1 {
+						w = nextw(w)
+					}
 				}
 			}
 			if ng == 0 {
@@ -81,10 +91,12 @@ func TestIteratorNext(t *testing.T) {
 	}
 	it := iterator{rng: xmath.NewRNG()}
 	it.prep(s, nil)
-	for i := 1; i < len(it.w); i++ {
-		if it.w[i] == it.w[i-1] {
+	w := it.wrow(0)
+	for i := 0; i < it.n-2; i++ {
+		if *w == *nextw(w) {
 			t.Error("weight", i, "equals its predecessor")
 		}
+		w = nextw(w)
 	}
 	if t.Failed() {
 		t.Fatalf("weight graph was %x", it.w)

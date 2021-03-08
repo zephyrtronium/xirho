@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image/color"
 	"sync/atomic"
+	"unsafe"
 
 	"github.com/zephyrtronium/xirho/xmath"
 )
@@ -43,18 +44,50 @@ type Node struct {
 
 // iterator manages the iterations of a System by a single goroutine.
 type iterator struct {
+	// n is the number of nodes in the system.
+	n int
 	// nodes is the system node list.
-	nodes []Func
+	nodes unsafe.Pointer // *[n]Func
 	// final is the system final.
 	final Func
+	// nclrs is the number of colors in the palette.
+	nclrs int
 	// palette is the renderer's palette converted to RGBA.
-	palette []color.RGBA64
+	palette unsafe.Pointer // *[nclrs]color.RGBA64
 	// rng is the iterator's source of randomness.
 	rng RNG
 	// op is the pre-multiplied opacities of each function in the system.
-	op []uint64
+	op unsafe.Pointer // *[n]uint64
 	// w is the pre-multiplied weights of each edge in the directed graph.
-	w []uint64
+	w unsafe.Pointer // *[n][n]uint64
+}
+
+// nodeat gets the nth node in the system. This does not perform bounds checks.
+func (it *iterator) nodeat(n int) Func {
+	return *(*Func)(unsafe.Pointer(uintptr(it.nodes) + uintptr(n)*unsafe.Sizeof(Func(nil))))
+}
+
+// colorat gets the nth color in the palette. This does not perform bounds
+// checks.
+func (it *iterator) colorat(n int) color.RGBA64 {
+	return *(*color.RGBA64)(unsafe.Pointer(uintptr(it.palette) + uintptr(n)*unsafe.Sizeof(color.RGBA64{})))
+}
+
+// opat gets the pre-multiplied opacity of the nth node in the system. This
+// does not perform bounds checks.
+func (it *iterator) opat(n int) uint64 {
+	return *(*uint64)(unsafe.Pointer(uintptr(it.op) + uintptr(n)*unsafe.Sizeof(uint64(0))))
+}
+
+// wrow gets a pointer to the pre-multiplied edge weights from node n in the
+// system. This does not perform bounds checks.
+func (it *iterator) wrow(n int) *uint64 {
+	return (*uint64)(unsafe.Pointer(uintptr(it.w) + uintptr(it.n*n)*unsafe.Sizeof(uint64(0))))
+}
+
+// nextw gets the next edge weight from an array returned by it.wrow.
+func nextw(w *uint64) *uint64 {
+	return (*uint64)(unsafe.Pointer(uintptr(unsafe.Pointer(w)) + unsafe.Sizeof(uint64(0))))
 }
 
 // Prep calls the Prep method of each function in the system. It should be
@@ -89,23 +122,23 @@ func (s System) Iter(ctx context.Context, r *Render, rng RNG) {
 			atomic.AddInt64(&r.q, int64(q))
 			return
 		default:
-			p = it.nodes[k].Calc(p, &it.rng)
+			p = it.nodeat(k).Calc(p, &it.rng)
 			n++
 			// If a function has opacity α, that means we plot its points with
 			// probability α. If we don't plot a point, then there's no reason
 			// to apply the final, since that is only a nonlinear camera.
-			if it.op[k] >= 1<<53 || (it.op[k] > 0 && it.rng.Uint64()%(1<<53) < it.op[k]) {
+			if op := it.opat(k); op >= 1<<53 || (op > 0 && it.rng.Uint64()%(1<<53) < op) {
 				fp := it.doFinal(p)
 				if !fp.IsValid() {
 					p, k = it.fuse()
 					continue
 				}
-				i := int(fp.C * float64(len(it.palette)))
-				if i >= len(it.palette) {
+				i := int(fp.C * float64(it.nclrs))
+				if i >= it.nclrs {
 					// Since fp.C can be 1.0, i can be out of bounds.
-					i = len(it.palette) - 1
+					i = it.nclrs - 1
 				}
-				if r.plot(fp.X, fp.Y, fp.Z, it.palette[i], aspect) {
+				if r.plot(fp.X, fp.Y, fp.Z, it.colorat(i), aspect) {
 					q++
 				}
 			}
@@ -182,9 +215,9 @@ func (it *iterator) fuse() (Pt, int) {
 		Z: it.rng.Uniform()*2 - 1,
 		C: it.rng.Uniform(),
 	}
-	k := it.next(it.rng.Intn(len(it.nodes)))
+	k := it.next(it.rng.Intn(it.n))
 	for i := 0; i < fuseLen; i++ {
-		p = it.nodes[k].Calc(p, &it.rng)
+		p = it.nodeat(k).Calc(p, &it.rng)
 		if !p.IsValid() {
 			break
 		}
@@ -196,13 +229,13 @@ func (it *iterator) fuse() (Pt, int) {
 // next obtains the next function to use from the current one.
 func (it *iterator) next(k int) int {
 	v := it.rng.Uint64() & (1<<53 - 1)
-	w := it.w[k*len(it.nodes) : (k+1)*len(it.nodes)]
-	for i, x := range w {
-		if v < x {
-			return i
-		}
+	w := it.wrow(k)
+	i := 0
+	for v >= *w {
+		w = nextw(w)
+		i++
 	}
-	panic("unreachable")
+	return i
 }
 
 // prep sets up the iterator's weighted directed graph, which controls the
@@ -210,19 +243,23 @@ func (it *iterator) next(k int) int {
 // pre-multiplies brightnesses
 func (it *iterator) prep(s System, p color.Palette) {
 	it.final = s.Final
+	var nodes []Func
+	var w []uint64
+	var op []uint64
+	var palette []color.RGBA64
 	switch l := len(s.Nodes); l {
 	case 0:
-		it.nodes = nil
-		it.w = nil
+		panic("xirho: iterator prep on empty system (unreachable)")
 	case 1:
-		it.nodes = []Func{s.Nodes[0].Func}
-		it.w = []uint64{^uint64(0)} // even if the weight is 0
+		it.n = 1
+		nodes = []Func{s.Nodes[0].Func}
+		w = []uint64{^uint64(0)} // even if the weight is 0
 	default:
-		it.nodes = make([]Func, len(s.Nodes))
+		nodes = make([]Func, len(s.Nodes))
 		for i, f := range s.Nodes {
-			it.nodes[i] = f.Func
+			nodes[i] = f.Func
 		}
-		it.w = make([]uint64, len(s.Nodes)*len(s.Nodes))
+		w = make([]uint64, len(s.Nodes)*len(s.Nodes))
 		// Let F denote the set of nodes in the system. Let f denote the
 		// current node.
 		// Each node in F has its own weight, and f has a weight to each node
@@ -250,29 +287,38 @@ func (it *iterator) prep(s System, p color.Palette) {
 			sum := cumsum(wb)
 			if sum == 0 {
 				// 0 sum would give nan for every element. Avoid nan.
-				w := it.w[i*len(s.Nodes) : (i+1)*len(s.Nodes)]
+				w := w[i*len(s.Nodes) : (i+1)*len(s.Nodes)]
 				for j := range w {
 					w[j] = ^uint64(0)
 				}
 				continue
 			}
 			for j, x := range wb {
-				it.w[i*len(s.Nodes)+j] = uint64(x / sum * scale)
+				w[i*len(s.Nodes)+j] = uint64(x / sum * scale)
 			}
 		}
 	}
 	// Calculate opacity probabilities. The idea here is essentially the same
 	// as in fixed-point weights.
-	it.op = make([]uint64, len(s.Nodes))
+	op = make([]uint64, len(s.Nodes))
 	for i, f := range s.Nodes {
-		it.op[i] = uint64(f.Opacity * (1 << 53))
+		op[i] = uint64(f.Opacity * (1 << 53))
 	}
 	// Pre-multiply palette.
-	it.palette = make([]color.RGBA64, len(p))
+	if len(p) == 0 {
+		p = color.Palette{color.RGBA64{}}
+	}
+	palette = make([]color.RGBA64, len(p))
 	for i, c := range p {
 		r, g, b, a := c.RGBA()
-		it.palette[i] = color.RGBA64{R: uint16(r), G: uint16(g), B: uint16(b), A: uint16(a)}
+		palette[i] = color.RGBA64{R: uint16(r), G: uint16(g), B: uint16(b), A: uint16(a)}
 	}
+	it.n = len(s.Nodes)
+	it.nodes = unsafe.Pointer(&nodes[0])
+	it.w = unsafe.Pointer(&w[0])
+	it.op = unsafe.Pointer(&op[0])
+	it.nclrs = len(p)
+	it.palette = unsafe.Pointer(&palette[0])
 }
 
 // cumsum computes the cumulative sum of float64s without loss of precision
