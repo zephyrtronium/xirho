@@ -23,6 +23,7 @@ import (
 	"github.com/zephyrtronium/xirho"
 	"github.com/zephyrtronium/xirho/encoding"
 	"github.com/zephyrtronium/xirho/encoding/flame"
+	"github.com/zephyrtronium/xirho/hist"
 )
 
 func main() {
@@ -130,7 +131,7 @@ func main() {
 	if s == nil {
 		log.Fatal("no system to render")
 	}
-	log.Println("allocating histogram, estimated", xirho.HistMem(width*osa, height*osa)>>20, "MB")
+	log.Println("allocating histogram, estimated", hist.MemFor(width*osa, height*osa)>>20, "MB")
 	r := &xirho.Render{
 		Hist:    xirho.NewHist(width*osa, height*osa),
 		Camera:  s.Camera,

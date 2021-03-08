@@ -89,7 +89,7 @@ func (r *Render) RenderAsync(ctx context.Context, change <-chan ChangeRender, pl
 			cancel()
 			c = drainchg(c, change)
 			rctx, cancel = context.WithCancel(ctx)
-			x, y := r.Hist.cols, r.Hist.rows
+			x, y := r.Hist.Cols(), r.Hist.Rows()
 			reset := false
 			wg.Wait() // TODO: select with ctx.Done
 			if !c.System.Empty() {
@@ -119,7 +119,7 @@ func (r *Render) RenderAsync(ctx context.Context, change <-chan ChangeRender, pl
 			work = drainplot(work, plot)
 			rctx, cancel = context.WithCancel(ctx)
 			wg.Wait() // TODO: select with ctx.Done
-			osa := r.Hist.cols / work.Image.Bounds().Dx()
+			osa := r.Hist.Cols() / work.Image.Bounds().Dx()
 			src := r.Hist.Image(work.ToneMap, r.Area(), r.Iters(), osa)
 			work.Scale.Scale(work.Image, work.Image.Bounds(), src, src.Bounds(), draw.Over, nil)
 			img = work.Image
@@ -164,8 +164,8 @@ func (r *Render) plot(x, y, z float64, c color.RGBA64, aspect float64) bool {
 	if !(x >= -1 && x < 1 && y >= -1 && y < 1) {
 		return false
 	}
-	col = int((x + 1) * 0.5 * float64(r.Hist.cols))
-	row = int((y + 1) * 0.5 * float64(r.Hist.rows))
+	col = int((x + 1) * 0.5 * float64(r.Hist.Cols()))
+	row = int((y + 1) * 0.5 * float64(r.Hist.Rows()))
 	r.Hist.Add(col, row, c)
 	return true
 }

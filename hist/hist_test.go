@@ -1,4 +1,4 @@
-package xirho
+package hist
 
 import (
 	"fmt"
@@ -8,14 +8,49 @@ import (
 	"unsafe"
 )
 
-func TestHistMem(t *testing.T) {
+func TestNewZero(t *testing.T) {
+	cases := [][2]int{
+		{0, 0},
+		{1, 0},
+		{0, 1},
+	}
+	for _, c := range cases {
+		h := New(c[0], c[1])
+		if h.arr != nil {
+			t.Errorf("non-nil array pointer %p after allocating %dx%d hist", h.arr, c[0], c[1])
+		}
+		if !h.IsEmpty() {
+			t.Errorf("non-empty after allocating %dx%d hist", c[0], c[1])
+		}
+	}
+}
+
+func TestNew(t *testing.T) {
+	z := []int{1, 10}
+	for _, i := range z {
+		for _, j := range z {
+			w, h := 1<<i, 1<<j
+			t.Run(fmt.Sprintf("%dx%d", w, h), func(t *testing.T) {
+				h := New(w, h)
+				if h.arr != unsafe.Pointer(&h.counts[0]) {
+					t.Errorf("wrong array pointer after allocating %dx%d hist: want %p, got %p", w, h, h.arr, &h.counts[0])
+				}
+				if h.IsEmpty() {
+					t.Errorf("empty after allocating %dx%d hist", w, h)
+				}
+			})
+		}
+	}
+}
+
+func TestMemFor(t *testing.T) {
 	z := []int{0, 1, 10}
 	for _, i := range z {
 		for _, j := range z {
 			w, h := 1<<i, 1<<j
 			t.Run(fmt.Sprintf("%dx%d", w, h), func(t *testing.T) {
-				est := uintptr(HistMem(w, h))
-				hist := NewHist(w, h)
+				est := uintptr(MemFor(w, h))
+				hist := New(w, h)
 				act := unsafe.Sizeof(*hist) + uintptr(len(hist.counts))*unsafe.Sizeof(hist.counts[0])
 				if est != act {
 					t.Error("wrong histogram size; estimated", est, "but actual size is", act)
@@ -26,14 +61,14 @@ func TestHistMem(t *testing.T) {
 }
 
 func TestHistReset(t *testing.T) {
-	h := NewHist(1, 1)
-	h.counts[0] = histBin{r: 1, g: 2, b: 3, n: 4}
+	h := New(1, 1)
+	h.counts[0] = bin{r: 1, g: 2, b: 3, n: 4}
 	ar := &h.counts[0]
 	h.Reset(1, 1)
 	if &h.counts[0] != ar {
 		t.Error("same-size reset reallocated memory")
 	}
-	if h.counts[0] != (histBin{}) {
+	if h.counts[0] != (bin{}) {
 		t.Error("reset failed to zero bin: have", h.counts[0])
 	}
 	h.Reset(1, 2)
@@ -48,7 +83,7 @@ func TestHistReset(t *testing.T) {
 }
 
 func TestHistAdd(t *testing.T) {
-	h := NewHist(1, 1)
+	h := New(1, 1)
 	c := color.RGBA64{R: 1, G: 10, B: 100, A: 1000}
 	h.Add(0, 0, c)
 	bin := h.counts[0]

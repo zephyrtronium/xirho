@@ -22,6 +22,7 @@ import (
 	"github.com/zephyrtronium/xirho"
 	"github.com/zephyrtronium/xirho/encoding"
 	"github.com/zephyrtronium/xirho/encoding/flame"
+	"github.com/zephyrtronium/xirho/hist"
 	"github.com/zephyrtronium/xirho/xmath"
 )
 
@@ -273,7 +274,7 @@ func help(ctx context.Context, status *status, line string) {
 	fmt.Printf("Ran %d iters, plotted %d points, hit ratio %f\n", n, q, float64(q)/float64(n))
 	fmt.Printf("Output image size %dx%d\n", status.sz.X, status.sz.Y)
 	cols, rows := status.r.Hist.Cols(), status.r.Hist.Rows()
-	fmt.Printf("Histogram oversampled %dx, size %dx%d (%d MB)\n", status.osa, cols, rows, xirho.HistMem(cols, rows)>>20)
+	fmt.Printf("Histogram oversampled %dx, size %dx%d (%d MB)\n", status.osa, cols, rows, hist.MemFor(cols, rows)>>20)
 	fmt.Printf("Plotting brightness %f, gamma %f, gamma threshold %f\n", status.onto.ToneMap.Brightness, status.onto.ToneMap.Gamma, status.onto.ToneMap.GammaMin)
 	r, g, b, a := status.bg.C.RGBA()
 	fmt.Printf("Plot background RGBA: #%02x%02x%02x%02x\n", r>>8, g>>8, b>>8, a>>8)
@@ -496,7 +497,7 @@ func oversample(ctx context.Context, status *status, line string) {
 		return
 	}
 	w, h := status.sz.X*osa, status.sz.Y*osa
-	fmt.Printf("new histogram memory usage will be %d MB\n", xirho.HistMem(w, h)>>20)
+	fmt.Printf("new histogram memory usage will be %d MB\n", hist.MemFor(w, h)>>20)
 	status.osa = osa
 	c := xirho.ChangeRender{Size: image.Pt(w, h), Procs: status.procs}
 	select {
