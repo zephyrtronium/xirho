@@ -23,7 +23,6 @@ import (
 	"github.com/zephyrtronium/xirho"
 	"github.com/zephyrtronium/xirho/encoding"
 	"github.com/zephyrtronium/xirho/encoding/flame"
-	"github.com/zephyrtronium/xirho/hist"
 )
 
 func main() {
@@ -31,8 +30,7 @@ func main() {
 	var outname, profname, inname, flamename, dumpname string
 	var sigint bool
 	var timeout time.Duration
-	var width, height int
-	var osa int
+	var sz xirho.HistSize
 	var tm xirho.ToneMap
 	var resample string
 	var procs int
@@ -45,9 +43,9 @@ func main() {
 	flag.StringVar(&flamename, "flame", "", "input flame filename")
 	flag.BoolVar(&sigint, "C", true, "save image on interrupt instead of exiting (ignored when interactive)")
 	flag.DurationVar(&timeout, "dur", 0, "max duration to render (default ignored; always ignored when interactive)")
-	flag.IntVar(&width, "width", 1024, "output image width")
-	flag.IntVar(&height, "height", 1024, "output image height")
-	flag.IntVar(&osa, "osa", 1, "oversampling; histogram bins per pixel per axis")
+	flag.IntVar(&sz.W, "width", 1024, "output image width")
+	flag.IntVar(&sz.H, "height", 1024, "output image height")
+	flag.IntVar(&sz.OSA, "osa", 1, "oversampling; histogram bins per pixel per axis")
 	flag.Float64Var(&tm.Gamma, "gamma", 0, "gamma factor")
 	flag.Float64Var(&tm.GammaMin, "thresh", 0, "gamma threshold")
 	flag.Float64Var(&tm.Brightness, "bright", 0, "brightness")
@@ -125,15 +123,15 @@ func main() {
 		s.ToneMap = tm
 	}
 	if intr {
-		interactive(ctx, s, width, height, resampler, tm, u, osa, procs)
+		interactive(ctx, s, sz, resampler, tm, u, procs)
 		return
 	}
 	if s == nil {
 		log.Fatal("no system to render")
 	}
-	log.Println("allocating histogram, estimated", hist.MemFor(width*osa, height*osa)>>20, "MB")
+	log.Println("allocating histogram, estimated", sz.Mem()>>20, "MB")
 	r := &xirho.Render{
-		Hist:    xirho.NewHist(width*osa, height*osa),
+		Hist:    xirho.NewHist(sz),
 		Camera:  s.Camera,
 		Palette: s.Palette,
 	}
@@ -153,11 +151,12 @@ func main() {
 		dumpto(dumpname, r.Hist)
 	}
 
-	img := image.NewRGBA(image.Rect(0, 0, width, height))
+	img := image.NewRGBA(image.Rect(0, 0, sz.W, sz.H))
 	draw.Draw(img, img.Bounds(), image.NewUniform(u), image.Point{}, draw.Src)
-	log.Printf("drawing onto image of size %dx%d", width, height)
-	src := r.Hist.Image(tm, r.Area(), r.Iters(), osa)
+	log.Printf("drawing onto image of size %dx%d", sz.W, sz.H)
+	src := r.Hist.Image(tm, r.Area(), r.Iters())
 	resampler.Scale(img, img.Bounds(), src, src.Bounds(), draw.Over, nil)
+	r, src = nil, nil // allow memory to be reclaimed
 	out := os.Stdout
 	if outname != "" {
 		log.Println("encoding to", outname)

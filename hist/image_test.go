@@ -10,8 +10,8 @@ import (
 func TestAtOOB(t *testing.T) {
 	z := []int{0, 1, 10}
 	for _, sz := range z {
-		h := hist.New(sz, sz)
-		src := h.Image(hist.ToneMap{Brightness: 1, Gamma: 1}, 1, 1, 1)
+		h := hist.New(hist.Size{W: sz, H: sz, OSA: 1})
+		src := h.Image(hist.ToneMap{Brightness: 1, Gamma: 1}, 1, 1)
 		// top edge
 		for i := -1; i <= sz; i++ {
 			c := src.At(i, -1)
@@ -48,8 +48,8 @@ func TestAt(t *testing.T) {
 	z := []int{1, 10}
 	for _, width := range z {
 		for _, height := range z {
-			h := hist.New(width, height)
-			src := h.Image(hist.ToneMap{Brightness: 1, Gamma: 1}, 1, 1, 1)
+			h := hist.New(hist.Size{W: width, H: height, OSA: 1})
+			src := h.Image(hist.ToneMap{Brightness: 1, Gamma: 1}, 1, 1)
 			for x := 0; x < width; x++ {
 				for y := 0; y < height; y++ {
 					c := src.At(x, y)
@@ -64,7 +64,7 @@ func TestAt(t *testing.T) {
 					h.Add(x, y, clr)
 				}
 			}
-			src = h.Image(hist.ToneMap{Brightness: 1, Gamma: 1}, 1, 1, 1)
+			src = h.Image(hist.ToneMap{Brightness: 1, Gamma: 1}, 1, 1)
 			for x := 0; x < width; x++ {
 				for y := 0; y < height; y++ {
 					c := src.At(x, y)

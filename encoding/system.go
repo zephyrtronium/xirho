@@ -54,10 +54,10 @@ func Wrap(system xirho.System, r *xirho.Render, tm xirho.ToneMap, bg *color.NRGB
 
 // Render creates a new renderer with a histogram scaled to the given size,
 // preserving the encoded aspect ratio.
-func (s *System) Render(sz image.Point) *xirho.Render {
+func (s *System) Render(sz image.Point, osa int) *xirho.Render {
 	w, h := xmath.Fit(sz.X, sz.Y, s.Aspect)
 	return &xirho.Render{
-		Hist:    xirho.NewHist(w, h),
+		Hist:    xirho.NewHist(xirho.HistSize{W: w, H: h, OSA: osa}),
 		Camera:  s.Camera,
 		Palette: s.Palette,
 	}

@@ -22,12 +22,14 @@ import (
 	"github.com/zephyrtronium/xirho"
 	"github.com/zephyrtronium/xirho/encoding"
 	"github.com/zephyrtronium/xirho/encoding/flame"
-	"github.com/zephyrtronium/xirho/hist"
 	"github.com/zephyrtronium/xirho/xmath"
 )
 
-func interactive(ctx context.Context, s *encoding.System, w, h int, res draw.Scaler, tm xirho.ToneMap, bg color.Color, osa, procs int) {
-	r := &xirho.Render{Hist: xirho.NewHist(w*osa, h*osa)}
+func interactive(ctx context.Context, s *encoding.System, sz xirho.HistSize, res draw.Scaler, tm xirho.ToneMap, bg color.Color, procs int) {
+	if sz.OSA <= 0 {
+		sz.OSA = 1
+	}
+	r := &xirho.Render{Hist: xirho.NewHist(sz)}
 	status := status{
 		r:      r,
 		change: make(chan xirho.ChangeRender, 1),
@@ -38,15 +40,14 @@ func interactive(ctx context.Context, s *encoding.System, w, h int, res draw.Sca
 			ToneMap: tm,
 		},
 		bg:    image.Uniform{C: bg},
-		sz:    image.Pt(w, h),
-		osa:   osa,
+		sz:    sz,
 		procs: procs,
 	}
 	if s != nil {
 		cam := s.Camera
 		c := xirho.ChangeRender{
 			System:  s.System,
-			Size:    image.Pt(w*status.osa, h*status.osa),
+			Size:    sz,
 			Camera:  &cam,
 			Palette: s.Palette,
 			Procs:   status.procs,
@@ -96,8 +97,7 @@ type status struct {
 	imgs   chan draw.Image
 	onto   xirho.PlotOnto
 	bg     image.Uniform
-	sz     image.Point
-	osa    int
+	sz     xirho.HistSize
 	procs  int
 	tick   *time.Ticker
 }
@@ -272,9 +272,9 @@ func help(ctx context.Context, status *status, line string) {
 	fmt.Printf("Rendering with %d procs:\n", status.procs)
 	n, q := status.r.Iters(), status.r.Hits()
 	fmt.Printf("Ran %d iters, plotted %d points, hit ratio %f\n", n, q, float64(q)/float64(n))
-	fmt.Printf("Output image size %dx%d\n", status.sz.X, status.sz.Y)
+	fmt.Printf("Output image size %dx%d\n", status.sz.W, status.sz.H)
 	cols, rows := status.r.Hist.Cols(), status.r.Hist.Rows()
-	fmt.Printf("Histogram oversampled %dx, size %dx%d (%d MB)\n", status.osa, cols, rows, hist.MemFor(cols, rows)>>20)
+	fmt.Printf("Histogram oversampled %dx, size %dx%d (%d MB)\n", status.sz.OSA, cols, rows, status.sz.Mem()>>20)
 	fmt.Printf("Plotting brightness %f, gamma %f, gamma threshold %f\n", status.onto.ToneMap.Brightness, status.onto.ToneMap.Gamma, status.onto.ToneMap.GammaMin)
 	r, g, b, a := status.bg.C.RGBA()
 	fmt.Printf("Plot background RGBA: #%02x%02x%02x%02x\n", r>>8, g>>8, b>>8, a>>8)
@@ -314,13 +314,13 @@ func open(ctx context.Context, status *status, line string) {
 		fmt.Println("Author(s):", strings.Join(s.Meta.Authors, ", "))
 		fmt.Println("Licensed under", s.Meta.License)
 	}
-	w, h := xmath.Fit(status.sz.X, status.sz.Y, s.Aspect)
+	w, h := xmath.Fit(status.sz.W, status.sz.H, s.Aspect)
 	status.onto.ToneMap = s.ToneMap
-	status.sz = image.Pt(w, h)
+	status.sz.W, status.sz.H = w, h
 	cam := s.Camera
 	c := xirho.ChangeRender{
 		System:  s.System,
-		Size:    image.Pt(w*status.osa, h*status.osa),
+		Size:    status.sz,
 		Camera:  &cam,
 		Palette: s.Palette,
 		Procs:   status.procs,
@@ -366,14 +366,14 @@ func flam3(ctx context.Context, status *status, line string) {
 	if len(s.Unrecognized) != 0 {
 		fmt.Printf("Unrecognized attributes: %q\n", s.Unrecognized)
 	}
-	w, h := xmath.Fit(status.sz.X, status.sz.Y, s.Aspect)
+	w, h := xmath.Fit(status.sz.W, status.sz.H, s.Aspect)
 	status.onto.ToneMap = s.ToneMap
 	status.bg = image.Uniform{C: s.BG}
-	status.sz = image.Pt(w, h)
+	status.sz.W, status.sz.H = w, h
 	cam := s.Camera
 	c := xirho.ChangeRender{
 		System:  s.System,
-		Size:    image.Pt(w*status.osa, h*status.osa),
+		Size:    status.sz,
 		Camera:  &cam,
 		Palette: s.Palette,
 		Procs:   status.procs,
@@ -401,8 +401,8 @@ func width(ctx context.Context, status *status, line string) {
 		return
 	}
 	h := int(float64(w)/status.r.Hist.Aspect() + 0.5)
-	status.sz = image.Pt(w, h)
-	c := xirho.ChangeRender{Size: image.Pt(w*status.osa, h*status.osa), Procs: status.procs}
+	status.sz.W, status.sz.H = w, h
+	c := xirho.ChangeRender{Size: status.sz, Procs: status.procs}
 	select {
 	case <-ctx.Done():
 		return
@@ -426,8 +426,8 @@ func height(ctx context.Context, status *status, line string) {
 		return
 	}
 	w := int(float64(h)*status.r.Hist.Aspect() + 0.5)
-	status.sz = image.Pt(w, h)
-	c := xirho.ChangeRender{Size: image.Pt(w*status.osa, h*status.osa), Procs: status.procs}
+	status.sz.W, status.sz.H = w, h
+	c := xirho.ChangeRender{Size: status.sz, Procs: status.procs}
 	select {
 	case <-ctx.Done():
 		return
@@ -468,8 +468,8 @@ func size(ctx context.Context, status *status, line string) {
 		fmt.Println("can't set height to", h)
 		return
 	}
-	status.sz = image.Pt(w, h)
-	c := xirho.ChangeRender{Size: image.Pt(w*status.osa, h*status.osa), Procs: status.procs}
+	status.sz.W, status.sz.H = w, h
+	c := xirho.ChangeRender{Size: status.sz, Procs: status.procs}
 	select {
 	case <-ctx.Done():
 		return
@@ -496,10 +496,9 @@ func oversample(ctx context.Context, status *status, line string) {
 		fmt.Println("can't set oversampling to", osa)
 		return
 	}
-	w, h := status.sz.X*osa, status.sz.Y*osa
-	fmt.Printf("new histogram memory usage will be %d MB\n", hist.MemFor(w, h)>>20)
-	status.osa = osa
-	c := xirho.ChangeRender{Size: image.Pt(w, h), Procs: status.procs}
+	status.sz.OSA = osa
+	fmt.Printf("new histogram memory usage will be %d MB\n", status.sz.Mem()>>20)
+	c := xirho.ChangeRender{Size: status.sz, Procs: status.procs}
 	select {
 	case <-ctx.Done():
 		return
@@ -997,8 +996,8 @@ func render(ctx context.Context, status *status, line string) {
 		return
 	}
 	onto := status.onto
-	onto.Image = image.NewNRGBA64(image.Rect(0, 0, status.sz.X, status.sz.Y))
-	draw.Draw(onto.Image, image.Rect(0, 0, status.sz.X, status.sz.Y), &status.bg, image.Point{}, draw.Src)
+	onto.Image = image.NewNRGBA64(image.Rect(0, 0, status.sz.W, status.sz.H))
+	draw.Draw(onto.Image, image.Rect(0, 0, status.sz.W, status.sz.H), &status.bg, image.Point{}, draw.Src)
 	var t time.Time
 	select {
 	case <-ctx.Done():
@@ -1045,8 +1044,8 @@ func preview(ctx context.Context, status *status, line string) {
 		line = "xirho-preview.png"
 	}
 	onto := status.onto
-	onto.Image = image.NewNRGBA64(image.Rect(0, 0, status.sz.X, status.sz.Y))
-	draw.Draw(onto.Image, image.Rect(0, 0, status.sz.X, status.sz.Y), &status.bg, image.Point{}, draw.Src)
+	onto.Image = image.NewNRGBA64(image.Rect(0, 0, status.sz.W, status.sz.H))
+	draw.Draw(onto.Image, image.Rect(0, 0, status.sz.W, status.sz.H), &status.bg, image.Point{}, draw.Src)
 	onto.Scale = draw.ApproxBiLinear
 	var t time.Time
 	select {

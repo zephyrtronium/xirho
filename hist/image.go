@@ -39,13 +39,12 @@ const clscale = 4.81647330376524970778435436877859114336949625277624593996551511
 // specifies the minimum bin count to which to apply gamma as the ratio versus
 // the number of iters per pixel. area is the area of the camera's visible
 // plane in spatial units. iters is the total number of iterations run for the
-// render. osa is the oversampling, the expected number of histogram bins per
-// pixel per axis (although the image may be rescaled to any size).
+// render.
 //
 // The histogram should not be modified while the wrapper is in use.
 // Note that the wrapper holds a reference to the histogram's bins, so it
 // should not be stored in any long-lived locations.
-func (h *Hist) Image(tm ToneMap, area float64, iters int64, osa int) image.Image {
+func (h *Hist) Image(tm ToneMap, area float64, iters int64) image.Image {
 	// Convert to log early to avoid overflow and mitigate loss of precision.
 	q := math.Log10(float64(len(h.counts))) - math.Log10(float64(iters))
 	return &histImage{
@@ -53,7 +52,7 @@ func (h *Hist) Image(tm ToneMap, area float64, iters int64, osa int) image.Image
 		b:    tm.Brightness * 0xffff,
 		g:    1 / tm.Gamma,
 		t:    tm.GammaMin,
-		lqa:  4*math.Log10(float64(osa)) - math.Log10(area) + q - 2*clscale,
+		lqa:  4*math.Log10(float64(h.osa)) - math.Log10(area) + q - 2*clscale,
 	}
 }
 

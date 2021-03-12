@@ -15,8 +15,10 @@ import (
 type Hist struct {
 	// arr is a pointer to first element of counts.
 	arr unsafe.Pointer
-	// rows and cols are the histogram size.
+	// rows and cols are the raw histogram size, after multiplication by osa.
 	rows, cols int
+	// osa is the oversampling factor.
+	osa int
 	// counts is the slice backed by arr. It is kept as a separate field for
 	// the convenience of less performance-sensitive algorithms.
 	counts []bin
@@ -29,8 +31,45 @@ type bin struct {
 	n uint64
 }
 
+// Size describes a histogram size, including width, height, and oversampling.
+type Size struct {
+	// W and H are the number of columns and rows, respectively.
+	W, H int
+	// OSA is the oversampling factor, the number of bins per axis to be
+	// resampled into each pixel. A value of 0 results in an empty histogram.
+	OSA int
+}
+
+// Bins computes the number of bins in a histogram of this size. If Overflows
+// returns true, then the result is zero.
+func (sz Size) Bins() int {
+	if sz.Overflows() {
+		return 0
+	}
+	return sz.W * sz.H * sz.OSA * sz.OSA
+}
+
+// Mem estimates the memory usage in bytes of a histogram (and not accumulator)
+// of this size. If Overflows returns true, then the result is zero.
+func (sz Size) Mem() uintptr {
+	if sz.Overflows() {
+		return 0
+	}
+	return unsafe.Sizeof(Hist{}) + uintptr(sz.W*sz.H*sz.OSA*sz.OSA)*unsafe.Sizeof(bin{})
+}
+
+// Overflows returns true when the memory required by a histogram of this
+// size would overflow the size of an integer. This is always true if either
+// dimension or the oversampling factor is negative.
+func (sz Size) Overflows() bool {
+	nw := bits.Len64(uint64(sz.W))
+	nh := bits.Len64(uint64(sz.H))
+	no := bits.Len64(uint64(sz.OSA))
+	return nw+nh+2*no >= bits.UintSize
+}
+
 // MemFor estimates the memory usage in bytes of a histogram (and not
-// accumulator) of a given size. It assumes HistMemOverflows returns false for
+// accumulator) of a given size. It assumes Overflows returns false for
 // the given width and height.
 func MemFor(width, height int) int {
 	return int(unsafe.Sizeof(Hist{})) + width*height*int(unsafe.Sizeof(bin{}))
@@ -48,18 +87,25 @@ func Overflows(width, height int) bool {
 	return hi != 0 || lo&^mask != 0
 }
 
-// New allocates a new histogram.
-func New(width, height int) *Hist {
-	if width < 0 || height < 0 {
+// check panics if the size cannot be used to allocate a histogram, e.g. due to
+// negative size or integer overflow.
+func (sz Size) check() {
+	if sz.W < 0 || sz.H < 0 || sz.OSA < 0 {
 		panic("xirho: cannot make negative size histogram")
 	}
-	if Overflows(width, height) {
+	if sz.Overflows() {
 		panic("xirho: histogram size overflows")
 	}
+}
+
+// New allocates a new histogram.
+func New(sz Size) *Hist {
+	sz.check()
 	h := Hist{
-		rows:   height,
-		cols:   width,
-		counts: make([]bin, width*height),
+		cols:   sz.W * sz.OSA,
+		rows:   sz.H * sz.OSA,
+		osa:    sz.OSA,
+		counts: make([]bin, sz.Bins()),
 	}
 	if len(h.counts) > 0 {
 		h.arr = unsafe.Pointer(&h.counts[0])
@@ -67,22 +113,23 @@ func New(width, height int) *Hist {
 	return &h
 }
 
-// Reset reinitializes the histogram counts. If the given width and height are
-// not equal to the histogram's current respective sizes, then the histogram is
-// completely reallocated.
-func (h *Hist) Reset(width, height int) {
-	if width != h.cols || height != h.rows {
+// Reset reinitializes the histogram counts. If the given size requires a
+// different number of bins from the current one, then the entire histogram is
+// reallocated.
+func (h *Hist) Reset(sz Size) {
+	sz.check()
+	// Might be different sizes with the same number of bins.
+	h.cols, h.rows, h.osa = sz.W*sz.OSA, sz.H*sz.OSA, sz.OSA
+	if sz.Bins() != len(h.counts) {
 		// Histograms can be very large, so we want to ensure the current
 		// counts are collected before we attempt to allocate new ones.
 		h.arr = nil
 		h.counts = nil
 		runtime.GC()
-		h.counts = make([]bin, width*height)
+		h.counts = make([]bin, sz.Bins())
 		if len(h.counts) > 0 {
 			h.arr = unsafe.Pointer(&h.counts[0])
 		}
-		h.rows = height
-		h.cols = width
 		return
 	}
 	for i := range h.counts {
@@ -90,7 +137,7 @@ func (h *Hist) Reset(width, height int) {
 	}
 }
 
-// IsEmpty returns true if the histogram has zero size.
+// IsEmpty returns true if the histogram has zero bins.
 func (h *Hist) IsEmpty() bool {
 	return len(h.counts) == 0
 }
@@ -120,12 +167,44 @@ func (h *Hist) Add(x, y int, c color.RGBA64) {
 	atomic.AddUint64(&bin.n, uint64(c.A))
 }
 
-// Cols returns the horizontal size of the histogram in bins.
+// Width returns the horizontal size of the histogram in pixels.
+func (h *Hist) Width() int {
+	if h.osa == 0 {
+		return 0
+	}
+	return h.cols / h.osa
+}
+
+// Height returns the vertical size of the histogram in pixels.
+func (h *Hist) Height() int {
+	if h.osa == 0 {
+		return 0
+	}
+	return h.rows / h.osa
+}
+
+// OSA returns the histogram oversampling factor.
+func (h *Hist) OSA() int {
+	return h.osa
+}
+
+// Size returns the histogram's size.
+func (h *Hist) Size() Size {
+	return Size{
+		W:   h.Width(),
+		H:   h.Height(),
+		OSA: h.OSA(),
+	}
+}
+
+// Cols returns the horizontal size of the histogram in bins. Use Width to get
+// the size in pixels.
 func (h *Hist) Cols() int {
 	return h.cols
 }
 
-// Rows returns the vertical size of the histogram in bins.
+// Rows returns the vertical size of the histogram in bins. Use Height to get
+// the size in pixels.
 func (h *Hist) Rows() int {
 	return h.rows
 }

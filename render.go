@@ -2,7 +2,6 @@ package xirho
 
 import (
 	"context"
-	"image"
 	"image/color"
 	"runtime"
 	"sync"
@@ -89,15 +88,15 @@ func (r *Render) RenderAsync(ctx context.Context, change <-chan ChangeRender, pl
 			cancel()
 			c = drainchg(c, change)
 			rctx, cancel = context.WithCancel(ctx)
-			x, y := r.Hist.Cols(), r.Hist.Rows()
+			x, y, osa := r.Hist.Width(), r.Hist.Height(), r.Hist.OSA()
 			reset := false
 			wg.Wait() // TODO: select with ctx.Done
 			if !c.System.Empty() {
 				system = c.System
 				reset = true
 			}
-			if !c.emptysz() {
-				x, y = c.Size.X, c.Size.Y
+			if c.Size.Bins() != 0 {
+				x, y, osa = c.Size.W, c.Size.H, c.Size.OSA
 				reset = true
 			}
 			if c.Camera != nil {
@@ -109,8 +108,7 @@ func (r *Render) RenderAsync(ctx context.Context, change <-chan ChangeRender, pl
 				reset = true
 			}
 			if reset {
-				r.Hist.Reset(x, y)
-				r.ResetCounts()
+				r.Reset(x, y, osa)
 			}
 			procs = c.Procs
 			r.start(rctx, &wg, procs, system, &rng)
@@ -119,8 +117,7 @@ func (r *Render) RenderAsync(ctx context.Context, change <-chan ChangeRender, pl
 			work = drainplot(work, plot)
 			rctx, cancel = context.WithCancel(ctx)
 			wg.Wait() // TODO: select with ctx.Done
-			osa := r.Hist.Cols() / work.Image.Bounds().Dx()
-			src := r.Hist.Image(work.ToneMap, r.Area(), r.Iters(), osa)
+			src := r.Hist.Image(work.ToneMap, r.Area(), r.Iters())
 			work.Scale.Scale(work.Image, work.Image.Bounds(), src, src.Bounds(), draw.Over, nil)
 			img = work.Image
 			out = imgs
@@ -199,6 +196,13 @@ func (r *Render) ResetCounts() {
 	r.n, r.q = 0, 0
 }
 
+// Reset resets the histogram and the iteration counts. It is not safe to call
+// this while the renderer is running.
+func (r *Render) Reset(width, height, osa int) {
+	r.ResetCounts()
+	r.Hist.Reset(HistSize{W: width, H: height, OSA: osa})
+}
+
 // drainchg pulls items from a ChangeRender channel until doing so would block,
 // returning the last item obtained.
 func drainchg(c ChangeRender, change <-chan ChangeRender) ChangeRender {
@@ -247,7 +251,7 @@ type ChangeRender struct {
 	// Size is the new histogram size to render. If this is the zero value,
 	// then the histogram is neither resized nor reset. If this is equal to the
 	// histogram's current size, then all plotting progress is cleared.
-	Size image.Point
+	Size HistSize
 	// Camera is the new camera transform to use, if non-nil.
 	Camera *Affine
 	// Palette is the new palette to use, if it has nonzero length. The palette
@@ -256,11 +260,6 @@ type ChangeRender struct {
 	// Procs is the new number of worker goroutines to use. If this is zero,
 	// then the renderer does no work until receiving a nonzero Procs.
 	Procs int
-}
-
-// emptysz returns true if the change's size is empty.
-func (c ChangeRender) emptysz() bool {
-	return c.Size.X == 0 || c.Size.Y == 0
 }
 
 // Metadata holds metadata about a fractal.
