@@ -1,6 +1,9 @@
 package xi
 
-import "github.com/zephyrtronium/xirho"
+import (
+	"github.com/zephyrtronium/xirho"
+	"github.com/zephyrtronium/xirho/xmath"
+)
 
 // Perspective applies a perspective transform to the 3D spatial coordinates.
 type Perspective struct {
@@ -12,7 +15,7 @@ func newPerspective() xirho.Func {
 	return &Perspective{Distance: 1}
 }
 
-func (f *Perspective) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
+func (f *Perspective) Calc(in xirho.Pt, rng *xmath.RNG) xirho.Pt {
 	r := f.Distance / in.Z
 	in.X *= r
 	in.Y *= r

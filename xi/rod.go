@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/zephyrtronium/xirho"
+	"github.com/zephyrtronium/xirho/xmath"
 )
 
 // Rod creates a solid cylinder of a given radius, with circular cross-sections
@@ -12,7 +13,7 @@ type Rod struct {
 	Radius float64 `xirho:"radius"`
 }
 
-func (v *Rod) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
+func (v *Rod) Calc(in xirho.Pt, rng *xmath.RNG) xirho.Pt {
 	s, c := math.Sincos(2 * math.Pi * rng.Uniform())
 	return xirho.Pt{
 		X: v.Radius * s,

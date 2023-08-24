@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/zephyrtronium/xirho"
+	"github.com/zephyrtronium/xirho/xmath"
 )
 
 // Bipolar does bipolar
@@ -11,7 +12,7 @@ type Bipolar struct {
 	Shift float64 `xirho:"shift,angle"`
 }
 
-func (v *Bipolar) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
+func (v *Bipolar) Calc(in xirho.Pt, rng *xmath.RNG) xirho.Pt {
 	r := in.X*in.X + in.Y*in.Y
 	y := math.Atan2(2*in.Y, r-1) - v.Shift
 	// y is in (-2pi, 2pi]. Wrap to an angle.

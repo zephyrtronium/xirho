@@ -11,7 +11,7 @@ type Hole struct {
 	Origin [3]float64 `xirho:"origin"`
 }
 
-func (v *Hole) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
+func (v *Hole) Calc(in xirho.Pt, rng *xmath.RNG) xirho.Pt {
 	ox, oy, oz := in.X-v.Origin[0], in.Y-v.Origin[1], in.Z-v.Origin[2]
 	r := xmath.R3(ox, oy, oz)
 	s := 1 + v.Amount/r

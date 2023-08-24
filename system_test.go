@@ -15,7 +15,7 @@ import (
 
 type prepf bool
 
-func (v *prepf) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
+func (v *prepf) Calc(in xirho.Pt, rng *xmath.RNG) xirho.Pt {
 	return in
 }
 
@@ -117,7 +117,7 @@ type nanf struct {
 	f bool
 }
 
-func (v *nanf) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
+func (v *nanf) Calc(in xirho.Pt, rng *xmath.RNG) xirho.Pt {
 	atomic.AddInt64(&v.n, 1)
 	switch v.p {
 	case 1:

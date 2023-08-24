@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/zephyrtronium/xirho"
+	"github.com/zephyrtronium/xirho/xmath"
 )
 
 // Scry maps space onto a sphere.
@@ -11,7 +12,7 @@ type Scry struct {
 	Radius float64 `xirho:"radius"`
 }
 
-func (v *Scry) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
+func (v *Scry) Calc(in xirho.Pt, rng *xmath.RNG) xirho.Pt {
 	r := in.X*in.X + in.Y*in.Y + in.Z*in.Z
 	s := math.Sqrt(r) * (r + 1/v.Radius)
 	in.X /= s

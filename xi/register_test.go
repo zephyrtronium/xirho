@@ -6,15 +6,16 @@ import (
 
 	"github.com/zephyrtronium/xirho"
 	"github.com/zephyrtronium/xirho/xi"
+	"github.com/zephyrtronium/xirho/xmath"
 )
 
 type T struct{}
 type U struct{}
 type N struct{}
 
-func (T) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt { return in }
-func (U) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt { return in }
-func (N) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt { return in }
+func (T) Calc(in xirho.Pt, rng *xmath.RNG) xirho.Pt { return in }
+func (U) Calc(in xirho.Pt, rng *xmath.RNG) xirho.Pt { return in }
+func (N) Calc(in xirho.Pt, rng *xmath.RNG) xirho.Pt { return in }
 
 func (T) Prep() {}
 func (U) Prep() {}

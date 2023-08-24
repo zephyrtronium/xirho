@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/zephyrtronium/xirho"
+	"github.com/zephyrtronium/xirho/xmath"
 )
 
 // JuliaN does julian
@@ -17,7 +18,7 @@ func newJuliaN() xirho.Func {
 	return &JuliaN{Power: 3, Dist: 1}
 }
 
-func (f *JuliaN) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
+func (f *JuliaN) Calc(in xirho.Pt, rng *xmath.RNG) xirho.Pt {
 	p1 := int(f.Power)
 	if p1 < 0 {
 		p1 = -p1

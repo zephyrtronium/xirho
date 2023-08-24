@@ -1,5 +1,7 @@
 package xirho
 
+import "github.com/zephyrtronium/xirho/xmath"
+
 // Pt is a point in R^3 × [0, 1].
 type Pt struct {
 	// X, Y, and Z are spatial coordinates.
@@ -23,7 +25,7 @@ func (p Pt) IsValid() bool {
 // interface for setting and displaying such parameters.
 type Func interface {
 	// Calc calculates the function at a point.
-	Calc(in Pt, rng *RNG) Pt
+	Calc(in Pt, rng *xmath.RNG) Pt
 	// Prep is called once prior to iteration so that a function can cache
 	// expensive calculations.
 	Prep()

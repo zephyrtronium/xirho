@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/zephyrtronium/xirho"
+	"github.com/zephyrtronium/xirho/xmath"
 )
 
 // Polar maps the x/y rectangular coordinates of the input to polar.
@@ -14,7 +15,7 @@ func newPolar() xirho.Func {
 	return Polar{}
 }
 
-func (Polar) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
+func (Polar) Calc(in xirho.Pt, rng *xmath.RNG) xirho.Pt {
 	t := math.Atan2(in.X, in.Y) / math.Pi
 	r := math.Hypot(in.X, in.Y) - 1
 	in.X = t

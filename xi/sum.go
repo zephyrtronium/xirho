@@ -1,6 +1,9 @@
 package xi
 
-import "github.com/zephyrtronium/xirho"
+import (
+	"github.com/zephyrtronium/xirho"
+	"github.com/zephyrtronium/xirho/xmath"
+)
 
 // Sum performs a list of functions, summing the spatial coordinates. An
 // additional function controls the color coordinate.
@@ -14,7 +17,7 @@ func newSum() xirho.Func {
 	return &Sum{}
 }
 
-func (f *Sum) Calc(in xirho.Pt, rng *xirho.RNG) (out xirho.Pt) {
+func (f *Sum) Calc(in xirho.Pt, rng *xmath.RNG) (out xirho.Pt) {
 	for _, v := range f.Funcs {
 		p := v.Calc(in, rng)
 		out.X += p.X

@@ -1,6 +1,9 @@
 package xi
 
-import "github.com/zephyrtronium/xirho"
+import (
+	"github.com/zephyrtronium/xirho"
+	"github.com/zephyrtronium/xirho/xmath"
+)
 
 // Then performs a list of functions performed in a set order, without plotting
 // intermediate results.
@@ -13,7 +16,7 @@ func newThen() xirho.Func {
 	return &Then{}
 }
 
-func (f *Then) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
+func (f *Then) Calc(in xirho.Pt, rng *xmath.RNG) xirho.Pt {
 	for _, v := range f.Funcs {
 		in = v.Calc(in, rng)
 	}

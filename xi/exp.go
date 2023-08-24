@@ -5,6 +5,7 @@ import (
 	"math/cmplx"
 
 	"github.com/zephyrtronium/xirho"
+	"github.com/zephyrtronium/xirho/xmath"
 )
 
 // Exp performs the complex exponential in a fixed base.
@@ -14,7 +15,7 @@ type Exp struct {
 	lb complex128
 }
 
-func (v *Exp) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
+func (v *Exp) Calc(in xirho.Pt, rng *xmath.RNG) xirho.Pt {
 	z := cmplx.Exp(complex(in.X, in.Y) * v.lb)
 	in.X = real(z)
 	in.Y = imag(z)

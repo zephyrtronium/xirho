@@ -2,12 +2,13 @@ package xi
 
 import (
 	"github.com/zephyrtronium/xirho"
+	"github.com/zephyrtronium/xirho/xmath"
 )
 
 // Gaussblur creates a spherical Gaussian blur.
 type Gaussblur struct{}
 
-func (Gaussblur) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
+func (Gaussblur) Calc(in xirho.Pt, rng *xmath.RNG) xirho.Pt {
 	return xirho.Pt{
 		X: rng.Normal(),
 		Y: rng.Normal(),

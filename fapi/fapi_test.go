@@ -26,7 +26,7 @@ type pf struct {
 	Funcs   []xirho.Func `xirho:"13"`
 }
 
-func (*pf) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
+func (*pf) Calc(in xirho.Pt, rng *xmath.RNG) xirho.Pt {
 	return in
 }
 
@@ -40,7 +40,7 @@ func newPf() xirho.Func {
 
 type ef struct{}
 
-func (ef) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
+func (ef) Calc(in xirho.Pt, rng *xmath.RNG) xirho.Pt {
 	return in
 }
 
@@ -51,7 +51,7 @@ type uf struct {
 	unexported bool `xirho:"unexported"`
 }
 
-func (*uf) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
+func (*uf) Calc(in xirho.Pt, rng *xmath.RNG) xirho.Pt {
 	return in
 }
 
@@ -59,7 +59,7 @@ func (*uf) Prep() {}
 
 type ff bool
 
-func (*ff) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
+func (*ff) Calc(in xirho.Pt, rng *xmath.RNG) xirho.Pt {
 	return in
 }
 

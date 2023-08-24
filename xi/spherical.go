@@ -2,6 +2,7 @@ package xi
 
 import (
 	"github.com/zephyrtronium/xirho"
+	"github.com/zephyrtronium/xirho/xmath"
 )
 
 // Spherical calculates the conjugate of the complex reciprocal of the x and y
@@ -13,7 +14,7 @@ func newSpherical() xirho.Func {
 	return Spherical{}
 }
 
-func (Spherical) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
+func (Spherical) Calc(in xirho.Pt, rng *xmath.RNG) xirho.Pt {
 	r := in.X*in.X + in.Y*in.Y + in.Z*in.Z
 	in.X /= r
 	in.Y /= r

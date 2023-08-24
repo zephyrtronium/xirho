@@ -10,9 +10,6 @@ import (
 	"github.com/zephyrtronium/xirho/xmath"
 )
 
-// RNG is the randomness source type.
-type RNG = xmath.RNG
-
 // System is a generalized iterated function system.
 type System struct {
 	// Nodes is the system's node list.
@@ -55,7 +52,7 @@ type iterator struct {
 	// palette is the renderer's palette converted to RGBA.
 	palette unsafe.Pointer // *[nclrs]color.RGBA64
 	// rng is the iterator's source of randomness.
-	rng RNG
+	rng xmath.RNG
 	// op is the pre-multiplied opacities of each function in the system.
 	op unsafe.Pointer // *[n]uint64
 	// w is the pre-multiplied weights of each edge in the directed graph.
@@ -105,7 +102,7 @@ func (s System) Prep() {
 // iterating until the context's Done channel is closed. rng should be seeded
 // to a distinct state for each call to this method. Iter panics if Check
 // returns an error.
-func (s System) Iter(ctx context.Context, r *Render, rng RNG) {
+func (s System) Iter(ctx context.Context, r *Render, rng xmath.RNG) {
 	if err := s.Check(); err != nil {
 		panic(err)
 	}

@@ -16,7 +16,7 @@ type Farblur struct {
 	Dist   float64      `xirho:"dist"`
 }
 
-func (v *Farblur) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
+func (v *Farblur) Calc(in xirho.Pt, rng *xmath.RNG) xirho.Pt {
 	ox, oy, oz := in.X-v.Origin[0], in.Y-v.Origin[1], in.Z-v.Origin[2]
 	r := ox*ox + oy*oy + oz*oz
 	s := math.Pow(r, v.Dist)

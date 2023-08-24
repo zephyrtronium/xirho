@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/zephyrtronium/xirho"
+	"github.com/zephyrtronium/xirho/xmath"
 )
 
 // Disc does disc.
@@ -14,7 +15,7 @@ func newDisc() xirho.Func {
 	return Disc{}
 }
 
-func (Disc) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
+func (Disc) Calc(in xirho.Pt, rng *xmath.RNG) xirho.Pt {
 	t := math.Atan2(in.X, in.Y) / math.Pi
 	s, c := math.Sincos(math.Hypot(in.X, in.Y) * math.Pi)
 	in.X = t * s

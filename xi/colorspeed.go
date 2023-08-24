@@ -1,6 +1,9 @@
 package xi
 
-import "github.com/zephyrtronium/xirho"
+import (
+	"github.com/zephyrtronium/xirho"
+	"github.com/zephyrtronium/xirho/xmath"
+)
 
 // ColorSpeed performs exponential smoothing on the input color coordinate
 // toward a chosen color.
@@ -19,7 +22,7 @@ func newColorSpeed() xirho.Func {
 	return &ColorSpeed{Speed: 1}
 }
 
-func (f *ColorSpeed) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
+func (f *ColorSpeed) Calc(in xirho.Pt, rng *xmath.RNG) xirho.Pt {
 	in.C = in.C*f.Speed + (1-f.Speed)*f.Color
 	return in
 }

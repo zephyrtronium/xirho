@@ -45,7 +45,7 @@ func (r *Render) Render(ctx context.Context, system System, procs int) {
 	var wg sync.WaitGroup
 	wg.Add(procs)
 	for i := 0; i < procs; i++ {
-		go func(rng RNG) {
+		go func(rng xmath.RNG) {
 			system.Iter(ctx, r, rng)
 			wg.Done()
 		}(rng)

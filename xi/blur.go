@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/zephyrtronium/xirho"
+	"github.com/zephyrtronium/xirho/xmath"
 )
 
 // Blur produces a noisy solid circle with unit radius.
@@ -14,7 +15,7 @@ func newBlur() xirho.Func {
 	return Blur{}
 }
 
-func (Blur) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
+func (Blur) Calc(in xirho.Pt, rng *xmath.RNG) xirho.Pt {
 	s, c := math.Sincos(2 * math.Pi * rng.Uniform())
 	r := rng.Uniform()
 	in.X = r * c

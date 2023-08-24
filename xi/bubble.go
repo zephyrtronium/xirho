@@ -1,6 +1,9 @@
 package xi
 
-import "github.com/zephyrtronium/xirho"
+import (
+	"github.com/zephyrtronium/xirho"
+	"github.com/zephyrtronium/xirho/xmath"
+)
 
 // Bubble maps the plane to a sphere.
 type Bubble struct{}
@@ -10,7 +13,7 @@ func newBubble() xirho.Func {
 	return Bubble{}
 }
 
-func (Bubble) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
+func (Bubble) Calc(in xirho.Pt, rng *xmath.RNG) xirho.Pt {
 	r := 4 / (in.X*in.X + in.Y*in.Y + in.Z*in.Z + 4)
 	in.X *= r
 	in.Y *= r

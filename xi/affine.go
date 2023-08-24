@@ -17,7 +17,7 @@ func newAffine() xirho.Func {
 	return tx
 }
 
-func (v *Affine) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
+func (v *Affine) Calc(in xirho.Pt, rng *xmath.RNG) xirho.Pt {
 	x, y, z := xmath.Tx(&v.Ax, in.X, in.Y, in.Z)
 	return xirho.Pt{
 		X: x,

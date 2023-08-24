@@ -4,12 +4,13 @@ import (
 	"math"
 
 	"github.com/zephyrtronium/xirho"
+	"github.com/zephyrtronium/xirho/xmath"
 )
 
 // Foci does foci
 type Foci struct{}
 
-func (Foci) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
+func (Foci) Calc(in xirho.Pt, rng *xmath.RNG) xirho.Pt {
 	ex := math.Exp(in.X) / 2
 	sy, cy := math.Sincos(in.Y)
 	d := (ex + 1/(4*ex) + cy)

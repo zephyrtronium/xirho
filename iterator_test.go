@@ -9,7 +9,7 @@ import (
 
 type givef struct{}
 
-func (givef) Calc(in Pt, rng *RNG) Pt {
+func (givef) Calc(in Pt, rng *xmath.RNG) Pt {
 	return Pt{}
 }
 

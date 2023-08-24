@@ -1,6 +1,9 @@
 package xi
 
-import "github.com/zephyrtronium/xirho"
+import (
+	"github.com/zephyrtronium/xirho"
+	"github.com/zephyrtronium/xirho/xmath"
+)
 
 // Mobius implements Mobius transformations over quaternions.
 type Mobius struct {
@@ -24,7 +27,7 @@ func newMobius() xirho.Func {
 	}
 }
 
-func (v *Mobius) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
+func (v *Mobius) Calc(in xirho.Pt, rng *xmath.RNG) xirho.Pt {
 	// May the compiler bless me with optimized quaternion operations.
 	var nr, ni, nj, nk, dr, di, dj, dk float64
 	switch v.InZero {

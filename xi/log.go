@@ -5,6 +5,7 @@ import (
 	"math/cmplx"
 
 	"github.com/zephyrtronium/xirho"
+	"github.com/zephyrtronium/xirho/xmath"
 )
 
 // Log computes the complex logarithm of the input point treated as x+iy.
@@ -14,7 +15,7 @@ type Log struct {
 	lb complex128
 }
 
-func (v *Log) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
+func (v *Log) Calc(in xirho.Pt, rng *xmath.RNG) xirho.Pt {
 	z := cmplx.Log(complex(in.X, in.Y)) * v.lb
 	in.X = real(z)
 	in.Y = imag(z)

@@ -1,6 +1,9 @@
 package xi
 
-import "github.com/zephyrtronium/xirho"
+import (
+	"github.com/zephyrtronium/xirho"
+	"github.com/zephyrtronium/xirho/xmath"
+)
 
 // Splits spreads points away from the coordinate planes.
 type Splits struct {
@@ -13,7 +16,7 @@ func newSplits() xirho.Func {
 	return &Splits{}
 }
 
-func (v *Splits) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
+func (v *Splits) Calc(in xirho.Pt, rng *xmath.RNG) xirho.Pt {
 	if in.X >= 0 {
 		in.X += v.X
 	} else {
