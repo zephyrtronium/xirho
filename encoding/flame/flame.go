@@ -5,7 +5,6 @@
 //
 // While the goal is to produce results identical to Apophysis, it may not be
 // possible in all cases.
-//
 package flame
 
 import (
@@ -226,8 +225,8 @@ func decodexf(xf xform, final bool) (d decoded, err error) {
 	}
 	if xf.Symmetry != 1 {
 		cs := xi.ColorSpeed{
-			Color: xirho.Real(xf.Color),
-			Speed: xirho.Real(xf.Symmetry+1) / 2,
+			Color: xf.Color,
+			Speed: xf.Symmetry + 0.5,
 		}
 		f.Funcs = append(f.Funcs, &cs)
 	}

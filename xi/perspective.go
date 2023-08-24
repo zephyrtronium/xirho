@@ -4,7 +4,7 @@ import "github.com/zephyrtronium/xirho"
 
 // Perspective applies a perspective transform to the 3D spatial coordinates.
 type Perspective struct {
-	Distance xirho.Real `xirho:"distance"`
+	Distance float64 `xirho:"distance"`
 }
 
 // newPerspective is a factory for Perspective, defaulting to a distance of 1.
@@ -13,7 +13,7 @@ func newPerspective() xirho.Func {
 }
 
 func (f *Perspective) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
-	r := float64(f.Distance) / in.Z
+	r := f.Distance / in.Z
 	in.X *= r
 	in.Y *= r
 	return in

@@ -28,30 +28,3 @@ type Func interface {
 	// expensive calculations.
 	Prep()
 }
-
-// Flag is a boolean function parameter.
-type Flag bool
-
-// List is a function parameter to choose among a fixed set of options.
-type List int
-
-// Int is an integer function parameter, possibly bounded.
-type Int int64
-
-// Angle is an angle function parameter. External interfaces wrap its value
-// into the interval (-pi, pi].
-type Angle float64
-
-// Real is a floating-point function parameter, possibly bounded.
-type Real float64
-
-// Complex is an unconstrained function parameter in R^2.
-type Complex complex128
-
-// Vec3 is an unconstrained function parameter in R^3.
-type Vec3 [3]float64
-
-// Affine
-
-// FuncList is a function parameter holding a list of functions.
-type FuncList []Func

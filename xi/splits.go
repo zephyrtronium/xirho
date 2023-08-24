@@ -4,9 +4,9 @@ import "github.com/zephyrtronium/xirho"
 
 // Splits spreads points away from the coordinate planes.
 type Splits struct {
-	X xirho.Real `xirho:"x"`
-	Y xirho.Real `xirho:"y"`
-	Z xirho.Real `xirho:"z"`
+	X float64 `xirho:"x"`
+	Y float64 `xirho:"y"`
+	Z float64 `xirho:"z"`
 }
 
 func newSplits() xirho.Func {
@@ -15,19 +15,19 @@ func newSplits() xirho.Func {
 
 func (v *Splits) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	if in.X >= 0 {
-		in.X += float64(v.X)
+		in.X += v.X
 	} else {
-		in.X -= float64(v.X)
+		in.X -= v.X
 	}
 	if in.Y >= 0 {
-		in.Y += float64(v.Y)
+		in.Y += v.Y
 	} else {
-		in.Y -= float64(v.Y)
+		in.Y -= v.Y
 	}
 	if in.Z >= 0 {
-		in.Z += float64(v.Z)
+		in.Z += v.Z
 	} else {
-		in.Z -= float64(v.Z)
+		in.Z -= v.Z
 	}
 	return in
 }

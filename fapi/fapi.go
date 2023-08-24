@@ -4,7 +4,6 @@
 // This can be used to implement serialization formats or to provide user
 // interfaces for functions. Parameter types are based on semantics rather than
 // on representation to allow for more natural user interfaces.
-//
 package fapi
 
 import (
@@ -21,10 +20,22 @@ import (
 // "xirho" struct tag, defaulting to the field name. E.g., the JuliaN variation
 // is defined as such:
 //
-//		type JuliaN struct {
-//			Power xirho.Int  `xirho:"power"`
-//			Dist  xirho.Real `xirho:"dist"`
-//		}
+//	type JuliaN struct {
+//		Power int64   `xirho:"power"`
+//		Dist  float64 `xirho:"dist"`
+//	}
+//
+// Only fields with a xirho struct tag are exposed. The valid field types for
+// parameters are:
+//   - bool, which gives a [Flag].
+//   - int, which gives a [List] (not an Int).
+//   - int64, which gives an [Int].
+//   - float64, which gives a [Real] or, with the ",angle" option, [Angle].
+//   - complex128, which gives a [Complex].
+//   - [3]float64 (alias [xirho.Vec3]), which gives a [Vec3].
+//   - [xirho.Affine], which gives an [Affine].
+//   - [xirho.Func], which gives a [Func].
+//   - []xirho.Func, which gives a [FuncList].
 //
 // Certain parameters provide additional options; see the documentation for
 // each for details.
@@ -53,21 +64,26 @@ func getParam(f reflect.StructField, v reflect.Value) Param {
 		// If we can't Interface(), then the field is unexported.
 		return nil
 	}
+	text, ok := f.Tag.Lookup("xirho")
+	if !ok {
+		// No xirho tag, so skip it.
+		return nil
+	}
 	val := v.Addr().Interface()
-	tag := strings.Split(f.Tag.Get("xirho"), ",")
+	tag := strings.Split(text, ",")
 	name := pname(tag, f.Name)
 	switch f.Type {
-	case rFlag:
-		return flagFor(name, val.(*xirho.Flag))
-	case rList:
+	case rBool:
+		return flagFor(name, val.(*bool))
+	case rInt:
 		if len(tag) < 3 {
 			panic(fmt.Errorf("xirho: list must have at least 2 options (after name); have %q", tag))
 		}
-		return listFor(name, val.(*xirho.List), tag[1:]...)
-	case rInt:
+		return listFor(name, val.(*int), tag[1:]...)
+	case rInt64:
 		switch len(tag) {
 		case 0, 1:
-			return intFor(name, val.(*xirho.Int), false, 0, 0)
+			return intFor(name, val.(*int64), false, 0, 0)
 		case 2:
 			panic(fmt.Errorf("xirho: 2 tag fields in %q is probably a mistake; need 0, 1, or 3", f.Tag))
 		default:
@@ -82,17 +98,21 @@ func getParam(f reflect.StructField, v reflect.Value) Param {
 			if lo > hi {
 				panic(fmt.Errorf("xirho: Int lo > hi"))
 			}
-			return intFor(name, val.(*xirho.Int), true, xirho.Int(lo), xirho.Int(hi))
+			return intFor(name, val.(*int64), true, lo, hi)
 		}
-	case rAngle:
-		return angleFor(name, val.(*xirho.Angle))
-	case rReal:
+	case rFloat64:
 		switch len(tag) {
 		case 0, 1:
-			return realFor(name, val.(*xirho.Real), false, 0, 0)
+			return realFor(name, val.(*float64), false, 0, 0)
 		case 2:
-			panic(fmt.Errorf("xirho: 2 tag fields in %q is probably a mistake; need 0, 1, or 3", f.Tag))
+			if tag[1] != "angle" {
+				panic(fmt.Errorf(`xirho: second tag field of %q must be "angle"; otherwise need 0, 1, or 3 fields`, f.Tag))
+			}
+			return angleFor(name, val.(*float64))
 		default:
+			if tag[1] == "angle" {
+				return angleFor(name, val.(*float64))
+			}
 			var lo, hi float64
 			var err error
 			if lo, err = strconv.ParseFloat(tag[1], 64); err != nil {
@@ -104,12 +124,12 @@ func getParam(f reflect.StructField, v reflect.Value) Param {
 			if lo > hi {
 				panic(fmt.Errorf("xirho: Real lo > hi"))
 			}
-			return realFor(name, val.(*xirho.Real), true, xirho.Real(lo), xirho.Real(hi))
+			return realFor(name, val.(*float64), true, float64(lo), float64(hi))
 		}
 	case rComplex:
-		return complexFor(name, val.(*xirho.Complex))
+		return complexFor(name, val.(*complex128))
 	case rVec3:
-		return vec3For(name, val.(*xirho.Vec3))
+		return vec3For(name, val.(*[3]float64))
 	case rAffine:
 		return affineFor(name, val.(*xirho.Affine))
 	case rFunc:
@@ -122,7 +142,7 @@ func getParam(f reflect.StructField, v reflect.Value) Param {
 		}
 		return funcFor(name, opt, val.(*xirho.Func))
 	case rFuncList:
-		return funcListFor(name, val.(*xirho.FuncList))
+		return funcListFor(name, val.(*[]xirho.Func))
 	default:
 		return nil
 	}
@@ -138,14 +158,13 @@ func pname(tag []string, name string) string {
 
 // Reflected Param types.
 var (
-	rFlag     = reflect.TypeOf(xirho.Flag(false))
-	rList     = reflect.TypeOf(xirho.List(0))
-	rInt      = reflect.TypeOf(xirho.Int(0))
-	rAngle    = reflect.TypeOf(xirho.Angle(0))
-	rReal     = reflect.TypeOf(xirho.Real(0))
-	rComplex  = reflect.TypeOf(xirho.Complex(0))
-	rVec3     = reflect.TypeOf(xirho.Vec3{})
+	rBool     = reflect.TypeOf(bool(false))
+	rInt      = reflect.TypeOf(int(0))
+	rInt64    = reflect.TypeOf(int64(0))
+	rFloat64  = reflect.TypeOf(float64(0))
+	rComplex  = reflect.TypeOf(complex128(0))
+	rVec3     = reflect.TypeOf([3]float64{})
 	rAffine   = reflect.TypeOf(xirho.Affine{})
 	rFunc     = reflect.TypeOf((*xirho.Func)(nil)).Elem()
-	rFuncList = reflect.TypeOf(xirho.FuncList(nil))
+	rFuncList = reflect.TypeOf([]xirho.Func(nil))
 )

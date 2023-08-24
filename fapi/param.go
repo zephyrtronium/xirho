@@ -27,12 +27,12 @@ func (p paramName) Name() string {
 
 // Flag is a boolean function parameter.
 type Flag struct {
-	v *xirho.Flag
+	v *bool
 	paramName
 }
 
 // flagFor creates a Flag function parameter.
-func flagFor(name string, v *xirho.Flag) Param {
+func flagFor(name string, v *bool) Param {
 	return Flag{
 		v:         v,
 		paramName: paramName(name),
@@ -41,26 +41,26 @@ func flagFor(name string, v *xirho.Flag) Param {
 
 // Set sets the parameter value. The returned error is always nil.
 func (p Flag) Set(v bool) error {
-	*p.v = xirho.Flag(v)
+	*p.v = v
 	return nil
 }
 
 // Get gets the current parameter value.
 func (p Flag) Get() bool {
-	return bool(*p.v)
+	return *p.v
 }
 
 // List is a function parameter to choose among a list of strings. After the
-// parameter name, a List field may include any number of additional
+// parameter name, a List field must include at least two additional
 // comma-separated tags to define the display names of each option. For
 // example, to define a parameter allowing the user to choose between "fast",
 // "accurate", or "balanced", do:
 //
-//		type Example struct {
-//			Method xirho.List `xirho:"method,fast,accurate,balanced"`
-//		}
+//	type Example struct {
+//		Method int `xirho:"method,fast,accurate,balanced"`
+//	}
 type List struct {
-	v *xirho.List
+	v *int
 	// opts is the list of options for display.
 	opts []string
 
@@ -68,7 +68,7 @@ type List struct {
 }
 
 // listFor creates a List function parameter.
-func listFor(name string, idx *xirho.List, opts ...string) Param {
+func listFor(name string, idx *int, opts ...string) Param {
 	opts = append([]string{}, opts...) // copy
 	return List{
 		v:         idx,
@@ -88,13 +88,13 @@ func (p List) Set(v int) error {
 			Hi:    int64(len(p.opts) - 1),
 		}
 	}
-	*p.v = xirho.List(v)
+	*p.v = v
 	return nil
 }
 
 // Get gets the list integer value.
 func (p List) Get() int {
-	return int(*p.v)
+	return *p.v
 }
 
 // String gets the list's selected string.
@@ -113,22 +113,22 @@ func (p List) Opts() []string {
 // user to choose any integer greater than or equal to -3 and less than or
 // equal to 12, do:
 //
-//		type Example struct {
-//			P xirho.Int `xirho:"p,-3,12"`
-//		}
+//	type Example struct {
+//		P int64 `xirho:"p,-3,12"`
+//	}
 type Int struct {
-	v *xirho.Int
+	v *int64
 	// bdd indicates whether external interfaces should respect Lo and Hi.
 	bdd bool
 	// lo and hi indicate the minimum and maximum values, inclusive, that an
 	// external interface should attempt to assign to V.
-	lo, hi xirho.Int
+	lo, hi int64
 
 	paramName
 }
 
 // intFor creates an Int function parameter.
-func intFor(name string, v *xirho.Int, bounded bool, lo, hi xirho.Int) Param {
+func intFor(name string, v *int64, bounded bool, lo, hi int64) Param {
 	return Int{
 		v:         v,
 		paramName: paramName(name),
@@ -141,22 +141,21 @@ func intFor(name string, v *xirho.Int, bounded bool, lo, hi xirho.Int) Param {
 // Set sets the int value. If the Int is bounded and v is out of its bounds, an
 // error of type OutOfBoundsInt is returned instead.
 func (p Int) Set(v int64) error {
-	w := xirho.Int(v)
-	if p.bdd && (w < p.lo || p.hi < w) {
+	if p.bdd && (v < p.lo || p.hi < v) {
 		return OutOfBoundsInt{
 			Param: p,
 			Value: v,
-			Lo:    int64(p.lo),
-			Hi:    int64(p.hi),
+			Lo:    p.lo,
+			Hi:    p.hi,
 		}
 	}
-	*p.v = w
+	*p.v = v
 	return nil
 }
 
 // Get gets the int value.
 func (p Int) Get() int64 {
-	return int64(*p.v)
+	return *p.v
 }
 
 // Bounded returns whether the parameter is bounded.
@@ -170,18 +169,25 @@ func (p Int) Bounds() (lo, hi int64) {
 	if !p.bdd {
 		return -1 << 63, 1<<63 - 1
 	}
-	return int64(p.lo), int64(p.hi)
+	return p.lo, p.hi
 }
 
 // Angle is an angle function parameter. External interfaces wrap its value
 // into the interval (-pi, pi].
+//
+// Angle parameters are defined by supplying a ",angle" option after the
+// parameter name in the xirho struct tag. For example:
+//
+//	type Example struct {
+//		P float64 `xirho:"p,angle"`
+//	}
 type Angle struct {
-	v *xirho.Angle
+	v *float64
 	paramName
 }
 
 // angleFor creates an Angle function parameter.
-func angleFor(name string, v *xirho.Angle) Param {
+func angleFor(name string, v *float64) Param {
 	return Angle{
 		v:         v,
 		paramName: paramName(name),
@@ -194,13 +200,13 @@ func (p Angle) Set(v float64) error {
 		return NotFinite{Param: p}
 	}
 	x := xmath.Angle(v)
-	*p.v = xirho.Angle(x)
+	*p.v = x
 	return nil
 }
 
 // Get gets the angle value.
 func (p Angle) Get() float64 {
-	return float64(*p.v)
+	return *p.v
 }
 
 // Real is a floating-point function parameter. After the parameter name, a
@@ -208,22 +214,25 @@ func (p Angle) Get() float64 {
 // lowest and highest permitted values. For example, to define a parameter
 // allowing the user to choose any real in the interval [-2π, 2π], do:
 //
-//		type Example struct {
-//			P xirho.Real `xirho:"p,-6.283185307179586,6.283185307179586"`
-//		}
+//	type Example struct {
+//		P float64 `xirho:"p,-6.283185307179586,6.283185307179586"`
+//	}
+//
+// Note that the value ",angle" following the parameter name defines an [Angle]
+// parameter instead.
 type Real struct {
-	v *xirho.Real
+	v *float64
 	// bdd indicates whether external interfaces should respect Lo and Hi.
 	bdd bool
 	// lo and hi indicate the minimum and maximum values, inclusive, that an
 	// external interface should attempt to assign to V.
-	lo, hi xirho.Real
+	lo, hi float64
 
 	paramName
 }
 
 // realFor creates a Real function parameter.
-func realFor(name string, v *xirho.Real, bounded bool, lo, hi xirho.Real) Param {
+func realFor(name string, v *float64, bounded bool, lo, hi float64) Param {
 	return Real{
 		v:         v,
 		paramName: paramName(name),
@@ -239,8 +248,7 @@ func (p Real) Set(v float64) error {
 	if !xmath.IsFinite(v) {
 		return NotFinite{Param: p}
 	}
-	w := xirho.Real(v)
-	if p.bdd && (w < p.lo || p.hi < w) {
+	if p.bdd && (v < p.lo || p.hi < v) {
 		return OutOfBoundsReal{
 			Param: p,
 			Value: v,
@@ -248,13 +256,13 @@ func (p Real) Set(v float64) error {
 			Hi:    float64(p.hi),
 		}
 	}
-	*p.v = w
+	*p.v = v
 	return nil
 }
 
 // Get gets the real value.
 func (p Real) Get() float64 {
-	return float64(*p.v)
+	return *p.v
 }
 
 // Bounded returns whether the parameter is bounded.
@@ -268,17 +276,17 @@ func (p Real) Bounds() (lo, hi float64) {
 	if !p.bdd {
 		return math.Inf(-1), math.Inf(1)
 	}
-	return float64(p.lo), float64(p.hi)
+	return p.lo, p.hi
 }
 
 // Complex is an unconstrained function parameter in R^2.
 type Complex struct {
-	v *xirho.Complex
+	v *complex128
 	paramName
 }
 
 // complexFor creates a Complex function parameter.
-func complexFor(name string, v *xirho.Complex) Param {
+func complexFor(name string, v *complex128) Param {
 	return Complex{
 		v:         v,
 		paramName: paramName(name),
@@ -290,23 +298,23 @@ func (p Complex) Set(v complex128) error {
 	if !xmath.IsFinite(real(v)) || !xmath.IsFinite(imag(v)) {
 		return NotFinite{Param: p}
 	}
-	*p.v = xirho.Complex(v)
+	*p.v = v
 	return nil
 }
 
 // Get gets the complex value.
 func (p Complex) Get() complex128 {
-	return complex128(*p.v)
+	return *p.v
 }
 
 // Vec3 is an unconstrained function parameter in R^3.
 type Vec3 struct {
-	v *xirho.Vec3
+	v *[3]float64
 	paramName
 }
 
 // vec3For creates a Vec3 function parameter.
-func vec3For(name string, v *xirho.Vec3) Param {
+func vec3For(name string, v *[3]float64) Param {
 	return Vec3{
 		v:         v,
 		paramName: paramName(name),
@@ -314,7 +322,7 @@ func vec3For(name string, v *xirho.Vec3) Param {
 }
 
 // Set sets the vector value.
-func (p Vec3) Set(v xirho.Vec3) error {
+func (p Vec3) Set(v [3]float64) error {
 	for _, x := range v {
 		if !xmath.IsFinite(x) {
 			return NotFinite{Param: p}
@@ -325,7 +333,7 @@ func (p Vec3) Set(v xirho.Vec3) error {
 }
 
 // Get gets the vector value.
-func (p Vec3) Get() xirho.Vec3 {
+func (p Vec3) Get() [3]float64 {
 	return *p.v
 }
 
@@ -364,9 +372,9 @@ func (p Affine) Get() xirho.Affine {
 // the string "optional". Func fields marked optional may be set to nil. For
 // example:
 //
-//		type Example struct {
-//			NillableFunc `xirho:"func,optional"`
-//		}
+//	type Example struct {
+//		NillableFunc `xirho:"func,optional"`
+//	}
 type Func struct {
 	v *xirho.Func
 	// opt indicates whether the parameter is allowed to be nil.
@@ -406,12 +414,12 @@ func (p Func) IsOptional() bool {
 
 // FuncList is a function parameter holding a list of functions.
 type FuncList struct {
-	v *xirho.FuncList
+	v *[]xirho.Func
 	paramName
 }
 
 // funcListFor creates a FuncList function parameter.
-func funcListFor(name string, v *xirho.FuncList) Param {
+func funcListFor(name string, v *[]xirho.Func) Param {
 	return FuncList{
 		v:         v,
 		paramName: paramName(name),
@@ -419,14 +427,14 @@ func funcListFor(name string, v *xirho.FuncList) Param {
 }
 
 // Set sets the function list value.
-func (p FuncList) Set(v xirho.FuncList) error {
+func (p FuncList) Set(v []xirho.Func) error {
 	*p.v = v
 	return nil
 }
 
 // Get returns a copy of the function list value.
-func (p FuncList) Get() xirho.FuncList {
-	return append(xirho.FuncList(nil), *p.v...)
+func (p FuncList) Get() []xirho.Func {
+	return append([]xirho.Func(nil), *p.v...)
 }
 
 // Append appends functions to the list.

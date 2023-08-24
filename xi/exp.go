@@ -9,7 +9,7 @@ import (
 
 // Exp performs the complex exponential in a fixed base.
 type Exp struct {
-	Base xirho.Complex `xirho:"base"`
+	Base complex128 `xirho:"base"`
 
 	lb complex128
 }
@@ -22,7 +22,7 @@ func (v *Exp) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 }
 
 func (v *Exp) Prep() {
-	v.lb = cmplx.Log(complex128(v.Base))
+	v.lb = cmplx.Log(v.Base)
 }
 
 func init() {

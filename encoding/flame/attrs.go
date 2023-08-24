@@ -127,7 +127,7 @@ func parseLinear(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affin
 }
 
 func parseBipolar(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
-	s := xirho.Angle(math.Mod(attrs["bipolar_shift"], 2))
+	s := math.Mod(attrs["bipolar_shift"], 2)
 	if s > 1 {
 		s -= 2
 	} else if s <= -1 {
@@ -154,8 +154,8 @@ func parseElliptic(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Aff
 
 func parseCurl(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
 	v := xi.Curl{
-		C1: xirho.Real(attrs["curl_c1"]),
-		C2: xirho.Real(attrs["curl_c2"]),
+		C1: attrs["curl_c1"],
+		C2: attrs["curl_c2"],
 	}
 	in.Funcs = append(in.Funcs, maybeScaled(&v, attrs["curl"]))
 }
@@ -174,7 +174,7 @@ func parseExp(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) 
 
 func parseExpo(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
 	z := complex(attrs["expo_real"], attrs["expo_imaginary"])
-	in.Funcs = append(in.Funcs, maybeScaled(&xi.Exp{Base: xirho.Complex(z)}, attrs["expo"]))
+	in.Funcs = append(in.Funcs, maybeScaled(&xi.Exp{Base: z}, attrs["expo"]))
 }
 
 func parseFlatten(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
@@ -187,7 +187,7 @@ func parseFoci(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine)
 
 func parseGaussblur(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
 	t := xi.Then{
-		Funcs: xirho.FuncList{
+		Funcs: []xirho.Func{
 			xi.Gaussblur{},
 			xi.Flatten{},
 		},
@@ -197,15 +197,15 @@ func parseGaussblur(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Af
 
 func parsePostHeat(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
 	f := xi.Heat{
-		ThetaT: xirho.Real(attrs["post_heat_theta_period"]),
-		ThetaP: xirho.Angle(attrs["post_heat_theta_phase"]),
-		ThetaA: xirho.Real(attrs["post_heat"] * attrs["post_heat_theta_amp"]),
-		PhiT:   xirho.Real(attrs["post_heat_phi_period"]),
-		PhiP:   xirho.Angle(attrs["post_heat_phi_phase"]),
-		PhiA:   xirho.Real(attrs["post_heat"] * attrs["post_heat_phi_amp"]),
-		RT:     xirho.Real(attrs["post_heat_r_period"]),
-		RP:     xirho.Angle(attrs["post_heat_r_phase"]),
-		RA:     xirho.Real(attrs["post_heat"] * attrs["post_heat_r_amp"]),
+		ThetaT: attrs["post_heat_theta_period"],
+		ThetaP: attrs["post_heat_theta_phase"],
+		ThetaA: attrs["post_heat"] * attrs["post_heat_theta_amp"],
+		PhiT:   attrs["post_heat_phi_period"],
+		PhiP:   attrs["post_heat_phi_phase"],
+		PhiA:   attrs["post_heat"] * attrs["post_heat_phi_amp"],
+		RT:     attrs["post_heat_r_period"],
+		RP:     attrs["post_heat_r_phase"],
+		RA:     attrs["post_heat"] * attrs["post_heat_r_amp"],
 	}
 	post.Funcs = append(post.Funcs, &f)
 }
@@ -224,8 +224,8 @@ func parseJulia(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine
 
 func parseJulian(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
 	f := xi.JuliaN{
-		Power: xirho.Int(attrs["julian_power"]),
-		Dist:  xirho.Real(attrs["julian_dist"]),
+		Power: int64(attrs["julian_power"]),
+		Dist:  attrs["julian_dist"],
 	}
 	in.Funcs = append(in.Funcs, maybeScaled(&f, attrs["julian"]))
 }
@@ -234,10 +234,10 @@ func parseLazySusan(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Af
 	f := xi.LazySusan{
 		Inside:  xirho.Eye(),
 		Outside: xirho.Eye(),
-		Center:  xirho.Vec3{attrs["lazysusan_x"], -attrs["lazysusan_y"], 0},
-		Radius:  xirho.Real(attrs["lazysusan"]),
-		Spread:  xirho.Real(attrs["lazysusan_space"]),
-		TwistZ:  xirho.Real(-attrs["lazysusan_twist"]),
+		Center:  [3]float64{attrs["lazysusan_x"], -attrs["lazysusan_y"], 0},
+		Radius:  attrs["lazysusan"],
+		Spread:  attrs["lazysusan_space"],
+		TwistZ:  -attrs["lazysusan_twist"],
 	}
 	f.Outside.Scale(1, 1, 0)
 	f.Inside.RotZ(attrs["lazysusan_spin"]).Scale(1, 1, 0)
@@ -245,7 +245,7 @@ func parseLazySusan(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Af
 }
 
 func parseLog(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
-	f := xi.Log{Base: xirho.Complex(complex(attrs["log_base"], 0))}
+	f := xi.Log{Base: complex(attrs["log_base"], 0)}
 	if f.Base == 0 {
 		f.Base = math.E
 	}
@@ -254,14 +254,14 @@ func parseLog(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) 
 
 func parseMobius(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
 	f := xi.Mobius{
-		Ar:     xirho.Real(attrs["Re_A"]),
-		Avec:   xirho.Vec3{attrs["Im_A"], 0, 0},
-		Br:     xirho.Real(attrs["Re_B"]),
-		Bvec:   xirho.Vec3{attrs["Im_B"], 0, 0},
-		Cr:     xirho.Real(attrs["Re_C"]),
-		Cvec:   xirho.Vec3{attrs["Im_C"], 0, 0},
-		Dr:     xirho.Real(attrs["Re_D"]),
-		Dvec:   xirho.Vec3{attrs["Im_D"], 0, 0},
+		Ar:     attrs["Re_A"],
+		Avec:   [3]float64{attrs["Im_A"], 0, 0},
+		Br:     attrs["Re_B"],
+		Bvec:   [3]float64{attrs["Im_B"], 0, 0},
+		Cr:     attrs["Re_C"],
+		Cvec:   [3]float64{attrs["Im_C"], 0, 0},
+		Dr:     attrs["Re_D"],
+		Dvec:   [3]float64{attrs["Im_D"], 0, 0},
 		InZero: 3,
 	}
 	t := xi.Then{
@@ -275,14 +275,14 @@ func parseMobius(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affin
 
 func parseMobiq(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
 	f := xi.Mobius{
-		Ar:     xirho.Real(attrs["mobiq_at"]),
-		Avec:   xirho.Vec3{attrs["mobiq_ax"], attrs["mobiq_ay"], attrs["mobiq_az"]},
-		Br:     xirho.Real(attrs["mobiq_bt"]),
-		Bvec:   xirho.Vec3{attrs["mobiq_bx"], attrs["mobiq_by"], attrs["mobiq_bz"]},
-		Cr:     xirho.Real(attrs["mobiq_ct"]),
-		Cvec:   xirho.Vec3{attrs["mobiq_cx"], attrs["mobiq_cy"], attrs["mobiq_cz"]},
-		Dr:     xirho.Real(attrs["mobiq_dt"]),
-		Dvec:   xirho.Vec3{attrs["mobiq_dx"], attrs["mobiq_dy"], attrs["mobiq_dz"]},
+		Ar:     attrs["mobiq_at"],
+		Avec:   [3]float64{attrs["mobiq_ax"], attrs["mobiq_ay"], attrs["mobiq_az"]},
+		Br:     attrs["mobiq_bt"],
+		Bvec:   [3]float64{attrs["mobiq_bx"], attrs["mobiq_by"], attrs["mobiq_bz"]},
+		Cr:     attrs["mobiq_ct"],
+		Cvec:   [3]float64{attrs["mobiq_cx"], attrs["mobiq_cy"], attrs["mobiq_cz"]},
+		Dr:     attrs["mobiq_dt"],
+		Dvec:   [3]float64{attrs["mobiq_dx"], attrs["mobiq_dy"], attrs["mobiq_dz"]},
 		InZero: 3,
 	}
 	in.Funcs = append(in.Funcs, maybeScaled(&f, attrs["mobiq"]))
@@ -297,13 +297,13 @@ func parsePolar(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine
 }
 
 func parseRod(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
-	in.Funcs = append(in.Funcs, &xi.Rod{Radius: xirho.Real(attrs["rod"])})
+	in.Funcs = append(in.Funcs, &xi.Rod{Radius: attrs["rod"]})
 }
 
 func parseScry(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
-	f := xi.Scry{Radius: xirho.Real(attrs["scry"])}
+	f := xi.Scry{Radius: attrs["scry"]}
 	t := xi.Then{
-		Funcs: xirho.FuncList{
+		Funcs: []xirho.Func{
 			xi.Flatten{},
 			&f,
 		},
@@ -337,8 +337,8 @@ func parsePrespherical(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho
 
 func parseSplits(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
 	f := xi.Splits{
-		X: xirho.Real(attrs["splits_x"]),
-		Y: xirho.Real(attrs["splits_y"]),
+		X: attrs["splits_x"],
+		Y: attrs["splits_y"],
 	}
 	t := xi.Then{
 		Funcs: []xirho.Func{
@@ -351,9 +351,9 @@ func parseSplits(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affin
 
 func parseSplits3D(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
 	f := xi.Splits{
-		X: xirho.Real(attrs["splits3D_x"]),
-		Y: xirho.Real(attrs["splits3D_y"]),
-		Z: xirho.Real(attrs["splits3D_z"]),
+		X: attrs["splits3D_x"],
+		Y: attrs["splits3D_y"],
+		Z: attrs["splits3D_z"],
 	}
 	in.Funcs = append(in.Funcs, maybeScaled(&f, attrs["splits3D"]))
 }
@@ -361,10 +361,11 @@ func parseSplits3D(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Aff
 func parseUnpolar(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
 	f := xi.Exp{Base: math.E}
 	a := xi.Affine{}
-	const sc = 1 / (2 * math.Pi)
+	// TODO(zeph): why was this here?
+	// const sc = 1 / (2 * math.Pi)
 	a.Ax.Eye().RotZ(math.Pi/2).Scale(-1, 1, 0)
 	t := xi.Then{
-		Funcs: xirho.FuncList{
+		Funcs: []xirho.Func{
 			&a,
 			&f,
 		},
@@ -378,13 +379,13 @@ func maybeScaled(f xirho.Func, v float64) xirho.Func {
 		return f
 	}
 	if t, ok := f.(*xi.Then); ok {
-		t.Funcs = append(t.Funcs, &xi.Scale{Amount: xirho.Real(v)})
+		t.Funcs = append(t.Funcs, &xi.Scale{Amount: v})
 		return t
 	}
 	return &xi.Then{
 		Funcs: []xirho.Func{
 			f,
-			&xi.Scale{Amount: xirho.Real(v)},
+			&xi.Scale{Amount: v},
 		},
 	}
 }

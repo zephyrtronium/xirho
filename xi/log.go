@@ -9,7 +9,7 @@ import (
 
 // Log computes the complex logarithm of the input point treated as x+iy.
 type Log struct {
-	Base xirho.Complex `xirho:"base"`
+	Base complex128 `xirho:"base"`
 
 	lb complex128
 }
@@ -22,7 +22,7 @@ func (v *Log) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 }
 
 func (v *Log) Prep() {
-	v.lb = 1 / cmplx.Log(complex128(v.Base))
+	v.lb = 1 / cmplx.Log(v.Base)
 }
 
 func init() {

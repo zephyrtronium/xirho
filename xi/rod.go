@@ -9,15 +9,15 @@ import (
 // Rod creates a solid cylinder of a given radius, with circular cross-sections
 // in the x/z plane.
 type Rod struct {
-	Radius xirho.Real `xirho:"radius"`
+	Radius float64 `xirho:"radius"`
 }
 
 func (v *Rod) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	s, c := math.Sincos(2 * math.Pi * rng.Uniform())
 	return xirho.Pt{
-		X: float64(v.Radius) * s,
+		X: v.Radius * s,
 		Y: in.Y + rng.Normal(),
-		Z: float64(v.Radius) * c,
+		Z: v.Radius * c,
 	}
 }
 

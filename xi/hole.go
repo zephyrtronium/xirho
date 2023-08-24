@@ -7,14 +7,14 @@ import (
 
 // Hole translates points radially away from a point.
 type Hole struct {
-	Amount xirho.Real `xirho:"amount"`
-	Origin xirho.Vec3 `xirho:"origin"`
+	Amount float64    `xirho:"amount"`
+	Origin [3]float64 `xirho:"origin"`
 }
 
 func (v *Hole) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	ox, oy, oz := in.X-v.Origin[0], in.Y-v.Origin[1], in.Z-v.Origin[2]
 	r := xmath.R3(ox, oy, oz)
-	s := 1 + float64(v.Amount)/r
+	s := 1 + v.Amount/r
 	in.X = ox*s + v.Origin[0]
 	in.Y = oy*s + v.Origin[1]
 	in.Z = oz*s + v.Origin[2]

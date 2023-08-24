@@ -9,24 +9,24 @@ import (
 
 // Heat applies transverse and radial waves.
 type Heat struct {
-	ThetaT xirho.Real  `xirho:"planar wave period"`
-	ThetaP xirho.Angle `xirho:"planar wave phase"`
-	ThetaA xirho.Real  `xirho:"planar wave amp"`
+	ThetaT float64 `xirho:"planar wave period"`
+	ThetaP float64 `xirho:"planar wave phase,angle"`
+	ThetaA float64 `xirho:"planar wave amp"`
 
-	PhiT xirho.Real  `xirho:"axial wave period"`
-	PhiP xirho.Angle `xirho:"axial wave phase"`
-	PhiA xirho.Real  `xirho:"axial wave amp"`
+	PhiT float64 `xirho:"axial wave period"`
+	PhiP float64 `xirho:"axial wave phase,angle"`
+	PhiA float64 `xirho:"axial wave amp"`
 
-	RT xirho.Real  `xirho:"radial wave period"`
-	RP xirho.Angle `xirho:"radial wave phase"`
-	RA xirho.Real  `xirho:"radial wave amp"`
+	RT float64 `xirho:"radial wave period"`
+	RP float64 `xirho:"radial wave phase,angle"`
+	RA float64 `xirho:"radial wave amp"`
 }
 
 func (v *Heat) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	r, theta, phi := xmath.Spherical(in.X, in.Y, in.Z)
-	r += float64(v.RA) * math.Sin((2*math.Pi*r+float64(v.RP))/float64(v.RT))
-	theta += float64(v.ThetaA) * math.Sin((2*math.Pi*r+float64(v.ThetaP))/float64(v.ThetaT))
-	phi += float64(v.PhiA) * math.Sin((2*math.Pi*r+float64(v.PhiP))/float64(v.PhiT))
+	r += v.RA * math.Sin((2*math.Pi*r+v.RP)/v.RT)
+	theta += v.ThetaA * math.Sin((2*math.Pi*r+v.ThetaP)/v.ThetaT)
+	phi += v.PhiA * math.Sin((2*math.Pi*r+v.PhiP)/v.PhiT)
 	in.X, in.Y, in.Z = xmath.FromSpherical(r, theta, phi)
 	return in
 }

@@ -9,20 +9,20 @@ import (
 )
 
 type pf struct {
-	Not     bool           `xirho:"0"`
-	Flag    xirho.Flag     `xirho:"1"`
-	List    xirho.List     `xirho:"2,madoka,homura,anime"`
-	Int     xirho.Int      `xirho:"3"`
-	BInt    xirho.Int      `xirho:"4,-1,1"`
-	Angle   xirho.Angle    `xirho:"5"`
-	Real    xirho.Real     `xirho:"6"`
-	BReal   xirho.Real     `xirho:"7,-1,1"`
-	Complex xirho.Complex  `xirho:"8"`
-	Vec3    xirho.Vec3     `xirho:"9"`
-	Affine  xirho.Affine   `xirho:"10"`
-	Func    xirho.Func     `xirho:"11"`
-	NFunc   xirho.Func     `xirho:"12,optional"`
-	Funcs   xirho.FuncList `xirho:"13"`
+	Not     int32        `xirho:"0"`
+	Flag    bool         `xirho:"1"`
+	List    int          `xirho:"2,madoka,homura,anime"`
+	Int     int64        `xirho:"3"`
+	BInt    int64        `xirho:"4,-1,1"`
+	Angle   float64      `xirho:"5,angle"`
+	Real    float64      `xirho:"6"`
+	BReal   float64      `xirho:"7,-1,1"`
+	Complex complex128   `xirho:"8"`
+	Vec3    [3]float64   `xirho:"9"`
+	Affine  xirho.Affine `xirho:"10"`
+	Func    xirho.Func   `xirho:"11"`
+	NFunc   xirho.Func   `xirho:"12,optional"`
+	Funcs   []xirho.Func `xirho:"13"`
 }
 
 func (*pf) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
@@ -47,7 +47,7 @@ func (ef) Prep() {}
 
 type uf struct {
 	//lint:ignore U1000 field is used to test that we skip unexported fields in reflection
-	unexported xirho.Flag `xirho:"unexported"`
+	unexported bool `xirho:"unexported"`
 }
 
 func (*uf) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
@@ -56,7 +56,7 @@ func (*uf) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 
 func (*uf) Prep() {}
 
-type ff xirho.Flag
+type ff bool
 
 func (*ff) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	return in

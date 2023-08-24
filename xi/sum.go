@@ -5,8 +5,8 @@ import "github.com/zephyrtronium/xirho"
 // Sum performs a list of functions, summing the spatial coordinates. An
 // additional function controls the color coordinate.
 type Sum struct {
-	Funcs xirho.FuncList `xirho:"funcs"`
-	Color xirho.Func     `xirho:"color,optional"`
+	Funcs []xirho.Func `xirho:"funcs"`
+	Color xirho.Func   `xirho:"color,optional"`
 }
 
 // newSum is a factory for Sum, defaulting to an empty function list.

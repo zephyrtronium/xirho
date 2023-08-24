@@ -5,7 +5,7 @@ import "github.com/zephyrtronium/xirho"
 // Then performs a list of functions performed in a set order, without plotting
 // intermediate results.
 type Then struct {
-	Funcs xirho.FuncList `xirho:"funcs"`
+	Funcs []xirho.Func `xirho:"funcs"`
 }
 
 // newThen is a factory for Then, defaulting to an empty function list.

@@ -158,7 +158,7 @@ func unf(f *funcm) (v xirho.Func, err error) {
 			if len(t) != 3 {
 				return nil, fmt.Errorf("expected vec3 for %s but got %#v", p.Name(), x)
 			}
-			if err := p.Set(xirho.Vec3{t[0], t[1], t[2]}); err != nil {
+			if err := p.Set([3]float64{t[0], t[1], t[2]}); err != nil {
 				return nil, err
 			}
 		case fapi.Affine:
@@ -198,7 +198,7 @@ func unf(f *funcm) (v xirho.Func, err error) {
 			if !ok {
 				return nil, fmt.Errorf("expected func list for %s but got %#v", p.Name(), x)
 			}
-			r := make(xirho.FuncList, len(fl))
+			r := make([]xirho.Func, len(fl))
 			for i, fa := range fl {
 				t, err := getfunc(fmt.Sprintf("%s[%d] (of %d)", p.Name(), i, len(fl)), fa)
 				if err != nil {

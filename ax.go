@@ -150,49 +150,49 @@ func (ax *Affine) Yaw(tz float64) *Affine {
 // TODO: shear
 
 // VX returns the X vector of the transform, which is the first column.
-func (ax *Affine) VX() Vec3 {
-	return Vec3{ax[0], ax[4], ax[8]}
+func (ax *Affine) VX() [3]float64 {
+	return [3]float64{ax[0], ax[4], ax[8]}
 }
 
 // VY returns the Y vector of the transform, which is the second column.
-func (ax *Affine) VY() Vec3 {
-	return Vec3{ax[1], ax[5], ax[9]}
+func (ax *Affine) VY() [3]float64 {
+	return [3]float64{ax[1], ax[5], ax[9]}
 }
 
 // VZ returns the Z vector of the transform, which is the third column.
-func (ax *Affine) VZ() Vec3 {
-	return Vec3{ax[2], ax[6], ax[10]}
+func (ax *Affine) VZ() [3]float64 {
+	return [3]float64{ax[2], ax[6], ax[10]}
 }
 
 // VO returns the O vector of the transform, which is the translation vector.
-func (ax *Affine) VO() Vec3 {
-	return Vec3{ax[3], ax[7], ax[11]}
+func (ax *Affine) VO() [3]float64 {
+	return [3]float64{ax[3], ax[7], ax[11]}
 }
 
 // SetVX sets the X vector of the transform, which is the first column, and
 // returns the transform.
-func (ax *Affine) SetVX(v Vec3) *Affine {
+func (ax *Affine) SetVX(v [3]float64) *Affine {
 	ax[0], ax[4], ax[8] = v[0], v[1], v[2]
 	return ax
 }
 
 // SetVY sets the Y vector of the transform, which is the second column, and
 // returns the transform.
-func (ax *Affine) SetVY(v Vec3) *Affine {
+func (ax *Affine) SetVY(v [3]float64) *Affine {
 	ax[1], ax[5], ax[9] = v[0], v[1], v[2]
 	return ax
 }
 
 // SetVZ sets the Z vector of the transform, which is the third column, and
 // returns the transform.
-func (ax *Affine) SetVZ(v Vec3) *Affine {
+func (ax *Affine) SetVZ(v [3]float64) *Affine {
 	ax[2], ax[6], ax[10] = v[0], v[1], v[2]
 	return ax
 }
 
 // SetVO sets the O vector of the transform, which is the translation vector,
 // and returns the transform.
-func (ax *Affine) SetVO(v Vec3) *Affine {
+func (ax *Affine) SetVO(v [3]float64) *Affine {
 	ax[3], ax[7], ax[11] = v[0], v[1], v[2]
 	return ax
 }

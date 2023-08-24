@@ -11,134 +11,134 @@ import (
 
 type (
 	testFlag struct {
-		V xirho.Flag `xirho:"test"` // ok
+		V bool `xirho:"test"` // ok
 	}
 	testFlagUnnamed struct {
-		V xirho.Flag // ok, named V
+		V bool `xirho:""` // ok, named V
 	}
 	testFlagExtra struct {
-		V xirho.Flag `xirho:"test,ignore"` // ok
+		V bool `xirho:"test,ignore"` // ok
 	}
 
 	testListEmpty struct {
-		V xirho.List `xirho:"test"` // error
+		V int `xirho:"test"` // error
 	}
 	testList1 struct {
-		V xirho.List `xirho:"test,1"` // error
+		V int `xirho:"test,1"` // error
 	}
 	testList2 struct {
-		V xirho.List `xirho:"test,1,2"` // ok
+		V int `xirho:"test,1,2"` // ok
 	}
 	testList10 struct {
-		V xirho.List `xirho:"test,1,2,3,4,5,6,7,8,9,10"` // ok
+		V int `xirho:"test,1,2,3,4,5,6,7,8,9,10"` // ok
 	}
 	testListUnnamed struct {
-		V xirho.List `xirho:",1,2"` // ok, named V
+		V int `xirho:",1,2"` // ok, named V
 	}
 
 	testInt struct {
-		V xirho.Int `xirho:"test"` // ok
+		V int64 `xirho:"test"` // ok
 	}
 	testIntUnnamed struct {
-		V xirho.Int // ok, named V
+		V int64 `xirho:""` // ok, named V
 	}
 	testIntBounded struct {
-		V xirho.Int `xirho:"test,-1,1"` // ok
+		V int64 `xirho:"test,-1,1"` // ok
 	}
 	testIntBoundedUnnamed struct {
-		V xirho.Int `xirho:",-1,1"` // ok, named V
+		V int64 `xirho:",-1,1"` // ok, named V
 	}
 	testIntBoundedBadLower struct {
-		V xirho.Int `xirho:"test,-1.5,1"` // error
+		V int64 `xirho:"test,-1.5,1"` // error
 	}
 	testIntBoundedBadUpper struct {
-		V xirho.Int `xirho:"test,-1,1.5"` // error
+		V int64 `xirho:"test,-1,1.5"` // error
 	}
 	testIntBoundedLowerOnly struct {
-		V xirho.Int `xirho:"test,-1"` // error
+		V int64 `xirho:"test,-1"` // error
 	}
 	testIntBoundedUpperOnly struct {
-		V xirho.Int `xirho:"test,,1"` // error
+		V int64 `xirho:"test,,1"` // error
 	}
 	testIntBoundedEmpty struct {
-		V xirho.Int `xirho:"test,1,-1"` // error
+		V int64 `xirho:"test,1,-1"` // error
 	}
 	testIntBoundedSingleton struct {
-		V xirho.Int `xirho:"test,0,0"` // ok
+		V int64 `xirho:"test,0,0"` // ok
 	}
 	testInt3 struct {
-		V xirho.Int `xirho:"test,-1,1,ignore"` // ok
+		V int64 `xirho:"test,-1,1,ignore"` // ok
 	}
 
 	testAngle struct {
-		V xirho.Angle `xirho:"test"` // ok
+		V float64 `xirho:"test,angle"` // ok
 	}
 	testAngleUnnamed struct {
-		V xirho.Angle // ok, named V
+		V float64 `xirho:",angle"` // ok, named V
 	}
 	testAngleExtra struct {
-		V xirho.Angle `xirho:"test,ignore"` // ok
+		V float64 `xirho:"test,angle,ignore"` // ok
 	}
 
 	testReal struct {
-		V xirho.Real `xirho:"test"` // ok
+		V float64 `xirho:"test"` // ok
 	}
 	testRealUnnamed struct {
-		V xirho.Real // ok, named V
+		V float64 `xirho:""` // ok, named V
 	}
 	testRealBounded struct {
-		V xirho.Real `xirho:"test,-1,1"` // ok
+		V float64 `xirho:"test,-1,1"` // ok
 	}
 	testRealBoundedUnnamed struct {
-		V xirho.Real `xirho:",-1,1"` // ok, named V
+		V float64 `xirho:",-1,1"` // ok, named V
 	}
 	testRealBoundedBadLower struct {
-		V xirho.Real `xirho:"test,-pi,0"` // error
+		V float64 `xirho:"test,-pi,0"` // error
 	}
 	testRealBoundedBadUpper struct {
-		V xirho.Real `xirho:"test,0,pi"` // error
+		V float64 `xirho:"test,0,pi"` // error
 	}
 	testRealBoundedLowerOnly struct {
-		V xirho.Real `xirho:"test,-1"` // error
+		V float64 `xirho:"test,-1"` // error
 	}
 	testRealBoundedUpperOnly struct {
-		V xirho.Real `xirho:"test,,1"` // error
+		V float64 `xirho:"test,,1"` // error
 	}
 	testRealBoundedEmpty struct {
-		V xirho.Real `xirho:"test,1,-1"` // error
+		V float64 `xirho:"test,1,-1"` // error
 	}
 	testRealBoundedSingleton struct {
-		V xirho.Real `xirho:"test,0,0"` // ok
+		V float64 `xirho:"test,0,0"` // ok
 	}
 	testReal3 struct {
-		V xirho.Real `xirho:"test,-1,1,ignore"` // ok
+		V float64 `xirho:"test,-1,1,ignore"` // ok
 	}
 
 	testComplex struct {
-		V xirho.Complex `xirho:"test"` // ok
+		V complex128 `xirho:"test"` // ok
 	}
 	testComplexUnnamed struct {
-		V xirho.Complex // ok, named V
+		V complex128 `xirho:""` // ok, named V
 	}
 	testComplexExtra struct {
-		V xirho.Complex `xirho:"test,ignore"` // ok
+		V complex128 `xirho:"test,ignore"` // ok
 	}
 
 	testVec3 struct {
-		V xirho.Vec3 `xirho:"test"` // ok
+		V [3]float64 `xirho:"test"` // ok
 	}
 	testVec3Unnamed struct {
-		V xirho.Vec3 // ok, named V
+		V [3]float64 `xirho:""` // ok, named V
 	}
 	testVec3Extra struct {
-		V xirho.Vec3 `xirho:"test,ignore"` // ok
+		V [3]float64 `xirho:"test,ignore"` // ok
 	}
 
 	testAffine struct {
 		V xirho.Affine `xirho:"test"` // ok
 	}
 	testAffineUnnamed struct {
-		V xirho.Affine // ok, named V
+		V xirho.Affine `xirho:""` // ok, named V
 	}
 	testAffineExtra struct {
 		V xirho.Affine `xirho:"test,ignore"` // ok
@@ -148,7 +148,7 @@ type (
 		V xirho.Func `xirho:"test"` // ok
 	}
 	testFuncUnnamed struct {
-		V xirho.Func // ok, named V
+		V xirho.Func `xirho:""` // ok, named V
 	}
 	testFuncOptional struct {
 		V xirho.Func `xirho:"test,optional"` // ok
@@ -164,13 +164,13 @@ type (
 	}
 
 	testFuncList struct {
-		V xirho.FuncList `xirho:"test"` // ok
+		V []xirho.Func `xirho:"test"` // ok
 	}
 	testFuncListUnnamed struct {
-		V xirho.FuncList // ok, named V
+		V []xirho.Func `xirho:""` // ok, named V
 	}
 	testFuncListExtra struct {
-		V xirho.FuncList `xirho:"test,ignore"` // ok
+		V []xirho.Func `xirho:"test,ignore"` // ok
 	}
 )
 
@@ -569,10 +569,10 @@ var typeCases = []struct {
 		param: reflect.TypeOf(fapi.Vec3{}),
 		field: "test",
 		set: []setCase{
-			{set: xirho.Vec3{1, 1, 1}, get: xirho.Vec3{1, 1, 1}},
-			{set: xirho.Vec3{math.Inf(0), 0, 0}, get: xirho.Vec3{1, 1, 1}, err: new(fapi.NotFinite)},
-			{set: xirho.Vec3{0, math.Inf(-1), 0}, get: xirho.Vec3{1, 1, 1}, err: new(fapi.NotFinite)},
-			{set: xirho.Vec3{0, 0, math.NaN()}, get: xirho.Vec3{1, 1, 1}, err: new(fapi.NotFinite)},
+			{set: [3]float64{1, 1, 1}, get: [3]float64{1, 1, 1}},
+			{set: [3]float64{math.Inf(0), 0, 0}, get: [3]float64{1, 1, 1}, err: new(fapi.NotFinite)},
+			{set: [3]float64{0, math.Inf(-1), 0}, get: [3]float64{1, 1, 1}, err: new(fapi.NotFinite)},
+			{set: [3]float64{0, 0, math.NaN()}, get: [3]float64{1, 1, 1}, err: new(fapi.NotFinite)},
 		},
 	},
 	{
@@ -581,10 +581,10 @@ var typeCases = []struct {
 		param: reflect.TypeOf(fapi.Vec3{}),
 		field: "V",
 		set: []setCase{
-			{set: xirho.Vec3{1, 1, 1}, get: xirho.Vec3{1, 1, 1}},
-			{set: xirho.Vec3{math.Inf(0), 0, 0}, get: xirho.Vec3{1, 1, 1}, err: new(fapi.NotFinite)},
-			{set: xirho.Vec3{0, math.Inf(-1), 0}, get: xirho.Vec3{1, 1, 1}, err: new(fapi.NotFinite)},
-			{set: xirho.Vec3{0, 0, math.NaN()}, get: xirho.Vec3{1, 1, 1}, err: new(fapi.NotFinite)},
+			{set: [3]float64{1, 1, 1}, get: [3]float64{1, 1, 1}},
+			{set: [3]float64{math.Inf(0), 0, 0}, get: [3]float64{1, 1, 1}, err: new(fapi.NotFinite)},
+			{set: [3]float64{0, math.Inf(-1), 0}, get: [3]float64{1, 1, 1}, err: new(fapi.NotFinite)},
+			{set: [3]float64{0, 0, math.NaN()}, get: [3]float64{1, 1, 1}, err: new(fapi.NotFinite)},
 		},
 	},
 	{
@@ -593,10 +593,10 @@ var typeCases = []struct {
 		param: reflect.TypeOf(fapi.Vec3{}),
 		field: "test",
 		set: []setCase{
-			{set: xirho.Vec3{1, 1, 1}, get: xirho.Vec3{1, 1, 1}},
-			{set: xirho.Vec3{math.Inf(0), 0, 0}, get: xirho.Vec3{1, 1, 1}, err: new(fapi.NotFinite)},
-			{set: xirho.Vec3{0, math.Inf(-1), 0}, get: xirho.Vec3{1, 1, 1}, err: new(fapi.NotFinite)},
-			{set: xirho.Vec3{0, 0, math.NaN()}, get: xirho.Vec3{1, 1, 1}, err: new(fapi.NotFinite)},
+			{set: [3]float64{1, 1, 1}, get: [3]float64{1, 1, 1}},
+			{set: [3]float64{math.Inf(0), 0, 0}, get: [3]float64{1, 1, 1}, err: new(fapi.NotFinite)},
+			{set: [3]float64{0, math.Inf(-1), 0}, get: [3]float64{1, 1, 1}, err: new(fapi.NotFinite)},
+			{set: [3]float64{0, 0, math.NaN()}, get: [3]float64{1, 1, 1}, err: new(fapi.NotFinite)},
 		},
 	},
 	{
@@ -723,8 +723,8 @@ var typeCases = []struct {
 		param: reflect.TypeOf(fapi.FuncList{}),
 		field: "test",
 		set: []setCase{
-			{set: xirho.FuncList{xi.Spherical{}}, get: xirho.FuncList{xi.Spherical{}}},
-			{set: xirho.FuncList(nil), get: xirho.FuncList(nil)},
+			{set: []xirho.Func{xi.Spherical{}}, get: []xirho.Func{xi.Spherical{}}},
+			{set: []xirho.Func(nil), get: []xirho.Func(nil)},
 		},
 	},
 	{
@@ -733,8 +733,8 @@ var typeCases = []struct {
 		param: reflect.TypeOf(fapi.FuncList{}),
 		field: "V",
 		set: []setCase{
-			{set: xirho.FuncList{xi.Spherical{}}, get: xirho.FuncList{xi.Spherical{}}},
-			{set: xirho.FuncList(nil), get: xirho.FuncList(nil)},
+			{set: []xirho.Func{xi.Spherical{}}, get: []xirho.Func{xi.Spherical{}}},
+			{set: []xirho.Func(nil), get: []xirho.Func(nil)},
 		},
 	},
 	{
@@ -743,8 +743,8 @@ var typeCases = []struct {
 		param: reflect.TypeOf(fapi.FuncList{}),
 		field: "test",
 		set: []setCase{
-			{set: xirho.FuncList{xi.Spherical{}}, get: xirho.FuncList{xi.Spherical{}}},
-			{set: xirho.FuncList(nil), get: xirho.FuncList(nil)},
+			{set: []xirho.Func{xi.Spherical{}}, get: []xirho.Func{xi.Spherical{}}},
+			{set: []xirho.Func(nil), get: []xirho.Func(nil)},
 		},
 	},
 }

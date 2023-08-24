@@ -189,7 +189,7 @@ func TestSetVec3(t *testing.T) {
 				}
 				p := api[0].(fapi.Vec3)
 				for i, s := range c.set {
-					err := p.Set(s.set.(xirho.Vec3))
+					err := p.Set(s.set.([3]float64))
 					if (err != nil && s.err != nil && !errors.As(err, &s.err)) || (err == nil && s.err != nil) || (err != nil && s.err == nil) {
 						t.Errorf("wrong error for set case %d: expected %T, got %T", i, s.err, err)
 					}
@@ -276,7 +276,7 @@ func TestSetFuncList(t *testing.T) {
 				}
 				p := api[0].(fapi.FuncList)
 				for i, s := range c.set {
-					err := p.Set(s.set.(xirho.FuncList))
+					err := p.Set(s.set.([]xirho.Func))
 					if (err != nil && s.err != nil && !errors.As(err, &s.err)) || (err == nil && s.err != nil) || (err != nil && s.err == nil) {
 						t.Errorf("wrong error for set case %d: expected %T, got %T", i, s.err, err)
 					}

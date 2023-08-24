@@ -8,12 +8,12 @@ import (
 
 // Bipolar does bipolar
 type Bipolar struct {
-	Shift xirho.Angle `xirho:"shift"`
+	Shift float64 `xirho:"shift,angle"`
 }
 
 func (v *Bipolar) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	r := in.X*in.X + in.Y*in.Y
-	y := math.Atan2(2*in.Y, r-1) - float64(v.Shift)
+	y := math.Atan2(2*in.Y, r-1) - v.Shift
 	// y is in (-2pi, 2pi]. Wrap to an angle.
 	if y > math.Pi {
 		y -= 2 * math.Pi
