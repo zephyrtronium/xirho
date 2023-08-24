@@ -339,12 +339,12 @@ func (p Vec3) Get() [3]float64 {
 
 // Affine is an affine transform function parameter.
 type Affine struct {
-	v *xirho.Affine
+	v *xmath.Affine
 	paramName
 }
 
 // affineFor creates an Affine function parameter.
-func affineFor(name string, v *xirho.Affine) Param {
+func affineFor(name string, v *xmath.Affine) Param {
 	return Affine{
 		v:         v,
 		paramName: paramName(name),
@@ -352,7 +352,7 @@ func affineFor(name string, v *xirho.Affine) Param {
 }
 
 // Set sets the affine transform value.
-func (p Affine) Set(v xirho.Affine) error {
+func (p Affine) Set(v xmath.Affine) error {
 	for _, x := range v {
 		if !xmath.IsFinite(x) {
 			return NotFinite{Param: p}
@@ -363,7 +363,7 @@ func (p Affine) Set(v xirho.Affine) error {
 }
 
 // Get gets the affine transform value.
-func (p Affine) Get() xirho.Affine {
+func (p Affine) Get() xmath.Affine {
 	return *p.v
 }
 

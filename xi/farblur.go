@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/zephyrtronium/xirho"
+	"github.com/zephyrtronium/xirho/xmath"
 )
 
 // Farblur applies an affine-transformed Gaussian blur with strength varying
@@ -11,7 +12,7 @@ import (
 // other functions in a Then.
 type Farblur struct {
 	Origin [3]float64   `xirho:"origin"`
-	Ax     xirho.Affine `xirho:"affine"`
+	Ax     xmath.Affine `xirho:"affine"`
 	Dist   float64      `xirho:"dist"`
 }
 
@@ -19,7 +20,7 @@ func (v *Farblur) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 	ox, oy, oz := in.X-v.Origin[0], in.Y-v.Origin[1], in.Z-v.Origin[2]
 	r := ox*ox + oy*oy + oz*oz
 	s := math.Pow(r, v.Dist)
-	x, y, z := xirho.Tx(&v.Ax, rng.Normal()*s, rng.Normal()*s, rng.Normal()*s)
+	x, y, z := xmath.Tx(&v.Ax, rng.Normal()*s, rng.Normal()*s, rng.Normal()*s)
 	in.X += x
 	in.Y += y
 	in.Z += z
@@ -30,7 +31,7 @@ func (v *Farblur) Prep() {}
 
 func newFarblur() xirho.Func {
 	return &Farblur{
-		Ax:   xirho.Eye(),
+		Ax:   xmath.Eye(),
 		Dist: 0.5,
 	}
 }

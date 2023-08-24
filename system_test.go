@@ -153,7 +153,7 @@ func TestSystemIter(t *testing.T) {
 		},
 	}
 	r := xirho.Render{
-		Camera:  xirho.Eye(),
+		Camera:  xmath.Eye(),
 		Hist:    xirho.NewHist(xirho.HistSize{W: 1, H: 1, OSA: 1}),
 		Palette: color.Palette{color.RGBA64{R: 0xffff, A: 0xffff}, color.RGBA64{R: 0xffff, A: 0xffff}},
 	}
@@ -177,7 +177,7 @@ func TestSystemIter(t *testing.T) {
 	t.Run("check", func(t *testing.T) {
 		s := xirho.System{}
 		r := xirho.Render{
-			Camera:  xirho.Eye(),
+			Camera:  xmath.Eye(),
 			Hist:    xirho.NewHist(xirho.HistSize{W: 1, H: 1, OSA: 1}),
 			Palette: color.Palette{color.RGBA64{R: 0xffff, A: 0xffff}, color.RGBA64{R: 0xffff, A: 0xffff}},
 		}
@@ -203,7 +203,7 @@ func TestSystemIter(t *testing.T) {
 			},
 		}
 		r := xirho.Render{
-			Camera:  xirho.Eye(),
+			Camera:  xmath.Eye(),
 			Hist:    xirho.NewHist(xirho.HistSize{W: 1, H: 1, OSA: 1}),
 			Palette: color.Palette{color.RGBA64{R: 0xffff, A: 0xffff}, color.RGBA64{R: 0xffff, A: 0xffff}},
 		}
@@ -228,7 +228,7 @@ func TestSystemIter(t *testing.T) {
 	t.Run("fuseColor", func(t *testing.T) {
 		f := nanf{p: 2}
 		r := xirho.Render{
-			Camera:  xirho.Eye(),
+			Camera:  xmath.Eye(),
 			Hist:    xirho.NewHist(xirho.HistSize{W: 1, H: 1, OSA: 1}),
 			Palette: color.Palette{color.RGBA64{R: 0xffff, A: 0xffff}, color.RGBA64{R: 0xffff, A: 0xffff}},
 		}

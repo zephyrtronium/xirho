@@ -1,10 +1,13 @@
 package xi
 
-import "github.com/zephyrtronium/xirho"
+import (
+	"github.com/zephyrtronium/xirho"
+	"github.com/zephyrtronium/xirho/xmath"
+)
 
 // Affine performs an affine transform.
 type Affine struct {
-	Ax xirho.Affine `xirho:"transform"`
+	Ax xmath.Affine `xirho:"transform"`
 }
 
 // newAffine is a factory for Affine, defaulting to an identity transform.
@@ -15,7 +18,7 @@ func newAffine() xirho.Func {
 }
 
 func (v *Affine) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
-	x, y, z := xirho.Tx(&v.Ax, in.X, in.Y, in.Z)
+	x, y, z := xmath.Tx(&v.Ax, in.X, in.Y, in.Z)
 	return xirho.Pt{
 		X: x,
 		Y: y,

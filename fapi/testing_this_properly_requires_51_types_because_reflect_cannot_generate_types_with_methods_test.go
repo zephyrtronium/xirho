@@ -7,6 +7,7 @@ import (
 	"github.com/zephyrtronium/xirho"
 	"github.com/zephyrtronium/xirho/fapi"
 	"github.com/zephyrtronium/xirho/xi"
+	"github.com/zephyrtronium/xirho/xmath"
 )
 
 type (
@@ -135,13 +136,13 @@ type (
 	}
 
 	testAffine struct {
-		V xirho.Affine `xirho:"test"` // ok
+		V xmath.Affine `xirho:"test"` // ok
 	}
 	testAffineUnnamed struct {
-		V xirho.Affine `xirho:""` // ok, named V
+		V xmath.Affine `xirho:""` // ok, named V
 	}
 	testAffineExtra struct {
-		V xirho.Affine `xirho:"test,ignore"` // ok
+		V xmath.Affine `xirho:"test,ignore"` // ok
 	}
 
 	testFunc struct {
@@ -605,19 +606,19 @@ var typeCases = []struct {
 		param: reflect.TypeOf(fapi.Affine{}),
 		field: "test",
 		set: []setCase{
-			{set: xirho.Eye(), get: xirho.Eye()},
-			{set: xirho.Affine{0: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{1: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{2: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{3: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{4: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{5: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{6: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{7: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{8: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{9: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{10: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{11: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Eye(), get: xmath.Eye()},
+			{set: xmath.Affine{0: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{1: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{2: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{3: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{4: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{5: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{6: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{7: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{8: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{9: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{10: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{11: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
 		},
 	},
 	{
@@ -626,19 +627,19 @@ var typeCases = []struct {
 		param: reflect.TypeOf(fapi.Affine{}),
 		field: "V",
 		set: []setCase{
-			{set: xirho.Eye(), get: xirho.Eye()},
-			{set: xirho.Affine{0: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{1: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{2: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{3: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{4: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{5: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{6: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{7: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{8: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{9: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{10: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{11: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Eye(), get: xmath.Eye()},
+			{set: xmath.Affine{0: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{1: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{2: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{3: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{4: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{5: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{6: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{7: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{8: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{9: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{10: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{11: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
 		},
 	},
 	{
@@ -647,19 +648,19 @@ var typeCases = []struct {
 		param: reflect.TypeOf(fapi.Affine{}),
 		field: "test",
 		set: []setCase{
-			{set: xirho.Eye(), get: xirho.Eye()},
-			{set: xirho.Affine{0: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{1: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{2: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{3: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{4: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{5: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{6: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{7: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{8: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{9: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{10: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
-			{set: xirho.Affine{11: math.Inf(0)}, get: xirho.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Eye(), get: xmath.Eye()},
+			{set: xmath.Affine{0: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{1: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{2: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{3: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{4: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{5: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{6: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{7: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{8: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{9: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{10: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
+			{set: xmath.Affine{11: math.Inf(0)}, get: xmath.Eye(), err: new(fapi.NotFinite)},
 		},
 	},
 	{

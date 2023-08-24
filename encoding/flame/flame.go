@@ -19,6 +19,7 @@ import (
 	"github.com/zephyrtronium/xirho"
 	"github.com/zephyrtronium/xirho/encoding"
 	"github.com/zephyrtronium/xirho/xi"
+	"github.com/zephyrtronium/xirho/xmath"
 )
 
 // UnmarshalAll decodes all systems in an Apophysis flame file. The decoder
@@ -177,7 +178,7 @@ func decodexf(xf xform, final bool) (d decoded, err error) {
 		vars[attr.Name.Local] = v
 	}
 	// Decode affine transform.
-	var ax xirho.Affine
+	var ax xmath.Affine
 	if ax, err = decodetx(xf.Coefs, "transform"); err != nil {
 		return
 	}
@@ -195,7 +196,7 @@ func decodexf(xf xform, final bool) (d decoded, err error) {
 		ax.RotY(v)
 	}
 	// Decode post-transform, if it exists.
-	px := xirho.Eye()
+	px := xmath.Eye()
 	if xf.Post != "" {
 		px, err = decodetx(xf.Post, "post-transform")
 		if err != nil {
@@ -214,7 +215,7 @@ func decodexf(xf xform, final bool) (d decoded, err error) {
 	}
 	// Then everything together. Only save the parts that do something.
 	f := xi.Then{}
-	if ax != xirho.Eye() {
+	if ax != xmath.Eye() {
 		f.Funcs = append(f.Funcs, &xi.Affine{Ax: ax})
 	}
 	if s := sumdefault(pre); s != nil {
@@ -233,7 +234,7 @@ func decodexf(xf xform, final bool) (d decoded, err error) {
 	if s := sumdefault(post); s != nil {
 		f.Funcs = append(f.Funcs, s)
 	}
-	if px != xirho.Eye() {
+	if px != xmath.Eye() {
 		f.Funcs = append(f.Funcs, &xi.Affine{Ax: px})
 	}
 	switch len(f.Funcs) {
@@ -253,7 +254,7 @@ func decodexf(xf xform, final bool) (d decoded, err error) {
 }
 
 // decodetx decodes an affine transform.
-func decodetx(coefs, name string) (ax xirho.Affine, err error) {
+func decodetx(coefs, name string) (ax xmath.Affine, err error) {
 	var a []float64
 	a, err = nums(coefs)
 	if err != nil {
@@ -284,7 +285,7 @@ func sumdefault(f xi.Sum) xirho.Func {
 }
 
 // aff2to3 converts a Flame 2D affine matrix to a xirho.Ax transform.
-func aff2to3(a []float64) (ax xirho.Affine) {
+func aff2to3(a []float64) (ax xmath.Affine) {
 	ax.Eye()
 	ax[0] = a[0]
 	ax[1] = a[2]

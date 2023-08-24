@@ -6,6 +6,7 @@ import (
 
 	"github.com/zephyrtronium/xirho"
 	"github.com/zephyrtronium/xirho/fapi"
+	"github.com/zephyrtronium/xirho/xmath"
 )
 
 type pf struct {
@@ -19,7 +20,7 @@ type pf struct {
 	BReal   float64      `xirho:"7,-1,1"`
 	Complex complex128   `xirho:"8"`
 	Vec3    [3]float64   `xirho:"9"`
-	Affine  xirho.Affine `xirho:"10"`
+	Affine  xmath.Affine `xirho:"10"`
 	Func    xirho.Func   `xirho:"11"`
 	NFunc   xirho.Func   `xirho:"12,optional"`
 	Funcs   []xirho.Func `xirho:"13"`

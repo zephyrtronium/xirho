@@ -22,7 +22,7 @@ type System struct {
 	System  xirho.System
 	ToneMap xirho.ToneMap
 	Aspect  float64
-	Camera  xirho.Affine
+	Camera  xmath.Affine
 	BG      color.NRGBA64
 	Palette color.Palette
 
@@ -184,7 +184,7 @@ type marshaler struct {
 	Final *funcm   `json:"final,omitempty"`
 	// renderer params
 	Aspect float64      `json:"aspect"`
-	Camera xirho.Affine `json:"camera"`
+	Camera xmath.Affine `json:"camera"`
 	// brightness params
 	Bright float64 `json:"bright"`
 	Gamma  float64 `json:"gamma"`

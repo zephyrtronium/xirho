@@ -25,7 +25,7 @@ type Render struct {
 	// Hist is the target histogram.
 	Hist *Hist
 	// Camera is the camera transform.
-	Camera Affine
+	Camera xmath.Affine
 	// Palette is the colors used by the renderer.
 	Palette color.Palette
 }
@@ -70,6 +70,7 @@ func (r *Render) Render(ctx context.Context, system System, procs int) {
 // of the renderer's fields.
 func (r *Render) RenderAsync(ctx context.Context, change <-chan ChangeRender, plot <-chan PlotOnto, imgs chan<- draw.Image) {
 	rng := xmath.NewRNG()
+	//lint:ignore SA4006 indeed unused, but it's simpler to write this way
 	rctx, cancel := context.WithCancel(ctx)
 	defer close(imgs)
 	var (
@@ -150,7 +151,7 @@ func (r *Render) start(ctx context.Context, wg *sync.WaitGroup, procs int, syste
 
 // plot plots a point.
 func (r *Render) plot(x, y, z float64, c color.RGBA64, aspect float64) bool {
-	x, y, _ = Tx(&r.Camera, x, y, z) // ignore z
+	x, y, _ = xmath.Tx(&r.Camera, x, y, z) // ignore z
 	var col, row int
 	if aspect >= 1 {
 		y *= aspect
@@ -253,7 +254,7 @@ type ChangeRender struct {
 	// histogram's current size, then all plotting progress is cleared.
 	Size HistSize
 	// Camera is the new camera transform to use, if non-nil.
-	Camera *Affine
+	Camera *xmath.Affine
 	// Palette is the new palette to use, if it has nonzero length. The palette
 	// is copied into the renderer.
 	Palette color.Palette

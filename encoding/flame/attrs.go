@@ -5,6 +5,7 @@ import (
 
 	"github.com/zephyrtronium/xirho"
 	"github.com/zephyrtronium/xirho/xi"
+	"github.com/zephyrtronium/xirho/xmath"
 )
 
 // Funcs maps Flame xform attribute names to functions which parse attributes
@@ -118,15 +119,15 @@ var KnownAttrs = map[string]bool{
 // Parser is a function which parses a xirho function from XML attributes.
 // Parsers should add the parsed function to one of pre, in, or post, and they
 // should not modify attrs.
-type Parser func(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine)
+type Parser func(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine)
 
-func parseLinear(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
+func parseLinear(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	v := attrs["linear"] + attrs["linear3D"]
 	ax.Eye().Scale(v, v, v)
 	in.Funcs = append(in.Funcs, &xi.Affine{Ax: ax})
 }
 
-func parseBipolar(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
+func parseBipolar(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	s := math.Mod(attrs["bipolar_shift"], 2)
 	if s > 1 {
 		s -= 2
@@ -136,23 +137,23 @@ func parseBipolar(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affi
 	in.Funcs = append(in.Funcs, maybeScaled(&xi.Bipolar{Shift: s * math.Pi}, attrs["bipolar"]))
 }
 
-func parseBlur(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
+func parseBlur(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	in.Funcs = append(in.Funcs, maybeScaled(xi.Blur{}, attrs["blur"]))
 }
 
-func parsePreblur(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
+func parsePreblur(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	pre.Funcs = append(pre.Funcs, maybeScaled(xi.Gaussblur{}, attrs["pre_blur"]))
 }
 
-func parseBubble(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
+func parseBubble(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	in.Funcs = append(in.Funcs, maybeScaled(xi.Bubble{}, attrs["bubble"]))
 }
 
-func parseElliptic(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
+func parseElliptic(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	in.Funcs = append(in.Funcs, maybeScaled(xi.CElliptic{}, attrs["elliptic"]))
 }
 
-func parseCurl(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
+func parseCurl(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	v := xi.Curl{
 		C1: attrs["curl_c1"],
 		C2: attrs["curl_c2"],
@@ -160,32 +161,32 @@ func parseCurl(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine)
 	in.Funcs = append(in.Funcs, maybeScaled(&v, attrs["curl"]))
 }
 
-func parseCylinder(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
+func parseCylinder(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	in.Funcs = append(in.Funcs, maybeScaled(xi.Cylinder{}, attrs["cylinder"]))
 }
 
-func parseDisc(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
+func parseDisc(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	in.Funcs = append(in.Funcs, maybeScaled(xi.Disc{}, attrs["disc"]))
 }
 
-func parseExp(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
+func parseExp(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	in.Funcs = append(in.Funcs, maybeScaled(&xi.Exp{Base: math.E}, attrs["exp"]))
 }
 
-func parseExpo(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
+func parseExpo(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	z := complex(attrs["expo_real"], attrs["expo_imaginary"])
 	in.Funcs = append(in.Funcs, maybeScaled(&xi.Exp{Base: z}, attrs["expo"]))
 }
 
-func parseFlatten(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
+func parseFlatten(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	pre.Funcs = append(pre.Funcs, xi.Flatten{})
 }
 
-func parseFoci(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
+func parseFoci(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	in.Funcs = append(in.Funcs, xi.Foci{})
 }
 
-func parseGaussblur(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
+func parseGaussblur(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	t := xi.Then{
 		Funcs: []xirho.Func{
 			xi.Gaussblur{},
@@ -195,7 +196,7 @@ func parseGaussblur(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Af
 	in.Funcs = append(in.Funcs, maybeScaled(&t, attrs["gaussian_blur"]))
 }
 
-func parsePostHeat(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
+func parsePostHeat(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	f := xi.Heat{
 		ThetaT: attrs["post_heat_theta_period"],
 		ThetaP: attrs["post_heat_theta_phase"],
@@ -210,11 +211,11 @@ func parsePostHeat(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Aff
 	post.Funcs = append(post.Funcs, &f)
 }
 
-func parseHemisphere(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
+func parseHemisphere(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	in.Funcs = append(in.Funcs, maybeScaled(xi.Hemisphere{}, attrs["hemisphere"]))
 }
 
-func parseJulia(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
+func parseJulia(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	f := xi.JuliaN{
 		Power: 2,
 		Dist:  1,
@@ -222,7 +223,7 @@ func parseJulia(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine
 	in.Funcs = append(in.Funcs, maybeScaled(&f, attrs["julia"]))
 }
 
-func parseJulian(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
+func parseJulian(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	f := xi.JuliaN{
 		Power: int64(attrs["julian_power"]),
 		Dist:  attrs["julian_dist"],
@@ -230,10 +231,10 @@ func parseJulian(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affin
 	in.Funcs = append(in.Funcs, maybeScaled(&f, attrs["julian"]))
 }
 
-func parseLazySusan(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
+func parseLazySusan(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	f := xi.LazySusan{
-		Inside:  xirho.Eye(),
-		Outside: xirho.Eye(),
+		Inside:  xmath.Eye(),
+		Outside: xmath.Eye(),
 		Center:  [3]float64{attrs["lazysusan_x"], -attrs["lazysusan_y"], 0},
 		Radius:  attrs["lazysusan"],
 		Spread:  attrs["lazysusan_space"],
@@ -244,7 +245,7 @@ func parseLazySusan(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Af
 	in.Funcs = append(in.Funcs, &f)
 }
 
-func parseLog(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
+func parseLog(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	f := xi.Log{Base: complex(attrs["log_base"], 0)}
 	if f.Base == 0 {
 		f.Base = math.E
@@ -252,7 +253,7 @@ func parseLog(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) 
 	in.Funcs = append(in.Funcs, maybeScaled(&f, attrs["log"]))
 }
 
-func parseMobius(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
+func parseMobius(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	f := xi.Mobius{
 		Ar:     attrs["Re_A"],
 		Avec:   [3]float64{attrs["Im_A"], 0, 0},
@@ -273,7 +274,7 @@ func parseMobius(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affin
 	in.Funcs = append(in.Funcs, maybeScaled(&t, attrs["mobius"]))
 }
 
-func parseMobiq(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
+func parseMobiq(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	f := xi.Mobius{
 		Ar:     attrs["mobiq_at"],
 		Avec:   [3]float64{attrs["mobiq_ax"], attrs["mobiq_ay"], attrs["mobiq_az"]},
@@ -288,19 +289,19 @@ func parseMobiq(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine
 	in.Funcs = append(in.Funcs, maybeScaled(&f, attrs["mobiq"]))
 }
 
-func parseNoise(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
+func parseNoise(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	in.Funcs = append(in.Funcs, maybeScaled(xi.Noise{}, attrs["noise"]))
 }
 
-func parsePolar(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
+func parsePolar(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	in.Funcs = append(in.Funcs, maybeScaled(xi.Polar{}, attrs["polar"]))
 }
 
-func parseRod(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
+func parseRod(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	in.Funcs = append(in.Funcs, &xi.Rod{Radius: attrs["rod"]})
 }
 
-func parseScry(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
+func parseScry(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	f := xi.Scry{Radius: attrs["scry"]}
 	t := xi.Then{
 		Funcs: []xirho.Func{
@@ -311,7 +312,7 @@ func parseScry(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine)
 	in.Funcs = append(in.Funcs, &t)
 }
 
-func parseSpherical(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
+func parseSpherical(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	f := xi.Then{
 		Funcs: []xirho.Func{
 			xi.Flatten{},
@@ -321,11 +322,11 @@ func parseSpherical(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Af
 	in.Funcs = append(in.Funcs, maybeScaled(&f, attrs["spherical"]))
 }
 
-func parseSpherical3D(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
+func parseSpherical3D(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	in.Funcs = append(in.Funcs, maybeScaled(xi.Spherical{}, attrs["spherical3D"]))
 }
 
-func parsePrespherical(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
+func parsePrespherical(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	f := xi.Then{
 		Funcs: []xirho.Func{
 			xi.Flatten{},
@@ -335,7 +336,7 @@ func parsePrespherical(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho
 	pre.Funcs = append(pre.Funcs, maybeScaled(&f, attrs["pre_spherical"]))
 }
 
-func parseSplits(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
+func parseSplits(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	f := xi.Splits{
 		X: attrs["splits_x"],
 		Y: attrs["splits_y"],
@@ -349,7 +350,7 @@ func parseSplits(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affin
 	in.Funcs = append(in.Funcs, maybeScaled(&t, attrs["splits"]))
 }
 
-func parseSplits3D(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
+func parseSplits3D(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	f := xi.Splits{
 		X: attrs["splits3D_x"],
 		Y: attrs["splits3D_y"],
@@ -358,7 +359,7 @@ func parseSplits3D(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Aff
 	in.Funcs = append(in.Funcs, maybeScaled(&f, attrs["splits3D"]))
 }
 
-func parseUnpolar(attrs map[string]float64, pre, in, post *xi.Sum, ax xirho.Affine) {
+func parseUnpolar(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	f := xi.Exp{Base: math.E}
 	a := xi.Affine{}
 	// TODO(zeph): why was this here?

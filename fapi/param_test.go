@@ -11,6 +11,7 @@ import (
 	"github.com/zephyrtronium/xirho"
 	"github.com/zephyrtronium/xirho/fapi"
 	"github.com/zephyrtronium/xirho/xi"
+	"github.com/zephyrtronium/xirho/xmath"
 )
 
 func TestSetFlag(t *testing.T) {
@@ -216,7 +217,7 @@ func TestSetAffine(t *testing.T) {
 				}
 				p := api[0].(fapi.Affine)
 				for i, s := range c.set {
-					err := p.Set(s.set.(xirho.Affine))
+					err := p.Set(s.set.(xmath.Affine))
 					if (err != nil && s.err != nil && !errors.As(err, &s.err)) || (err == nil && s.err != nil) || (err != nil && s.err == nil) {
 						t.Errorf("wrong error for set case %d: expected %T, got %T", i, s.err, err)
 					}

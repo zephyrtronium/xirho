@@ -1,13 +1,10 @@
-package xirho
+package xmath
 
-import (
-	"math"
+import "math"
 
-	"golang.org/x/image/math/f64"
-)
-
-// Affine is an affine transform.
-type Affine f64.Aff4
+// Affine is a 4×4 affine transform in row major order where the bottom row is
+// implicitly [0 0 0 1].
+type Affine [12]float64
 
 // Eye returns an identity transform.
 func Eye() Affine {
@@ -20,11 +17,7 @@ func Eye() Affine {
 
 // Eye sets the transform to the identity transform and returns it.
 func (ax *Affine) Eye() *Affine {
-	*ax = Affine{
-		1, 0, 0, 0,
-		0, 1, 0, 0,
-		0, 0, 1, 0,
-	}
+	*ax = Eye()
 	return ax
 }
 

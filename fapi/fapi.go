@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/zephyrtronium/xirho"
+	"github.com/zephyrtronium/xirho/xmath"
 )
 
 // For collects a xirho.Func's exported parameters. Each returned parameter has
@@ -33,7 +34,7 @@ import (
 //   - float64, which gives a [Real] or, with the ",angle" option, [Angle].
 //   - complex128, which gives a [Complex].
 //   - [3]float64 (alias [xirho.Vec3]), which gives a [Vec3].
-//   - [xirho.Affine], which gives an [Affine].
+//   - [xmath.Affine], which gives an [Affine].
 //   - [xirho.Func], which gives a [Func].
 //   - []xirho.Func, which gives a [FuncList].
 //
@@ -131,7 +132,7 @@ func getParam(f reflect.StructField, v reflect.Value) Param {
 	case rVec3:
 		return vec3For(name, val.(*[3]float64))
 	case rAffine:
-		return affineFor(name, val.(*xirho.Affine))
+		return affineFor(name, val.(*xmath.Affine))
 	case rFunc:
 		opt := false
 		if len(tag) >= 2 {
@@ -164,7 +165,7 @@ var (
 	rFloat64  = reflect.TypeOf(float64(0))
 	rComplex  = reflect.TypeOf(complex128(0))
 	rVec3     = reflect.TypeOf([3]float64{})
-	rAffine   = reflect.TypeOf(xirho.Affine{})
+	rAffine   = reflect.TypeOf(xmath.Affine{})
 	rFunc     = reflect.TypeOf((*xirho.Func)(nil)).Elem()
 	rFuncList = reflect.TypeOf([]xirho.Func(nil))
 )

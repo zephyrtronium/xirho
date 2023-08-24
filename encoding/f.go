@@ -7,6 +7,7 @@ import (
 	"github.com/zephyrtronium/xirho"
 	"github.com/zephyrtronium/xirho/fapi"
 	"github.com/zephyrtronium/xirho/xi"
+	"github.com/zephyrtronium/xirho/xmath"
 )
 
 // funcm encodes information about a function and its parameters in an
@@ -166,7 +167,7 @@ func unf(f *funcm) (v xirho.Func, err error) {
 			if err != nil {
 				return nil, err
 			}
-			var b xirho.Affine
+			var b xmath.Affine
 			if copy(b[:], t) != len(b) {
 				return nil, fmt.Errorf("expected affine for %s but got %#v", p.Name(), x)
 			}
