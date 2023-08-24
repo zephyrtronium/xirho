@@ -13,6 +13,7 @@ import (
 	"strconv"
 
 	"github.com/zephyrtronium/xirho"
+	"github.com/zephyrtronium/xirho/hist"
 	"github.com/zephyrtronium/xirho/xmath"
 )
 
@@ -20,7 +21,7 @@ import (
 // unmarshaling.
 type System struct {
 	System  xirho.System
-	ToneMap xirho.ToneMap
+	ToneMap hist.ToneMap
 	Aspect  float64
 	Camera  xmath.Affine
 	BG      color.NRGBA64
@@ -37,7 +38,7 @@ type System struct {
 
 // Wrap wraps a xirho system, renderer, tone mapping, and optionally a
 // background color and metadata into a serializable system.
-func Wrap(system xirho.System, r *xirho.Render, tm xirho.ToneMap, bg *color.NRGBA64, meta *xirho.Metadata) *System {
+func Wrap(system xirho.System, r *xirho.Render, tm hist.ToneMap, bg *color.NRGBA64, meta *xirho.Metadata) *System {
 	s := System{
 		System:  system,
 		ToneMap: tm,
@@ -57,7 +58,7 @@ func Wrap(system xirho.System, r *xirho.Render, tm xirho.ToneMap, bg *color.NRGB
 func (s *System) Render(sz image.Point, osa int) *xirho.Render {
 	w, h := xmath.Fit(sz.X, sz.Y, s.Aspect)
 	return &xirho.Render{
-		Hist:    xirho.NewHist(xirho.HistSize{W: w, H: h, OSA: osa}),
+		Hist:    hist.New(hist.Size{W: w, H: h, OSA: osa}),
 		Camera:  s.Camera,
 		Palette: s.Palette,
 	}
@@ -152,7 +153,7 @@ func (s *System) UnmarshalJSON(b []byte) (err error) {
 			return err
 		}
 	}
-	s.ToneMap = xirho.ToneMap{Brightness: m.Bright, Gamma: m.Gamma, GammaMin: m.Thresh}
+	s.ToneMap = hist.ToneMap{Brightness: m.Bright, Gamma: m.Gamma, GammaMin: m.Thresh}
 	if m.BG != nil {
 		s.BG = color.NRGBA64(*m.BG)
 	}
@@ -334,7 +335,7 @@ func (c *bgcolor) UnmarshalText(text []byte) error {
 // Marshal creates a JSON encoding of the renderer and system information
 // needed to serialize the system. If system.Check returns a non-nil error,
 // then that error is returned instead.
-func Marshal(system xirho.System, r *xirho.Render, tm xirho.ToneMap, bg *color.NRGBA64, meta *xirho.Metadata) ([]byte, error) {
+func Marshal(system xirho.System, r *xirho.Render, tm hist.ToneMap, bg *color.NRGBA64, meta *xirho.Metadata) ([]byte, error) {
 	return Wrap(system, r, tm, bg, meta).MarshalJSON()
 }
 

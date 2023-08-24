@@ -22,14 +22,15 @@ import (
 	"github.com/zephyrtronium/xirho"
 	"github.com/zephyrtronium/xirho/encoding"
 	"github.com/zephyrtronium/xirho/encoding/flame"
+	"github.com/zephyrtronium/xirho/hist"
 	"github.com/zephyrtronium/xirho/xmath"
 )
 
-func interactive(ctx context.Context, s *encoding.System, sz xirho.HistSize, res draw.Scaler, tm xirho.ToneMap, bg color.Color, procs int) {
+func interactive(ctx context.Context, s *encoding.System, sz hist.Size, res draw.Scaler, tm hist.ToneMap, bg color.Color, procs int) {
 	if sz.OSA <= 0 {
 		sz.OSA = 1
 	}
-	r := &xirho.Render{Hist: xirho.NewHist(sz)}
+	r := &xirho.Render{Hist: hist.New(sz)}
 	status := status{
 		r:      r,
 		change: make(chan xirho.ChangeRender, 1),
@@ -97,7 +98,7 @@ type status struct {
 	imgs   chan draw.Image
 	onto   xirho.PlotOnto
 	bg     image.Uniform
-	sz     xirho.HistSize
+	sz     hist.Size
 	procs  int
 }
 

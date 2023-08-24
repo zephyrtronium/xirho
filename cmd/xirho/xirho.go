@@ -23,6 +23,7 @@ import (
 	"github.com/zephyrtronium/xirho"
 	"github.com/zephyrtronium/xirho/encoding"
 	"github.com/zephyrtronium/xirho/encoding/flame"
+	"github.com/zephyrtronium/xirho/hist"
 )
 
 func main() {
@@ -30,8 +31,8 @@ func main() {
 	var outname, profname, inname, flamename, dumpname string
 	var sigint bool
 	var timeout time.Duration
-	var sz xirho.HistSize
-	var tm xirho.ToneMap
+	var sz hist.Size
+	var tm hist.ToneMap
 	var resample string
 	var procs int
 	var echo bool
@@ -119,7 +120,7 @@ func main() {
 			log.Fatalln("error unmarshaling system:", err)
 		}
 	}
-	if tm != (xirho.ToneMap{}) {
+	if tm != (hist.ToneMap{}) {
 		s.ToneMap = tm
 	}
 	if intr {
@@ -131,7 +132,7 @@ func main() {
 	}
 	log.Println("allocating histogram, estimated", sz.Mem()>>20, "MB")
 	r := &xirho.Render{
-		Hist:    xirho.NewHist(sz),
+		Hist:    hist.New(sz),
 		Camera:  s.Camera,
 		Palette: s.Palette,
 	}
@@ -197,7 +198,7 @@ func lanczos(a float64) *draw.Kernel {
 	}
 }
 
-func dumpto(fn string, h *xirho.Hist) {
+func dumpto(fn string, h *hist.Hist) {
 	f, err := os.Create(fn)
 	if err != nil {
 		log.Println("couldn't dump histogram:", err)

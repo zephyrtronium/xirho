@@ -10,6 +10,7 @@ import (
 
 	"golang.org/x/image/draw"
 
+	"github.com/zephyrtronium/xirho/hist"
 	"github.com/zephyrtronium/xirho/xmath"
 )
 
@@ -23,7 +24,7 @@ type Render struct {
 	q int64
 
 	// Hist is the target histogram.
-	Hist *Hist
+	Hist *hist.Hist
 	// Camera is the camera transform.
 	Camera xmath.Affine
 	// Palette is the colors used by the renderer.
@@ -201,7 +202,7 @@ func (r *Render) ResetCounts() {
 // this while the renderer is running.
 func (r *Render) Reset(width, height, osa int) {
 	r.ResetCounts()
-	r.Hist.Reset(HistSize{W: width, H: height, OSA: osa})
+	r.Hist.Reset(hist.Size{W: width, H: height, OSA: osa})
 }
 
 // drainchg pulls items from a ChangeRender channel until doing so would block,
@@ -239,7 +240,7 @@ type PlotOnto struct {
 	// size of Image.
 	Scale draw.Scaler
 	// ToneMap is the tone mapping parameters for this render.
-	ToneMap ToneMap
+	ToneMap hist.ToneMap
 }
 
 // ChangeRender signals to RenderAsync to modify its system, histogram, or
@@ -252,7 +253,7 @@ type ChangeRender struct {
 	// Size is the new histogram size to render. If this is the zero value,
 	// then the histogram is neither resized nor reset. If this is equal to the
 	// histogram's current size, then all plotting progress is cleared.
-	Size HistSize
+	Size hist.Size
 	// Camera is the new camera transform to use, if non-nil.
 	Camera *xmath.Affine
 	// Palette is the new palette to use, if it has nonzero length. The palette

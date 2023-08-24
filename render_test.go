@@ -7,8 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zephyrtronium/xirho"
 	"golang.org/x/image/draw"
+
+	"github.com/zephyrtronium/xirho"
+	"github.com/zephyrtronium/xirho/hist"
 )
 
 func TestRender(t *testing.T) {
@@ -16,7 +18,7 @@ func TestRender(t *testing.T) {
 		t.SkipNow()
 	}
 	r := xirho.Render{
-		Hist:    xirho.NewHist(xirho.HistSize{W: 1, H: 1, OSA: 1}),
+		Hist:    hist.New(hist.Size{W: 1, H: 1, OSA: 1}),
 		Palette: color.Palette{color.RGBA64{R: 0xffff, A: 0xffff}, color.RGBA64{R: 0xffff, A: 0xffff}},
 	}
 	f := nanf{}
@@ -52,7 +54,7 @@ func TestRender(t *testing.T) {
 	if r.Iters() != r.Hits() {
 		t.Error("iters and hits should be equal, but got", r.Iters(), "iters and", r.Hits(), "hits")
 	}
-	tm := xirho.ToneMap{Brightness: 1e6, Gamma: 1, GammaMin: 0}
+	tm := hist.ToneMap{Brightness: 1e6, Gamma: 1, GammaMin: 0}
 	red, _, _, alpha := r.Hist.Image(tm, 1, 1).At(0, 0).RGBA()
 	if red == 0 || alpha == 0 {
 		t.Error("expected solid red pixel, got red", red, "alpha", alpha)
@@ -64,7 +66,7 @@ func TestRenderAsync(t *testing.T) {
 		t.SkipNow()
 	}
 	r := xirho.Render{
-		Hist:    xirho.NewHist(xirho.HistSize{W: 1, H: 1, OSA: 1}),
+		Hist:    hist.New(hist.Size{W: 1, H: 1, OSA: 1}),
 		Palette: color.Palette{color.RGBA64{R: 0xffff, A: 0xffff}, color.RGBA64{R: 0xffff, A: 0xffff}},
 	}
 	f := nanf{}
@@ -89,7 +91,7 @@ func TestRenderAsync(t *testing.T) {
 	plot <- xirho.PlotOnto{
 		Image:   img,
 		Scale:   draw.NearestNeighbor,
-		ToneMap: xirho.ToneMap{Brightness: 1, Gamma: 1},
+		ToneMap: hist.ToneMap{Brightness: 1, Gamma: 1},
 	}
 	p, ok := <-imgs
 	if !ok {

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/zephyrtronium/xirho"
+	"github.com/zephyrtronium/xirho/hist"
 	"github.com/zephyrtronium/xirho/xmath"
 )
 
@@ -154,7 +155,7 @@ func TestSystemIter(t *testing.T) {
 	}
 	r := xirho.Render{
 		Camera:  xmath.Eye(),
-		Hist:    xirho.NewHist(xirho.HistSize{W: 1, H: 1, OSA: 1}),
+		Hist:    hist.New(hist.Size{W: 1, H: 1, OSA: 1}),
 		Palette: color.Palette{color.RGBA64{R: 0xffff, A: 0xffff}, color.RGBA64{R: 0xffff, A: 0xffff}},
 	}
 	r.Reset(1, 1, 1)
@@ -169,7 +170,7 @@ func TestSystemIter(t *testing.T) {
 	}()
 	s.Iter(ctx, &r, rng)
 	cancel()
-	tm := xirho.ToneMap{Brightness: 1e6, Gamma: 1, GammaMin: 0}
+	tm := hist.ToneMap{Brightness: 1e6, Gamma: 1, GammaMin: 0}
 	red, _, _, alpha := r.Hist.Image(tm, 1, 1).At(0, 0).RGBA()
 	if red == 0 || alpha == 0 {
 		t.Error("expected red pixel, got red", red, "alpha", alpha, "with hist", r.Hist, "after", r.Iters(), "iters")
@@ -178,7 +179,7 @@ func TestSystemIter(t *testing.T) {
 		s := xirho.System{}
 		r := xirho.Render{
 			Camera:  xmath.Eye(),
-			Hist:    xirho.NewHist(xirho.HistSize{W: 1, H: 1, OSA: 1}),
+			Hist:    hist.New(hist.Size{W: 1, H: 1, OSA: 1}),
 			Palette: color.Palette{color.RGBA64{R: 0xffff, A: 0xffff}, color.RGBA64{R: 0xffff, A: 0xffff}},
 		}
 		r.Reset(1, 1, 1)
@@ -204,7 +205,7 @@ func TestSystemIter(t *testing.T) {
 		}
 		r := xirho.Render{
 			Camera:  xmath.Eye(),
-			Hist:    xirho.NewHist(xirho.HistSize{W: 1, H: 1, OSA: 1}),
+			Hist:    hist.New(hist.Size{W: 1, H: 1, OSA: 1}),
 			Palette: color.Palette{color.RGBA64{R: 0xffff, A: 0xffff}, color.RGBA64{R: 0xffff, A: 0xffff}},
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -229,7 +230,7 @@ func TestSystemIter(t *testing.T) {
 		f := nanf{p: 2}
 		r := xirho.Render{
 			Camera:  xmath.Eye(),
-			Hist:    xirho.NewHist(xirho.HistSize{W: 1, H: 1, OSA: 1}),
+			Hist:    hist.New(hist.Size{W: 1, H: 1, OSA: 1}),
 			Palette: color.Palette{color.RGBA64{R: 0xffff, A: 0xffff}, color.RGBA64{R: 0xffff, A: 0xffff}},
 		}
 		s := xirho.System{

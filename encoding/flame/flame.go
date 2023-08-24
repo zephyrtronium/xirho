@@ -18,6 +18,7 @@ import (
 
 	"github.com/zephyrtronium/xirho"
 	"github.com/zephyrtronium/xirho/encoding"
+	"github.com/zephyrtronium/xirho/hist"
 	"github.com/zephyrtronium/xirho/xi"
 	"github.com/zephyrtronium/xirho/xmath"
 )
@@ -59,7 +60,7 @@ func convert(flm flame) (s encoding.System) {
 		Meta: &xirho.Metadata{
 			Title: flm.Name,
 		},
-		ToneMap: xirho.ToneMap{Brightness: flm.Brightness, Gamma: flm.Gamma, GammaMin: flm.Thresh},
+		ToneMap: hist.ToneMap{Brightness: flm.Brightness, Gamma: flm.Gamma, GammaMin: flm.Thresh},
 	}
 	sz, err := nums(flm.Size)
 	defer func() {
