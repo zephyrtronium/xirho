@@ -46,6 +46,7 @@ func (ef) Calc(in xirho.Pt, rng *xirho.RNG) xirho.Pt {
 func (ef) Prep() {}
 
 type uf struct {
+	//lint:ignore U1000 field is used to test that we skip unexported fields in reflection
 	unexported xirho.Flag `xirho:"unexported"`
 }
 

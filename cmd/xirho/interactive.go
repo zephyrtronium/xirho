@@ -99,7 +99,6 @@ type status struct {
 	bg     image.Uniform
 	sz     xirho.HistSize
 	procs  int
-	tick   *time.Ticker
 }
 
 type command struct {
