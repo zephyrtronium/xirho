@@ -61,30 +61,30 @@ type iterator struct {
 
 // nodeat gets the nth node in the system. This does not perform bounds checks.
 func (it *iterator) nodeat(n int) Func {
-	return *(*Func)(unsafe.Pointer(uintptr(it.nodes) + uintptr(n)*unsafe.Sizeof(Func(nil))))
+	return *(*Func)(unsafe.Add(it.nodes, uintptr(n)*unsafe.Sizeof(Func(nil))))
 }
 
 // colorat gets the nth color in the palette. This does not perform bounds
 // checks.
 func (it *iterator) colorat(n int) color.RGBA64 {
-	return *(*color.RGBA64)(unsafe.Pointer(uintptr(it.palette) + uintptr(n)*unsafe.Sizeof(color.RGBA64{})))
+	return *(*color.RGBA64)(unsafe.Add(it.palette, uintptr(n)*unsafe.Sizeof(color.RGBA64{})))
 }
 
 // opat gets the pre-multiplied opacity of the nth node in the system. This
 // does not perform bounds checks.
 func (it *iterator) opat(n int) uint64 {
-	return *(*uint64)(unsafe.Pointer(uintptr(it.op) + uintptr(n)*unsafe.Sizeof(uint64(0))))
+	return *(*uint64)(unsafe.Add(it.op, uintptr(n)*unsafe.Sizeof(uint64(0))))
 }
 
 // wrow gets a pointer to the pre-multiplied edge weights from node n in the
 // system. This does not perform bounds checks.
 func (it *iterator) wrow(n int) *uint64 {
-	return (*uint64)(unsafe.Pointer(uintptr(it.w) + uintptr(it.n*n)*unsafe.Sizeof(uint64(0))))
+	return (*uint64)(unsafe.Add(it.w, uintptr(it.n*n)*unsafe.Sizeof(uint64(0))))
 }
 
 // nextw gets the next edge weight from an array returned by it.wrow.
 func nextw(w *uint64) *uint64 {
-	return (*uint64)(unsafe.Pointer(uintptr(unsafe.Pointer(w)) + unsafe.Sizeof(uint64(0))))
+	return (*uint64)(unsafe.Add(unsafe.Pointer(w), unsafe.Sizeof(uint64(0))))
 }
 
 // Prep calls the Prep method of each function in the system. It should be
@@ -113,43 +113,42 @@ func (s System) Iter(ctx context.Context, r *Render, rng xmath.RNG) {
 	done := ctx.Done()
 	var n, q int
 	for {
-		select {
-		case <-done:
-			atomic.AddInt64(&r.n, int64(n))
-			atomic.AddInt64(&r.q, int64(q))
-			return
-		default:
-			p = it.nodeat(k).Calc(p, &it.rng)
-			n++
-			// If a function has opacity α, that means we plot its points with
-			// probability α. If we don't plot a point, then there's no reason
-			// to apply the final, since that is only a nonlinear camera.
-			if op := it.opat(k); op >= 1<<53 || (op > 0 && it.rng.Uint64()%(1<<53) < op) {
-				fp := it.doFinal(p)
-				if !fp.IsValid() {
-					p, k = it.fuse()
-					continue
-				}
-				i := int(fp.C * float64(it.nclrs))
-				if i >= it.nclrs {
-					// Since fp.C can be 1.0, i can be out of bounds.
-					i = it.nclrs - 1
-				}
-				if r.plot(fp.X, fp.Y, fp.Z, it.colorat(i), aspect) {
-					q++
-				}
+		p = it.nodeat(k).Calc(p, &it.rng)
+		n++
+		// If a function has opacity α, that means we plot its points with
+		// probability α. If we don't plot a point, then there's no reason
+		// to apply the final, since that is only a nonlinear camera.
+		if op := it.opat(k); op >= 1<<53 || (op > 0 && it.rng.Uint64()%(1<<53) < op) {
+			fp := it.doFinal(p)
+			if !fp.IsValid() {
+				p, k = it.fuse()
+				continue
 			}
-			k = it.next(k)
-			if n == 25000 {
-				atomic.AddInt64(&r.n, int64(n))
-				t := atomic.AddInt64(&r.q, int64(q))
-				n, q = 0, 0
-				// Some random-ish condition that's fast to check to decide
-				// whether to re-fuse. 0x8 is the lowest bit set in 25000, so
-				// this will be every other group if the hit ratio is 1.0.
-				if t&0x8 == 0 {
-					p, k = it.fuse()
-				}
+			i := int(fp.C * float64(it.nclrs))
+			if i >= it.nclrs {
+				// Since fp.C can be 1.0, i can be out of bounds.
+				i = it.nclrs - 1
+			}
+			if r.plot(fp.X, fp.Y, fp.Z, it.colorat(i), aspect) {
+				q++
+			}
+		}
+		k = it.next(k)
+		if n == 25000 {
+			atomic.AddInt64(&r.n, int64(n))
+			t := atomic.AddInt64(&r.q, int64(q))
+			n, q = 0, 0
+			// Some random-ish condition that's fast to check to decide
+			// whether to re-fuse. 0x8 is the lowest bit set in 25000, so
+			// this will be every other group if the hit ratio is 1.0.
+			if t&0x8 == 0 {
+				p, k = it.fuse()
+			}
+			select {
+			case <-done:
+				return
+			default:
+				// continue on
 			}
 		}
 	}
@@ -164,20 +163,20 @@ func (s System) Check() error {
 		return fmt.Errorf("xirho: cannot render an empty system")
 	}
 	for i, f := range s.Nodes {
-		if f.Opacity-f.Opacity != 0 {
+		if !xmath.IsFinite(f.Opacity) {
 			return fmt.Errorf("xirho: non-finite opacity %v for func %d", f.Opacity, i)
 		}
 		if f.Opacity < 0 || f.Opacity > 1 {
 			return fmt.Errorf("xirho: out of bounds opacity %v for func %d", f.Opacity, i)
 		}
-		if f.Weight-f.Weight != 0 {
+		if !xmath.IsFinite(f.Weight) {
 			return fmt.Errorf("xirho: non-finite weight %v for func %d", f.Weight, i)
 		}
 		if f.Weight < 0 {
 			return fmt.Errorf("xirho: negative weight %v for func %d", f.Weight, i)
 		}
 		for j, x := range f.Graph {
-			if x-x != 0 {
+			if !xmath.IsFinite(x) {
 				return fmt.Errorf("xirho: non-finite weight %v for func %d to %d", x, i, j)
 			}
 			if x < 0 {
