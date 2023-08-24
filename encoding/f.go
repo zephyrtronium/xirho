@@ -12,8 +12,8 @@ import (
 // funcm encodes information about a function and its parameters in an
 // intermediary structure to facilitate encoding and decoding.
 type funcm struct {
-	Name   string                 `json:"name"`
-	Params map[string]interface{} `json:"params,omitempty"`
+	Name   string         `json:"name"`
+	Params map[string]any `json:"params,omitempty"`
 	// These fields exist on every funcm but are only used at the top level.
 	Opacity float64   `json:"opacity,omitempty"`
 	Weight  float64   `json:"weight,omitempty"`
@@ -33,7 +33,7 @@ func newFuncm(f xirho.Func) (*funcm, error) {
 	if len(api) == 0 {
 		return &r, nil
 	}
-	r.Params = make(map[string]interface{})
+	r.Params = make(map[string]any)
 	for _, parm := range api {
 		switch p := parm.(type) {
 		case fapi.Flag:
@@ -194,7 +194,7 @@ func unf(f *funcm) (v xirho.Func, err error) {
 				return nil, err
 			}
 		case fapi.FuncList:
-			fl, ok := x.([]interface{})
+			fl, ok := x.([]any)
 			if !ok {
 				return nil, fmt.Errorf("expected func list for %s but got %#v", p.Name(), x)
 			}
@@ -225,7 +225,7 @@ func unf(f *funcm) (v xirho.Func, err error) {
 }
 
 // getint gets an int64 from a decoded JSON numeric value.
-func getint(name string, x interface{}) (int64, error) {
+func getint(name string, x any) (int64, error) {
 	switch t := x.(type) {
 	case json.Number:
 		r, err := t.Int64()
@@ -241,7 +241,7 @@ func getint(name string, x interface{}) (int64, error) {
 }
 
 // getfloat gets a float64 from a decoded JSON numeric value.
-func getfloat(name string, x interface{}) (float64, error) {
+func getfloat(name string, x any) (float64, error) {
 	switch t := x.(type) {
 	case json.Number:
 		r, err := t.Float64()
@@ -257,9 +257,9 @@ func getfloat(name string, x interface{}) (float64, error) {
 }
 
 // getfloatlist gets a []float64 from a decoded JSON numeric value.
-func getfloatlist(name string, x interface{}) (r []float64, err error) {
+func getfloatlist(name string, x any) (r []float64, err error) {
 	switch t := x.(type) {
-	case []interface{}:
+	case []any:
 		r = make([]float64, len(t))
 		for i, v := range t {
 			x, err := getfloat(fmt.Sprintf("%s[%d]", name, i), v)
@@ -285,8 +285,8 @@ func getfloatlist(name string, x interface{}) (r []float64, err error) {
 }
 
 // getfunc gets a funcm from a decoded JSON object.
-func getfunc(name string, x interface{}) (r *funcm, err error) {
-	v, _ := x.(map[string]interface{})
+func getfunc(name string, x any) (r *funcm, err error) {
+	v, _ := x.(map[string]any)
 	// If x isn't a JSON object, then v is nil, so v["name"] is nil, so
 	// v["name"].(string) gives "", false. It really does work like that.
 	n, ok := v["name"].(string)
@@ -297,7 +297,7 @@ func getfunc(name string, x interface{}) (r *funcm, err error) {
 	case 1: // no params
 		return &funcm{Name: n}, nil
 	case 2: // yes params
-		p, ok := v["params"].(map[string]interface{})
+		p, ok := v["params"].(map[string]any)
 		if !ok {
 			return nil, fmt.Errorf("expected func for %s but got %#v", name, x)
 		}

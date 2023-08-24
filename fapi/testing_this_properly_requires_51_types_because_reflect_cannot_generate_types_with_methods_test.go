@@ -175,8 +175,7 @@ type (
 )
 
 type setCase struct {
-	set, get interface{}
-	err      error
+	set, get, err any
 }
 
 var typeCases = []struct {
