@@ -144,7 +144,7 @@ func (h *Hist) IsEmpty() bool {
 
 // checkBounds controls whether at checks histogram bounds. Only disable this
 // if everything that calls at or Add is thoroughly tested!
-const checkBounds = true
+const checkBounds = false
 
 // at gets the bin at a given x and y. May panics if either dimension is
 // out of bounds.
@@ -154,7 +154,7 @@ func (h *Hist) at(x, y int) *bin {
 			panic("xirho: histogram position out of bounds")
 		}
 	}
-	return (*bin)(unsafe.Pointer(uintptr(h.arr) + uintptr(y*h.cols+x)*unsafe.Sizeof(bin{})))
+	return (*bin)(unsafe.Add(h.arr, uintptr(y*h.cols+x)*unsafe.Sizeof(bin{})))
 }
 
 // Add increments a histogram bucket by a color. It is safe for multiple
