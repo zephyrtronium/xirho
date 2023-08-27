@@ -1,20 +1,15 @@
 package encoding_test
 
 import (
-	"encoding/json"
 	"image/color"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/zephyrtronium/xirho"
+
 	"github.com/zephyrtronium/xirho/encoding"
-	"github.com/zephyrtronium/xirho/xi"
 )
 
-func TestPalette(t *testing.T) {
-	// This test is to verify that the extracted helpers produce the same
-	// output as the existing encoding, before we refactor to just use
-	// EncodePalette everywhere.
+func TestPaletteRoundTrip(t *testing.T) {
 	cases := []struct {
 		name    string
 		palette color.Palette
@@ -40,46 +35,15 @@ func TestPalette(t *testing.T) {
 	for _, c := range cases {
 		c := c
 		t.Run(c.name, func(t *testing.T) {
-			// Create a valid system to encode, marshal it, then unmarshal just
-			// the palette and compare.
-			s := encoding.System{
-				System: xirho.System{
-					Nodes: []xirho.Node{
-						{
-							Func: xi.Blur{},
-						},
-					},
-				},
-				Palette: c.palette,
-			}
-			m, err := s.MarshalJSON()
+			m := encoding.EncodePalette(c.palette)
+			d, err := encoding.DecodePalette(m)
 			if err != nil {
-				t.Fatal(err)
+				t.Errorf("failed to decode palette: %v", err)
 			}
-			var d struct {
-				Palette string `json:"palette"`
-			}
-			if err := json.Unmarshal(m, &d); err != nil {
-				t.Fatal(err)
-			}
-			{
-				// Test that we encode the same way.
-				got := encoding.EncodePalette(c.palette)
-				if got != d.Palette {
-					t.Errorf("wrong encoded palette: want %q, got %q", d.Palette, got)
-				}
-			}
-			{
-				// Test that we decode the same way.
-				want := rgbaPalette(c.palette)
-				p, err := encoding.DecodePalette(d.Palette)
-				if err != nil {
-					t.Errorf("couldn't decode palette: %v", err)
-				}
-				got := rgbaPalette(p)
-				if diff := cmp.Diff(want, got); diff != "" {
-					t.Errorf("wrong result (+got/-want):\n%s", diff)
-				}
+			want := rgbaPalette(c.palette)
+			got := rgbaPalette(d)
+			if diff := cmp.Diff(want, got); diff != "" {
+				t.Errorf("failed to round-trip (+got/-want):\n%s", diff)
 			}
 		})
 	}
