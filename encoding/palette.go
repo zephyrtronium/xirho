@@ -43,7 +43,7 @@ func DecodePalette(s string) (color.Palette, error) {
 		return nil, fmt.Errorf("couldn't decode palette data as lzw: %w", err)
 	}
 	p = buf.Bytes()
-	palette := make(color.Palette, 0, len(p)/(2*4))
+	palette := make(color.Palette, len(p)/(2*4))
 	for i := range palette {
 		palette[i] = color.RGBA64{
 			A: binary.BigEndian.Uint16(p[2*i:]),
