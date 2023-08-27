@@ -2,14 +2,10 @@
 package encoding
 
 import (
-	"bytes"
-	"compress/lzw"
-	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"image"
 	"image/color"
-	"io"
 	"strconv"
 
 	"github.com/zephyrtronium/xirho"
@@ -73,13 +69,14 @@ func (s *System) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	m := marshaler{
-		Funcs:  make([]*funcm, len(system.Nodes)),
-		Camera: s.Camera,
-		Bright: s.ToneMap.Brightness,
-		Gamma:  s.ToneMap.Gamma,
-		Thresh: s.ToneMap.GammaMin,
-		Aspect: s.Aspect,
-		Meta:   s.Meta,
+		Funcs:   make([]*funcm, len(system.Nodes)),
+		Camera:  s.Camera,
+		Bright:  s.ToneMap.Brightness,
+		Gamma:   s.ToneMap.Gamma,
+		Thresh:  s.ToneMap.GammaMin,
+		Aspect:  s.Aspect,
+		Meta:    s.Meta,
+		Palette: EncodePalette(s.Palette),
 	}
 	for i, f := range system.Nodes {
 		e, err := newFuncm(f.Func)
@@ -102,21 +99,6 @@ func (s *System) MarshalJSON() ([]byte, error) {
 	if s.BG != (color.NRGBA64{}) {
 		m.BG = (*bgcolor)(&s.BG)
 	}
-	palette := make([]byte, 2*4*len(s.Palette))
-	for i, c := range s.Palette {
-		r, g, b, a := c.RGBA()
-		binary.BigEndian.PutUint16(palette[2*(0*len(s.Palette)+i):], uint16(a))
-		binary.BigEndian.PutUint16(palette[2*(1*len(s.Palette)+i):], uint16(r))
-		binary.BigEndian.PutUint16(palette[2*(2*len(s.Palette)+i):], uint16(g))
-		binary.BigEndian.PutUint16(palette[2*(3*len(s.Palette)+i):], uint16(b))
-	}
-	var buf bytes.Buffer
-	z := lzw.NewWriter(&buf, lzw.LSB, 8)
-	if _, err := z.Write(palette); err != nil {
-		panic(err)
-	}
-	z.Close()
-	m.Palette = buf.Bytes()
 	return json.Marshal(m)
 }
 
@@ -157,21 +139,11 @@ func (s *System) UnmarshalJSON(b []byte) (err error) {
 	if m.BG != nil {
 		s.BG = color.NRGBA64(*m.BG)
 	}
-	z := lzw.NewReader(bytes.NewReader(m.Palette), lzw.LSB, 8)
-	var buf bytes.Buffer
-	if _, err = io.Copy(&buf, z); err != nil {
+	palette, err := DecodePalette(m.Palette)
+	if err != nil {
 		return err
 	}
-	palette := buf.Bytes()
-	s.Palette = make(color.Palette, len(palette)/(2*4))
-	for i := range s.Palette {
-		s.Palette[i] = color.NRGBA64{
-			A: binary.BigEndian.Uint16(palette[2*i:]),
-			R: binary.BigEndian.Uint16(palette[2*(i+len(s.Palette)):]),
-			G: binary.BigEndian.Uint16(palette[2*(i+2*len(s.Palette)):]),
-			B: binary.BigEndian.Uint16(palette[2*(i+3*len(s.Palette)):]),
-		}
-	}
+	s.Palette = palette
 	s.Meta = m.Meta
 	return nil
 }
@@ -194,7 +166,7 @@ type marshaler struct {
 	BG *bgcolor `json:"bg,omitempty"`
 	// Palette is formed by concatenating each channel of the NRGBA64 palette
 	// in ARGB order as big-endian, then LZW-encoding the result.
-	Palette []byte `json:"palette"`
+	Palette string `json:"palette"`
 }
 
 // bgcolor serializes an NRGBA64 color in a friendlier format.
