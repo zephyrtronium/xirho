@@ -66,5 +66,6 @@ If xi is the best place for a new function, e.g. because it is very common in Ap
 
 - Create the function type with `Calc` and `Prep` methods.
 - Register any factories in a `func init()` using `must`. There must be at least one factory, to ensure that the type implements `xirho.Func`.
+- Add at least a test against the function API.
 - Add it to this README, in the list near the top.
 - Create Flame parsers in package `xirho/encoding/flame` and add it to the README there.
