@@ -26,9 +26,9 @@ type Hist struct {
 
 type bin struct {
 	// r, g, b are the red, green, and blue channels.
-	r, g, b uint64
+	r, g, b atomic.Uint64
 	// n is the bin count.
-	n uint64
+	n atomic.Uint64
 }
 
 // Size describes a histogram size, including width, height, and oversampling.
@@ -161,10 +161,10 @@ func (h *Hist) at(x, y int) *bin {
 // goroutines to call this concurrently.
 func (h *Hist) Add(x, y int, c color.RGBA64) {
 	bin := h.at(x, y)
-	atomic.AddUint64(&bin.r, uint64(c.R))
-	atomic.AddUint64(&bin.g, uint64(c.G))
-	atomic.AddUint64(&bin.b, uint64(c.B))
-	atomic.AddUint64(&bin.n, uint64(c.A))
+	bin.r.Add(uint64(c.R))
+	bin.g.Add(uint64(c.G))
+	bin.b.Add(uint64(c.B))
+	bin.n.Add(uint64(c.A))
 }
 
 // Width returns the horizontal size of the histogram in pixels.
@@ -228,38 +228,42 @@ func (h *Hist) WriteTo(w io.Writer) (n int64, err error) {
 	b := make([]byte, 16)
 	binary.LittleEndian.PutUint64(b[0:8], uint64(h.cols))
 	binary.LittleEndian.PutUint64(b[8:16], uint64(h.rows))
-	k, err := w.Write(b[:16])
+	k, err := w.Write(b)
 	n += int64(k)
 	if err != nil {
 		return n, err
 	}
 	b = b[:8]
-	for _, bin := range h.counts {
-		binary.LittleEndian.PutUint64(b, bin.r)
+	for i := range h.counts {
+		bin := &h.counts[i]
+		binary.LittleEndian.PutUint64(b, bin.r.Load())
 		k, err = w.Write(b)
 		n += int64(k)
 		if err != nil {
 			return n, err
 		}
 	}
-	for _, bin := range h.counts {
-		binary.LittleEndian.PutUint64(b, bin.g)
+	for i := range h.counts {
+		bin := &h.counts[i]
+		binary.LittleEndian.PutUint64(b, bin.g.Load())
 		k, err = w.Write(b)
 		n += int64(k)
 		if err != nil {
 			return n, err
 		}
 	}
-	for _, bin := range h.counts {
-		binary.LittleEndian.PutUint64(b, bin.b)
+	for i := range h.counts {
+		bin := &h.counts[i]
+		binary.LittleEndian.PutUint64(b, bin.b.Load())
 		k, err = w.Write(b)
 		n += int64(k)
 		if err != nil {
 			return n, err
 		}
 	}
-	for _, bin := range h.counts {
-		binary.LittleEndian.PutUint64(b, bin.n)
+	for i := range h.counts {
+		bin := &h.counts[i]
+		binary.LittleEndian.PutUint64(b, bin.n.Load())
 		k, err = w.Write(b)
 		n += int64(k)
 		if err != nil {

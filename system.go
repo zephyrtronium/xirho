@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"image/color"
-	"sync/atomic"
 	"unsafe"
 
 	"github.com/zephyrtronium/xirho/xmath"
@@ -135,8 +134,8 @@ func (s System) Iter(ctx context.Context, r *Render, rng xmath.RNG) {
 		}
 		k = it.next(k)
 		if n == 25000 {
-			atomic.AddInt64(&r.n, int64(n))
-			t := atomic.AddInt64(&r.q, int64(q))
+			r.n.Add(int64(n))
+			t := r.q.Add(int64(q))
 			n, q = 0, 0
 			// Some random-ish condition that's fast to check to decide
 			// whether to re-fuse. 0x8 is the lowest bit set in 25000, so

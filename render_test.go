@@ -42,14 +42,14 @@ func TestRender(t *testing.T) {
 	if !f.f {
 		t.Error("system was not prepped")
 	}
-	if f.n == 0 {
+	if f.n.Load() == 0 {
 		t.Error("no points were calculated")
 	}
 	if r.Hits() == 0 {
 		// This could happen if the context closes during the fuse. It would be
 		// nice not to call this a failure in that case, but there isn't a
 		// consistent way to check.
-		t.Error("calculated", f.n, "points but plotted none")
+		t.Error("calculated", f.n.Load(), "points but plotted none")
 	}
 	if r.Iters() != r.Hits() {
 		t.Error("iters and hits should be equal, but got", r.Iters(), "iters and", r.Hits(), "hits")

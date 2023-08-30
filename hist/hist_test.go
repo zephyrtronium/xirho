@@ -61,16 +61,24 @@ func TestMemFor(t *testing.T) {
 	}
 }
 
+func zerobin(bin *bin) bool {
+	return bin.r.Load() == 0 && bin.g.Load() == 0 && bin.b.Load() == 0 && bin.n.Load() == 0
+}
+
 func TestHistReset(t *testing.T) {
 	h := New(Size{W: 1, H: 1, OSA: 1})
-	h.counts[0] = bin{r: 1, g: 2, b: 3, n: 4}
+	h.counts[0].r.Store(1)
+	h.counts[0].g.Store(2)
+	h.counts[0].b.Store(3)
+	h.counts[0].n.Store(4)
 	ar := &h.counts[0]
 	h.Reset(Size{W: 1, H: 1, OSA: 1})
 	if &h.counts[0] != ar {
 		t.Error("same-size reset reallocated memory")
 	}
-	if h.counts[0] != (bin{}) {
-		t.Error("reset failed to zero bin: have", h.counts[0])
+	if !zerobin(&h.counts[0]) {
+		bin := &h.counts[0]
+		t.Error("reset failed to zero bin: have", bin.r.Load(), bin.g.Load(), bin.b.Load(), bin.n.Load())
 	}
 	h.Reset(Size{W: 1, H: 2, OSA: 1})
 	if &h.counts[0] == ar {
@@ -92,34 +100,34 @@ func TestHistAdd(t *testing.T) {
 	h := New(Size{W: 1, H: 1, OSA: 1})
 	c := color.RGBA64{R: 1, G: 10, B: 100, A: 1000}
 	h.Add(0, 0, c)
-	bin := h.counts[0]
-	if bin.r != uint64(c.R) {
-		t.Error("wrong red: want", uint64(c.R), "have", bin.r)
+	bin := &h.counts[0]
+	if bin.r.Load() != uint64(c.R) {
+		t.Error("wrong red: want", uint64(c.R), "have", bin.r.Load())
 	}
-	if bin.g != uint64(c.G) {
-		t.Error("wrong green: want", uint64(c.G), "have", bin.g)
+	if bin.g.Load() != uint64(c.G) {
+		t.Error("wrong green: want", uint64(c.G), "have", bin.g.Load())
 	}
-	if bin.b != uint64(c.B) {
-		t.Error("wrong blue: want", uint64(c.B), "have", bin.b)
+	if bin.b.Load() != uint64(c.B) {
+		t.Error("wrong blue: want", uint64(c.B), "have", bin.b.Load())
 	}
-	if bin.n != uint64(c.A) {
-		t.Error("wrong alpha: want", uint64(c.A), "have", bin.n)
+	if bin.n.Load() != uint64(c.A) {
+		t.Error("wrong alpha: want", uint64(c.A), "have", bin.n.Load())
 	}
 	for i := 1; i < 10; i++ {
 		h.Add(0, 0, c)
 	}
-	bin = h.counts[0]
-	if bin.r != 10*uint64(c.R) {
-		t.Error("wrong red: want", 10*uint64(c.R), "have", bin.r)
+	bin = &h.counts[0]
+	if bin.r.Load() != 10*uint64(c.R) {
+		t.Error("wrong red: want", 10*uint64(c.R), "have", bin.r.Load())
 	}
-	if bin.g != 10*uint64(c.G) {
-		t.Error("wrong green: want", 10*uint64(c.G), "have", bin.g)
+	if bin.g.Load() != 10*uint64(c.G) {
+		t.Error("wrong green: want", 10*uint64(c.G), "have", bin.g.Load())
 	}
-	if bin.b != 10*uint64(c.B) {
-		t.Error("wrong blue: want", 10*uint64(c.B), "have", bin.b)
+	if bin.b.Load() != 10*uint64(c.B) {
+		t.Error("wrong blue: want", 10*uint64(c.B), "have", bin.b.Load())
 	}
-	if bin.n != 10*uint64(c.A) {
-		t.Error("wrong alpha: want", 10*uint64(c.A), "have", bin.n)
+	if bin.n.Load() != 10*uint64(c.A) {
+		t.Error("wrong alpha: want", 10*uint64(c.A), "have", bin.n.Load())
 	}
 
 	t.Run("concurrent", func(t *testing.T) {
@@ -137,18 +145,18 @@ func TestHistAdd(t *testing.T) {
 			}()
 		}
 		wg.Wait()
-		bin := h.counts[0]
-		if bin.r != procs*iters*uint64(c.R) {
-			t.Error("wrong red: want", procs*iters*uint64(c.R), "have", bin.r)
+		bin := &h.counts[0]
+		if bin.r.Load() != procs*iters*uint64(c.R) {
+			t.Error("wrong red: want", procs*iters*uint64(c.R), "have", bin.r.Load())
 		}
-		if bin.g != procs*iters*uint64(c.G) {
-			t.Error("wrong green: want", procs*iters*uint64(c.G), "have", bin.g)
+		if bin.g.Load() != procs*iters*uint64(c.G) {
+			t.Error("wrong green: want", procs*iters*uint64(c.G), "have", bin.g.Load())
 		}
-		if bin.b != procs*iters*uint64(c.B) {
-			t.Error("wrong blue: want", procs*iters*uint64(c.B), "have", bin.b)
+		if bin.b.Load() != procs*iters*uint64(c.B) {
+			t.Error("wrong blue: want", procs*iters*uint64(c.B), "have", bin.b.Load())
 		}
-		if bin.n != procs*iters*uint64(c.A) {
-			t.Error("wrong alpha: want", procs*iters*uint64(c.A), "have", bin.n)
+		if bin.n.Load() != procs*iters*uint64(c.A) {
+			t.Error("wrong alpha: want", procs*iters*uint64(c.A), "have", bin.n.Load())
 		}
 	})
 }

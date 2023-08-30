@@ -112,13 +112,13 @@ func TestSystemCheck(t *testing.T) {
 }
 
 type nanf struct {
-	n int64
+	n atomic.Int64
 	p int
 	f bool
 }
 
 func (v *nanf) Calc(in xirho.Pt, rng *xmath.RNG) xirho.Pt {
-	atomic.AddInt64(&v.n, 1)
+	v.n.Add(1)
 	switch v.p {
 	case 1:
 		return xirho.Pt{
@@ -219,11 +219,11 @@ func TestSystemIter(t *testing.T) {
 		}()
 		s.Iter(ctx, &r, rng)
 		cancel()
-		if f.n == 0 {
+		if f.n.Load() == 0 {
 			t.Log("vacuous condition: no points were calculated")
 		}
 		if r.Hits() != 0 {
-			t.Error("always-invalid function was plotted", r.Hits(), "times of", f.n, "calcs")
+			t.Error("always-invalid function was plotted", r.Hits(), "times of", f.n.Load(), "calcs")
 		}
 	})
 	t.Run("fuseColor", func(t *testing.T) {
@@ -249,11 +249,11 @@ func TestSystemIter(t *testing.T) {
 		}()
 		s.Iter(ctx, &r, rng)
 		cancel()
-		if f.n == 0 {
+		if f.n.Load() == 0 {
 			t.Log("vacuous condition: no points were calculated")
 		}
 		if r.Hits() != 0 {
-			t.Error("always-invalid function was plotted", r.Hits(), "times of", f.n, "calcs")
+			t.Error("always-invalid function was plotted", r.Hits(), "times of", f.n.Load(), "calcs")
 		}
 	})
 }

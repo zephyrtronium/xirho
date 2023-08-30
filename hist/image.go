@@ -5,7 +5,6 @@ import (
 	"image"
 	"image/color"
 	"math"
-	"sync/atomic"
 )
 
 // ToneMap holds the parameters describing conversion from histogram bin counts
@@ -78,10 +77,10 @@ func (h *histImage) At(x, y int) color.Color {
 		return color.RGBA64{}
 	}
 	bin := h.at(x, y)
-	r := atomic.LoadUint64(&bin.r)
-	g := atomic.LoadUint64(&bin.g)
-	b := atomic.LoadUint64(&bin.b)
-	n := atomic.LoadUint64(&bin.n)
+	r := bin.r.Load()
+	g := bin.g.Load()
+	b := bin.b.Load()
+	n := bin.n.Load()
 	if n == 0 {
 		return color.RGBA64{}
 	}

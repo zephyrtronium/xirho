@@ -16,19 +16,16 @@ import (
 
 // Render manages the rendering of a System onto a Hist.
 type Render struct {
-	// These fields must be first on 32-bit platforms because they are updated
-	// atomically.
-	// n is the number of points calculated.
-	n int64
-	// q is the number of points plotted.
-	q int64
-
 	// Hist is the target histogram.
 	Hist *hist.Hist
 	// Camera is the camera transform.
 	Camera xmath.Affine
 	// Palette is the colors used by the renderer.
 	Palette color.Palette
+	// n is the number of points calculated.
+	n atomic.Int64
+	// q is the number of points plotted.
+	q atomic.Int64
 }
 
 // Render renders a System onto a Hist. Calculation is performed by procs
@@ -183,19 +180,19 @@ func (r *Render) Area() float64 {
 // Iters returns the number of iterations the renderer has performed. It is
 // safe to call this while the renderer is running.
 func (r *Render) Iters() int64 {
-	return atomic.LoadInt64(&r.n)
+	return r.n.Load()
 }
 
 // Hits returns the number of iterations the renderer has plotted. It is safe
 // to call this while the renderer is running.
 func (r *Render) Hits() int64 {
-	return atomic.LoadInt64(&r.q)
+	return r.q.Load()
 }
 
-// ResetCounts resets the values returned by Iters and Hits to zero. Unlike
-// those methods, it is not safe to call this while the renderer is running.
+// ResetCounts resets the values returned by Iters and Hits to zero.
 func (r *Render) ResetCounts() {
-	r.n, r.q = 0, 0
+	r.n.Store(0)
+	r.q.Store(0)
 }
 
 // Reset resets the histogram and the iteration counts. It is not safe to call
