@@ -73,6 +73,10 @@ func (h *histImage) Bounds() image.Rectangle {
 // At returns the color of a pixel in the histogram. Note that this is a fairly
 // expensive operation.
 func (h *histImage) At(x, y int) color.Color {
+	return h.RGBA64At(x, y)
+}
+
+func (h *histImage) RGBA64At(x, y int) color.RGBA64 {
 	if x < 0 || x >= h.cols || y < 0 || y >= h.rows {
 		return color.RGBA64{}
 	}
