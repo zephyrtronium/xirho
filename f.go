@@ -2,6 +2,20 @@ package xirho
 
 import "github.com/zephyrtronium/xirho/xmath"
 
+// Func is a function ("variation") type.
+//
+// Functions may be parameterized in a number of ways with bool, int
+// (for lists), int64, float64, complex128, [3]float64, [xmath.Affine], nested
+// Func, and []Func fields. Package fapi can collect exported fields of such
+// types to enable a user interface for editing and display.
+type Func interface {
+	// Calc calculates the function at a point.
+	Calc(in Pt, rng *xmath.RNG) Pt
+	// Prep is called once prior to iteration so that a function can cache
+	// expensive calculations.
+	Prep()
+}
+
 // Pt is a point in R^3 × [0, 1].
 type Pt struct {
 	// X, Y, and Z are spatial coordinates.
@@ -15,18 +29,4 @@ type Pt struct {
 func (p Pt) IsValid() bool {
 	// x - x is 0 if x is finite and NaN otherwise.
 	return p.X-p.X == p.Y-p.Y && p.Z-p.Z == 0 && 0 <= p.C && p.C <= 1
-}
-
-// Func is a function ("variation") type.
-//
-// Functions may be parametrized in a number of ways with the types Flag, List,
-// Int, Angle, Real, Complex, Vec3, Affine, Func, and FuncList. If fields of
-// these types are exported, package fapi can collect them to enable a user
-// interface for setting and displaying such parameters.
-type Func interface {
-	// Calc calculates the function at a point.
-	Calc(in Pt, rng *xmath.RNG) Pt
-	// Prep is called once prior to iteration so that a function can cache
-	// expensive calculations.
-	Prep()
 }
