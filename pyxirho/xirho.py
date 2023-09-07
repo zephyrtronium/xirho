@@ -52,15 +52,28 @@ class ToneMap(typing.NamedTuple):
     gamma: float = 1
     gamma_min: float = 0
 
+def area(hist_shape: tuple[int, ...], proj_area: float) -> float:
+    """Calculates Cartesian histogram area.
+
+    Args:
+        hist_shape: Shape of the histogram, or at least the width and height.
+        proj_area: Projective area of the renderer's linear camera. This can
+            be calculated as the determinant of the upper-left 2x2 submatrix
+            of the camera matrix.
+    """
+    w, h = hist_shape
+    aspect = w / h
+    if aspect > 1:
+        aspect = 1 / aspect
+    return aspect / proj_area
+
 def lqa(hist_size: int, osa: int, area: float, iters: int) -> float:
     """Calculate log quality-area coefficient.
 
     Args:
         hist_size: Total number of bins in the histogram.
         osa: Oversampling factor used when rendering.
-        area: Projective area of the coordinate plane in the linear camera.
-            This can be calculated as the determinant of the upper-left 2x2
-            submatrix of the camera matrix, scaled by the image aspect ratio.
+        area: Cartesian histogram area, as calculated by area.
         iters: Total iterations (usually not hits) during rendering.
 
     Returns:
