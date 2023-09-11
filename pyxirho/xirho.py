@@ -18,6 +18,58 @@ import typing
 
 import numpy as np
 
+class ToneMap(typing.NamedTuple):
+
+    """Tone mapping parameters.
+
+    Attributes:
+        brightness: Multiplicative scaling factor.
+        gamma: Gamma correction factor.
+        gamma_min: Threshold at which to apply gamma correction.
+    """
+
+    brightness: float = 1
+    gamma: float = 1
+    gamma_min: float = 0
+
+class Histogram:
+
+    """Histogram object.
+    
+    Wraps the functionality in module xirho in a manner aware of the
+    histogram's shape and tone mapping parameters.
+    """
+
+    hist: np.ndarray
+    tone_map: ToneMap
+    lqa: float
+    osa: int
+
+    def __init__(self,
+                 hist: np.ndarray,
+                 osa: int = 1,
+                 iters: int = 25000,
+                 proj_area: float = 1,
+                 tone_map: typing.Optional[ToneMap] = None):
+        self.hist = hist
+        self.tone_map = tone_map or ToneMap()
+        self.lqa = lqa(hist.size//4, osa, area(hist.shape[:2], proj_area), iters)
+        self.osa = osa
+    
+    def brightest(self):
+        """Find the brightest bin, i.e. the highest count."""
+        return brightest(self.hist)
+    
+    def pixel_region(self, x, y):
+        """Return the oversampled bins corresponding to an image pixel."""
+        osa = self.osa
+        return self.hist[osa*x:osa*(x+1), osa*y:osa*(y+1), :]
+    
+    def pixel(self, bin_x, bin_y):
+        """Calculate the color corresponding to a single bin."""
+        bin = self.hist[bin_x,bin_y,:]
+        return pixel(bin, 65535*self.tone_map.brightness, self.lqa, self.tone_map.gamma, self.tone_map.gamma_min)
+
 # log10(0xffff). Xirho palettes have channels in [0, 0xffff], but the Flame
 # algorithm is based on colors in [0, 1]. Subtracting this from log counts
 # performs the conversion.
@@ -37,20 +89,6 @@ def read(f: typing.BinaryIO) -> np.ndarray:
     w, h = struct.unpack('<QQ', b)
     a = np.fromfile(f, dtype=np.uint64, count=w*h*4) # type: np.ndarray
     return np.reshape(a, (w, h, 4), order='F')
-
-class ToneMap(typing.NamedTuple):
-
-    """Tone mapping parameters.
-
-    Attributes:
-        brightness: Multiplicative scaling factor.
-        gamma: Gamma correction factor.
-        gamma_min: Threshold at which to apply gamma correction.
-    """
-
-    brightness: float = 1
-    gamma: float = 1
-    gamma_min: float = 0
 
 def area(hist_shape: tuple[int, ...], proj_area: float) -> float:
     """Calculates Cartesian histogram area.
