@@ -48,10 +48,10 @@ func (h *Hist) Image(tm ToneMap, area float64, iters int64) image.Image {
 	q := math.Log10(float64(len(h.counts))) - math.Log10(float64(iters))
 	return &histImage{
 		Hist: h,
-		b:    tm.Brightness * 0xffff,
+		b:    tm.Brightness,
 		g:    1 / tm.Gamma,
 		t:    tm.GammaMin,
-		lqa:  4*math.Log10(float64(h.osa)) - math.Log10(area) + q - 2*clscale,
+		lqa:  2*math.Log10(float64(h.osa)) + math.Log10(area) + q - clscale,
 	}
 }
 
@@ -116,8 +116,8 @@ func (h *histImage) RGBA64At(x, y int) color.RGBA64 {
 const itdoesntworkatall = false
 
 func ascale(n uint64, br, lb float64) float64 {
-	a := br * (math.Log10(float64(n)) - lb)
-	return a / float64(n)
+	a := br * (math.Log10(float64(n)) + lb)
+	return a
 }
 
 func cscale(c float64) uint16 {
