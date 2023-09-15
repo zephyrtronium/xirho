@@ -31,6 +31,9 @@ type ToneMap struct {
 // performs the conversion.
 const clscale = 4.816473303765249707784354368778591143369496252776245939965515119387352293655218
 
+// lwp is log10(200). Adding lwp performs a whitepoint adjustment.
+const lwp = 2.301029995663981195213738
+
 // Image creates a wrapper around the histogram that converts bins to pixels.
 //
 // The parameters are as follows. br is a multiplier for the alpha channel.
@@ -51,7 +54,7 @@ func (h *Hist) Image(tm ToneMap, area float64, iters int64) image.Image {
 		b:    tm.Brightness,
 		g:    1 / tm.Gamma,
 		t:    tm.GammaMin,
-		lqa:  2*math.Log10(float64(h.osa)) + math.Log10(area) + q - clscale,
+		lqa:  lwp - clscale + 4*math.Log10(float64(h.osa)) - math.Log10(area) + q,
 	}
 }
 
@@ -89,7 +92,7 @@ func (h *histImage) RGBA64At(x, y int) color.RGBA64 {
 		return color.RGBA64{}
 	}
 	a := ascale(n, h.b, h.lqa)
-	ag := gamma(a, h.g, h.t)
+	ag := gamma(aces(a), h.g, h.t)
 	as := cscale(ag)
 	if itdoesntworkatall {
 		fmt.Printf("  at(%d,%d) h.b=%f h.g=%f h.t=%f h.lqa=%f rgbn=%d/%d/%d/%d a=%f ag=%f as=%d\n", x, y, h.b, h.g, h.t, h.lqa, r, g, b, n, a, ag, as)
@@ -138,4 +141,17 @@ func gamma(a, exp, tr float64) float64 {
 	}
 	p := a / tr
 	return p*math.Pow(a, exp) + (1-p)*a*math.Pow(tr, exp-1)
+}
+
+func aces(x float64) float64 {
+	// Approximate ACES filmic tone mapping curve by Krzysztof Narkowicz.
+	// https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/
+	const (
+		a = 2.51
+		b = 0.03
+		c = 2.43
+		d = 0.59
+		e = 0.14
+	)
+	return (x * (a*x + b)) / (x*(c*x+d) + e)
 }
