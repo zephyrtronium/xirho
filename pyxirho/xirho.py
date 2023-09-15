@@ -75,6 +75,9 @@ class Histogram:
 # performs the conversion.
 clscale = 4.81647330376524970778
 
+# log10(200). Whitepoint adjustment factor.
+lwp = 2.301029995663981195213738
+
 def read(f: typing.BinaryIO) -> np.ndarray:
     """Read a xirho histogram from a file.
 
@@ -99,7 +102,7 @@ def area(hist_shape: tuple[int, ...], proj_area: float) -> float:
             be calculated as the determinant of the upper-left 2x2 submatrix
             of the camera matrix.
     """
-    w, h = hist_shape
+    w, h = hist_shape[:2]
     aspect = w / h
     if aspect > 1:
         aspect = 1 / aspect
@@ -109,7 +112,7 @@ def lqa(hist_size: int, osa: int, area: float, iters: int) -> float:
     """Calculate log quality-area coefficient.
 
     Args:
-        hist_size: Total number of bins in the histogram.
+        hist_size: Total number of bins per channel in the histogram.
         osa: Oversampling factor used when rendering.
         area: Cartesian histogram area, as calculated by area.
         iters: Total iterations (usually not hits) during rendering.
@@ -117,10 +120,10 @@ def lqa(hist_size: int, osa: int, area: float, iters: int) -> float:
     Returns:
         Log quality-area coefficient including adjustment for 16-bit color.
     """
-    o = 4 * math.log10(osa)
+    o = math.log10(osa)
     a = math.log10(area)
     q = math.log10(hist_size) - math.log10(iters)
-    return o - a + q - 2*clscale
+    return lwp - clscale + 4*o - a + q
 
 def ascale(n: np.uint64, br: float, lqa: float) -> float:
     """Alpha channel scaling.
@@ -134,8 +137,8 @@ def ascale(n: np.uint64, br: float, lqa: float) -> float:
         Scaled alpha channel. The nominal range is [0, 1], but actual values
         may be larger or negative depending on brightness and lqa.
     """
-    a = br * (math.log10(n) - lqa)
-    return a / n
+    a = br * (math.log10(n) + lqa)
+    return a
 
 def gamma(a: float, gamma: float, threshold: float) -> float:
     """Gamma correction.
@@ -154,6 +157,16 @@ def gamma(a: float, gamma: float, threshold: float) -> float:
     p = a / threshold
     return p * a**exp + (1-p) * threshold**(exp - 1)
 
+def aces(x: float, a=2.51, b=0.03, c=2.43, d=0.59, e=0.14) -> float:
+    """Approximate ACES filmic tone mapping curve.
+
+    Args:
+        x: Input color in the nominal range [0, 1].
+    Returns:
+        Tone mapped color.
+    """
+    return (x * (a*x + b)) / (x*(c*x+d) + e)
+
 def pixel(bin: np.ndarray, br: float, lqa: float, gf: float, thresh: float) -> np.ndarray:
     """Calculate a single pixel value.
 
@@ -171,7 +184,7 @@ def pixel(bin: np.ndarray, br: float, lqa: float, gf: float, thresh: float) -> n
     if n == 0:
         return [0., 0., 0., 0.]
     a = ascale(n, br, lqa)
-    ag = gamma(a, gf, thresh)
+    ag = gamma(aces(a), gf, thresh)
     if ag <= 0:
         return [0., 0., 0., 0.]
     s = a / n
