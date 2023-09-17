@@ -10,14 +10,14 @@ import (
 // ToneMap holds the parameters describing conversion from histogram bin counts
 // to color and alpha channels.
 type ToneMap struct {
-	// Brightness is a multiplier for the log-alpha channel.
+	// Brightness is a multiplier for the alpha channel.
 	Brightness float64
-	// Gamma is a nonlinear scaler that boosts low- and high-count
-	// bins differently.
+	// Contrast is a multiplier for the log-alpha channel.
+	Contrast float64
+	// Gamma is a nonlinear scaler that boosts low-count bins and compresses
+	// high-count bins.
 	Gamma float64
-	// GammaMin is the minimum log-alpha value to which to apply gamma scaling
-	// as a ratio versus the number of iterations per output pixel. Should
-	// generally be between 0 and 1, inclusive.
+	// GammaMin is the minimum log-alpha value to which to apply gamma scaling.
 	GammaMin float64
 }
 
@@ -29,7 +29,7 @@ type ToneMap struct {
 // clscale is log10(0xffff). Histogram counts are in [0, 0xffff], but the flame
 // algorithm is based on colors in [0, 1]. Subtracting this from log counts
 // performs the conversion.
-const clscale = 4.816473303765249707784354368778591143369496252776245939965515119387352293655218
+const clscale = 4.816473303765249707784354
 
 // lwp is log10(200). Adding lwp performs a whitepoint adjustment.
 const lwp = 2.301029995663981195213738
@@ -51,10 +51,10 @@ func (h *Hist) Image(tm ToneMap, area float64, iters int64) image.Image {
 	q := math.Log10(float64(len(h.counts))) - math.Log10(float64(iters))
 	return &histImage{
 		Hist: h,
-		b:    tm.Brightness,
+		b:    tm.Contrast,
 		g:    1 / tm.Gamma,
 		t:    tm.GammaMin,
-		lqa:  lwp - clscale + 4*math.Log10(float64(h.osa)) - math.Log10(area) + q,
+		lqa:  lwp - clscale + math.Log10(tm.Brightness) - math.Log10(area) + q,
 	}
 }
 

@@ -53,7 +53,7 @@ class Histogram:
                  tone_map: typing.Optional[ToneMap] = None):
         self.hist = hist
         self.tone_map = tone_map or ToneMap()
-        self.lqa = lqa(hist.size//4, osa, area(hist.shape[:2], proj_area), iters)
+        self.lqa = lqa(hist.size//4, tone_map.brightness, area(hist.shape[:2], proj_area), iters)
         self.osa = osa
     
     def brightest(self):
@@ -93,6 +93,13 @@ def read(f: typing.BinaryIO) -> np.ndarray:
     a = np.fromfile(f, dtype=np.uint64, count=w*h*4) # type: np.ndarray
     return np.reshape(a, (w, h, 4), order='F')
 
+def load(path: str, osa: int = 1, iters: int = 25000, proj_area: float = 1, tone_map: typing.Optional[ToneMap] = None) -> Histogram:
+    """Load a xirho histogram from a file at the given path.
+    
+    See Histogram.__init__ for a description of arguments."""
+    with open(path, 'rb') as f:
+        return Histogram(read(f), osa=osa, iters=iters, proj_area=proj_area, tone_map=tone_map)
+
 def area(hist_shape: tuple[int, ...], proj_area: float) -> float:
     """Calculates Cartesian histogram area.
 
@@ -108,36 +115,36 @@ def area(hist_shape: tuple[int, ...], proj_area: float) -> float:
         aspect = 1 / aspect
     return aspect / proj_area
 
-def lqa(hist_size: int, osa: int, area: float, iters: int) -> float:
+def lqa(hist_size: int, brightness: float, area: float, iters: int) -> float:
     """Calculate log quality-area coefficient.
 
     Args:
         hist_size: Total number of bins per channel in the histogram.
-        osa: Oversampling factor used when rendering.
+        brightness: Brightness coefficient.
         area: Cartesian histogram area, as calculated by area.
         iters: Total iterations (usually not hits) during rendering.
 
     Returns:
         Log quality-area coefficient including adjustment for 16-bit color.
     """
-    o = math.log10(osa)
     a = math.log10(area)
+    b = math.log10(brightness)
     q = math.log10(hist_size) - math.log10(iters)
-    return lwp - clscale + 4*o - a + q
+    return lwp - clscale + b - a + q
 
-def ascale(n: np.uint64, br: float, lqa: float) -> float:
+def ascale(n: np.uint64, contrast: float, lqa: float) -> float:
     """Alpha channel scaling.
 
     Args:
         n: Bin N channel.
-        br: Scaled brightness factor.
+        contrast: Contrast factor.
         lqa: Log quality-area coefficient.
 
     Returns:
         Scaled alpha channel. The nominal range is [0, 1], but actual values
-        may be larger or negative depending on brightness and lqa.
+        may be larger or negative depending on contrast and lqa.
     """
-    a = br * (math.log10(n) + lqa)
+    a = contrast * (math.log10(n) + lqa)
     return a
 
 def gamma(a: float, gamma: float, threshold: float) -> float:
