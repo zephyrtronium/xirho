@@ -174,6 +174,11 @@ var commands = []*command{
 		exec: brightness,
 	},
 	{
+		name: []string{"contrast", "con", "c"},
+		desc: `set render contrast`,
+		exec: contrast,
+	},
+	{
 		name: []string{"gamma", "g"},
 		desc: `set render gamma factor`,
 		exec: gamma,
@@ -706,6 +711,26 @@ func brightness(ctx context.Context, status *status, line string) {
 		return
 	}
 	status.onto.ToneMap.Brightness = x
+}
+
+func contrast(ctx context.Context, status *status, line string) {
+	const usage = `contrast <x>
+	Set contrast, the scaling of the log-alpha channel.
+	x may be any finite number greater than 0.`
+	if line == "" || line == "?" {
+		fmt.Println(usage)
+		return
+	}
+	x, err := strconv.ParseFloat(line, 64)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	if x <= 0 || !xmath.IsFinite(x) {
+		fmt.Println("can't set contrast to", x)
+		return
+	}
+	status.onto.ToneMap.Contrast = x
 }
 
 func gamma(ctx context.Context, status *status, line string) {
