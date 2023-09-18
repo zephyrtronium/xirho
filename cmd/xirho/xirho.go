@@ -50,6 +50,7 @@ func main() {
 	flag.Float64Var(&tm.Gamma, "gamma", 0, "gamma factor")
 	flag.Float64Var(&tm.GammaMin, "thresh", 0, "gamma threshold")
 	flag.Float64Var(&tm.Brightness, "bright", 0, "brightness")
+	flag.Float64Var(&tm.Contrast, "contrast", 0, "contrast")
 	flag.StringVar(&resample, "resample", "catmull-rom", "resampling method (catmull-rom, bilinear, approx-bilinear, or nearest)")
 	flag.IntVar(&procs, "procs", runtime.GOMAXPROCS(0), "concurrent render routines")
 	flag.BoolVar(&echo, "echo", false, "print system encoding before rendering")
