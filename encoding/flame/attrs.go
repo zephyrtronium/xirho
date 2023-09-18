@@ -362,8 +362,6 @@ func parseSplits3D(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Aff
 func parseUnpolar(attrs map[string]float64, pre, in, post *xi.Sum, ax xmath.Affine) {
 	f := xi.Exp{Base: math.E}
 	a := xi.Affine{}
-	// TODO(zeph): why was this here?
-	// const sc = 1 / (2 * math.Pi)
 	a.Ax.Eye().RotZ(math.Pi/2).Scale(-1, 1, 0)
 	t := xi.Then{
 		Funcs: []xirho.Func{

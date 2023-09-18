@@ -60,7 +60,12 @@ func convert(flm flame) (s encoding.System) {
 		Meta: &xirho.Metadata{
 			Title: flm.Name,
 		},
-		ToneMap: hist.ToneMap{Brightness: flm.Brightness, Gamma: flm.Gamma, GammaMin: flm.Thresh},
+		ToneMap: hist.ToneMap{
+			Brightness: flm.Brightness,
+			Contrast:   1,
+			Gamma:      flm.Gamma,
+			GammaMin:   flm.Thresh,
+		},
 	}
 	sz, err := nums(flm.Size)
 	defer func() {

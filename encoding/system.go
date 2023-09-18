@@ -69,14 +69,15 @@ func (s *System) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	m := marshaler{
-		Funcs:   make([]*funcm, len(system.Nodes)),
-		Camera:  s.Camera,
-		Bright:  s.ToneMap.Brightness,
-		Gamma:   s.ToneMap.Gamma,
-		Thresh:  s.ToneMap.GammaMin,
-		Aspect:  s.Aspect,
-		Meta:    s.Meta,
-		Palette: EncodePalette(s.Palette),
+		Funcs:    make([]*funcm, len(system.Nodes)),
+		Camera:   s.Camera,
+		Bright:   s.ToneMap.Brightness,
+		Contrast: s.ToneMap.Contrast,
+		Gamma:    s.ToneMap.Gamma,
+		Thresh:   s.ToneMap.GammaMin,
+		Aspect:   s.Aspect,
+		Meta:     s.Meta,
+		Palette:  EncodePalette(s.Palette),
 	}
 	for i, f := range system.Nodes {
 		e, err := newFuncm(f.Func)
@@ -135,7 +136,12 @@ func (s *System) UnmarshalJSON(b []byte) (err error) {
 			return err
 		}
 	}
-	s.ToneMap = hist.ToneMap{Brightness: m.Bright, Gamma: m.Gamma, GammaMin: m.Thresh}
+	s.ToneMap = hist.ToneMap{
+		Brightness: m.Bright,
+		Contrast:   m.Contrast,
+		Gamma:      m.Gamma,
+		GammaMin:   m.Thresh,
+	}
 	if m.BG != nil {
 		s.BG = color.NRGBA64(*m.BG)
 	}
@@ -159,9 +165,10 @@ type marshaler struct {
 	Aspect float64      `json:"aspect"`
 	Camera xmath.Affine `json:"camera"`
 	// brightness params
-	Bright float64 `json:"bright"`
-	Gamma  float64 `json:"gamma"`
-	Thresh float64 `json:"thresh"`
+	Bright   float64 `json:"bright"`
+	Contrast float64 `json:"contrast"`
+	Gamma    float64 `json:"gamma"`
+	Thresh   float64 `json:"thresh"`
 	// bg color, if any
 	BG *bgcolor `json:"bg,omitempty"`
 	// Palette is formed by concatenating each channel of the NRGBA64 palette
