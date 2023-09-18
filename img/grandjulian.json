@@ -59,7 +59,12 @@
             },
             "opacity": 1,
             "weight": 1,
-            "graph": [1, 1, 1, 1]
+            "graph": [
+                1,
+                1,
+                1,
+                1
+            ]
         },
         {
             "name": "then",
@@ -109,7 +114,12 @@
             },
             "opacity": 1,
             "weight": 12,
-            "graph": [1, 1, 1, 1]
+            "graph": [
+                1,
+                1,
+                1,
+                1
+            ]
         },
         {
             "name": "then",
@@ -178,7 +188,12 @@
             },
             "opacity": 1,
             "weight": 2,
-            "graph": [1, 1, 1, 1]
+            "graph": [
+                1,
+                1,
+                1,
+                1
+            ]
         },
         {
             "name": "then",
@@ -247,7 +262,12 @@
             },
             "opacity": 1,
             "weight": 2,
-            "graph": [1, 1, 1, 1]
+            "graph": [
+                1,
+                1,
+                1,
+                1
+            ]
         }
     ],
     "final": {
@@ -279,7 +299,7 @@
             ]
         }
     },
-    "aspect": 1,
+    "aspect": 1.7777777777777777,
     "camera": [
         0.6,
         0,
@@ -294,6 +314,9 @@
         0,
         0
     ],
-    "gamma": 0,
-    "palette": "/wQOJFjQ4EGECRUuVAjA4UODDyEWlOgwYsWLEjNOtEgRo0eNICcSrAhgY0eSJUcOLHnSpEiULD+mDEkwIA=="
+    "bright": 1,
+    "contrast": 0.95,
+    "gamma": 2.2,
+    "thresh": 0,
+    "palette": "AP8JHEiwoMGDCBMqXKgQgMOHBh9CLCjRYcSKFyVmnGiRIkaPGkFOJFgRwMaOJEuOHFjypEmRKFl+TBmSYEA="
 }

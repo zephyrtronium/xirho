@@ -45,7 +45,10 @@
             },
             "opacity": 1,
             "weight": 30,
-            "graph": [1, 1]
+            "graph": [
+                1,
+                1
+            ]
         },
         {
             "name": "then",
@@ -69,7 +72,10 @@
             },
             "opacity": 1,
             "weight": 1,
-            "graph": [1, 1]
+            "graph": [
+                1,
+                1
+            ]
         }
     ],
     "final": {
@@ -146,6 +152,9 @@
         0,
         0
     ],
-    "gamma": 0,
-    "palette": "/wQOJFjQ4EGECRUuVAjA4UODDyEWlOgwYsWLEjNOtEgRo0eNICcSrAhgY0eSJUcOLHnSpEiULD+mDEkwIA=="
+    "bright": 0.15,
+    "contrast": 1,
+    "gamma": 2.2,
+    "thresh": 0,
+    "palette": "AP8JHEiwoMGDCBMqXKgQgMOHBh9CLCjRYcSKFyVmnGiRIkaPGkFOJFgRwMaOJEuOHFjypEmRKFl+TBmSYEA="
 }
