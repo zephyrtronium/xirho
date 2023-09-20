@@ -33,14 +33,16 @@ func NewRNG() RNG {
 
 // Uint64 produces a 64-bit pseudo-random value.
 func (rng *RNG) Uint64() uint64 {
-	r := bits.RotateLeft64(rng.x*5, 7) * 9
-	t := rng.x << 17
-	rng.y ^= rng.w
-	rng.z ^= rng.x
-	rng.x ^= rng.y
-	rng.w ^= rng.z
-	rng.y ^= t
-	rng.z = bits.RotateLeft64(rng.z, 45)
+	w, x, y, z := rng.w, rng.x, rng.y, rng.z
+	r := bits.RotateLeft64(x*5, 7) * 9
+	t := x << 17
+	y ^= w
+	z ^= x
+	x ^= y
+	w ^= z
+	y ^= t
+	z = bits.RotateLeft64(z, 45)
+	rng.w, rng.x, rng.y, rng.z = w, x, y, z
 	return r
 }
 
