@@ -94,3 +94,16 @@ func graphFill(rng xmath.RNG, degree int) float64 {
 	// Calculate p-value from chi-squared statistic.
 	return mathext.GammaIncRegComp(float64(degree*degree-1)/2, x/2)
 }
+
+var doNotOptimize uint64
+
+func BenchmarkUint64(b *testing.B) {
+	rng := xmath.NewRNG()
+	b.SetBytes(8)
+	b.ResetTimer()
+	var dnopt uint64
+	for i := b.N; i != 0; i-- {
+		dnopt = rng.Uint64()
+	}
+	doNotOptimize = dnopt
+}
