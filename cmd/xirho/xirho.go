@@ -145,8 +145,10 @@ func main() {
 		log.Printf("system:\n%s\n", m)
 	}
 	log.Println("rendering for", timeout, "or until ^C")
+	start := time.Now()
 	r.Render(ctx, s.System, procs)
-	log.Println("finished render with", r.Iters(), "iters,", r.Hits(), "hits")
+	dur := time.Since(start)
+	log.Printf("finished render with %d iters (%.0f/s), %d hits (%d%%)", r.Iters(), float64(r.Iters())/dur.Seconds(), r.Hits(), r.Hits()*100/r.Iters())
 	signal.Reset(os.Interrupt) // no rendering for ^C to interrupt
 
 	if dumpname != "" {
