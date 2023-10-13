@@ -170,7 +170,7 @@ func TestSystemIter(t *testing.T) {
 	}()
 	s.Iter(ctx, &r, rng)
 	cancel()
-	tm := hist.ToneMap{Brightness: 1e6, Gamma: 1, GammaMin: 0}
+	tm := hist.ToneMap{Brightness: 1e6, Contrast: 1, Gamma: 1, GammaMin: 0}
 	red, _, _, alpha := r.Hist.Image(tm, 1, 1).At(0, 0).RGBA()
 	if red == 0 || alpha == 0 {
 		t.Error("expected red pixel, got red", red, "alpha", alpha, "with hist", r.Hist, "after", r.Iters(), "iters")

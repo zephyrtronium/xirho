@@ -11,6 +11,7 @@ import (
 
 	"github.com/zephyrtronium/xirho"
 	"github.com/zephyrtronium/xirho/hist"
+	"github.com/zephyrtronium/xirho/xmath"
 )
 
 func TestRender(t *testing.T) {
@@ -54,7 +55,7 @@ func TestRender(t *testing.T) {
 	if r.Iters() != r.Hits() {
 		t.Error("iters and hits should be equal, but got", r.Iters(), "iters and", r.Hits(), "hits")
 	}
-	tm := hist.ToneMap{Brightness: 1e6, Gamma: 1, GammaMin: 0}
+	tm := hist.ToneMap{Brightness: 1e6, Contrast: 1, Gamma: 1, GammaMin: 0}
 	red, _, _, alpha := r.Hist.Image(tm, 1, 1).At(0, 0).RGBA()
 	if red == 0 || alpha == 0 {
 		t.Error("expected solid red pixel, got red", red, "alpha", alpha)
@@ -67,6 +68,7 @@ func TestRenderAsync(t *testing.T) {
 	}
 	r := xirho.Render{
 		Hist:    hist.New(hist.Size{W: 1, H: 1, OSA: 1}),
+		Camera:  xmath.Eye(),
 		Palette: color.Palette{color.RGBA64{R: 0xffff, A: 0xffff}, color.RGBA64{R: 0xffff, A: 0xffff}},
 	}
 	f := nanf{}
@@ -91,7 +93,7 @@ func TestRenderAsync(t *testing.T) {
 	plot <- xirho.PlotOnto{
 		Image:   img,
 		Scale:   draw.NearestNeighbor,
-		ToneMap: hist.ToneMap{Brightness: 1, Gamma: 1},
+		ToneMap: hist.ToneMap{Brightness: 1, Contrast: 1, Gamma: 1},
 	}
 	p, ok := <-imgs
 	if !ok {
@@ -99,9 +101,7 @@ func TestRenderAsync(t *testing.T) {
 		t.Fatal("renderer closed imgs early")
 	}
 	iters := r.Iters()
-	if r.Hits() == 0 {
-		t.Log("note: renderer plotted no points")
-	}
+	t.Logf("%d iters, %d hits", iters, r.Hits())
 	red, green, blue, alpha := p.At(0, 0).RGBA()
 	if red == 0 || green != 0 || blue != 0 || alpha == 0 {
 		t.Errorf("expected solid red pixel, got rgba64=#%04x%04x%04x%04x", red, green, blue, alpha)

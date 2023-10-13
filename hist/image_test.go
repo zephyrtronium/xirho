@@ -49,7 +49,7 @@ func TestAt(t *testing.T) {
 	for _, width := range z {
 		for _, height := range z {
 			h := hist.New(hist.Size{W: width, H: height, OSA: 1})
-			src := h.Image(hist.ToneMap{Brightness: 1, Gamma: 1}, 1, 1)
+			src := h.Image(hist.ToneMap{Brightness: 1, Contrast: 1, Gamma: 1}, 1, 1)
 			for x := 0; x < width; x++ {
 				for y := 0; y < height; y++ {
 					c := src.At(x, y)
@@ -64,7 +64,7 @@ func TestAt(t *testing.T) {
 					h.Add(x, y, clr)
 				}
 			}
-			src = h.Image(hist.ToneMap{Brightness: 1, Gamma: 1}, 1, 1)
+			src = h.Image(hist.ToneMap{Brightness: 1, Contrast: 4, Gamma: 1}, 1, 1)
 			for x := 0; x < width; x++ {
 				for y := 0; y < height; y++ {
 					c := src.At(x, y)
